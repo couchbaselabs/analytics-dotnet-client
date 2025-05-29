@@ -25,6 +25,9 @@ x64/
 x86/
 */.DS_Store
 .DS_Store
+.idea
+*/.DS_Store
+.DS_Store
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
