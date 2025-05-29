@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Couchbase.Analytics2</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="DnsClient" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Internal\CouchbaseHttpClientFactory.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Internal\Authentication\" />
+    </ItemGroup>
+
+</Project>
