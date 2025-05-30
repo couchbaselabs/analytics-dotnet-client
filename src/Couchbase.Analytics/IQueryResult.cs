@@ -1,6 +1,6 @@
 namespace Couchbase.Analytics2;
 
-internal interface IQueryResult<out T> : IDisposable, IAsyncEnumerable<T>
+public interface IQueryResult<out T> : IDisposable, IAsyncEnumerable<T>
 {
     IAsyncEnumerable<T> Rows { get; }
 

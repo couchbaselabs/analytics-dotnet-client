@@ -8,6 +8,7 @@ namespace Couchbase.Analytics2.Internal;
 
 internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 {
+    private readonly ClusterOptions _options;
     private readonly ILogger<AnalyticsService> _logger;
     private const string ExecuteQueryPath = "/api/v1/request";
     private const string AnalyticsPriorityHeaderName = "Analytics-Priority";
@@ -15,6 +16,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, IPEndPoint endPoint,
         ILogger<AnalyticsService> logger) : base(httpClientFactory)
     {
+        _options = options;
         _logger = logger;
         HttpClientFactory = httpClientFactory;
         EndPoint = endPoint;
