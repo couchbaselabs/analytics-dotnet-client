@@ -8,9 +8,8 @@ namespace Couchbase.Analytics2.Internal;
 
 internal class ConnectionString
 {
-    private const int KeyValuePort = 11210;
-    private const int SecureKeyValuePort = 11207;
-    private const int StellarPort = 18098;
+    private const int HttpsPort = 443;
+    private const int HttpPort = 80;
 
     private static readonly Regex ConnectionStringRegex = new Regex(
         "^((?<scheme>[^://]+)://)?((?<username>[^\n@]+)@)?(?<hosts>[^\n?]+)?(\\?(?<params>(.+)))?",
@@ -22,7 +21,7 @@ internal class ConnectionString
         RegexOptions.Compiled | RegexOptions.CultureInvariant
     );
 
-    public Scheme Scheme { get; private set; } = Scheme.Couchbase;
+    public Scheme Scheme { get; private set; } = Scheme.Http;
     public string? Username { get; private set; }
     public IList<HostEndpoint> Hosts { get; private set; } = new List<HostEndpoint>();
     public IDictionary<string, string> Parameters { get; private set; } = new Dictionary<string, string>();
@@ -75,15 +74,11 @@ internal class ConnectionString
         {
             switch (match.Groups["scheme"].Value)
             {
-                case "couchbase":
-                    connectionString.Scheme = Scheme.Couchbase;
-                    break;
-                // ReSharper disable once StringLiteralTypo
-                case "couchbases":
-                    connectionString.Scheme = Scheme.Couchbases;
-                    break;
                 case "http":
                     connectionString.Scheme = Scheme.Http;
+                    break;
+                case "https":
+                    connectionString.Scheme = Scheme.Https;
                     break;
                 default:
                     throw new ArgumentException($"Unknown scheme {match.Groups["scheme"].Value}");
@@ -136,7 +131,7 @@ internal class ConnectionString
             else
             {
                 yield return new HostEndpointWithPort(endpoint.Host,
-                    overrideTls.GetValueOrDefault(Scheme == Scheme.Couchbases) ? SecureKeyValuePort : KeyValuePort);
+                    overrideTls.GetValueOrDefault(Scheme == Scheme.Https) ? HttpsPort: HttpPort);
             }
         }
     }
@@ -161,7 +156,7 @@ internal class ConnectionString
         {
             return true;
         }
-        if (Scheme != Scheme.Couchbase && Scheme != Scheme.Couchbases)
+        if (Scheme != Scheme.Http && Scheme != Scheme.Https)
         {
             return false;
         }
@@ -264,9 +259,9 @@ internal class ConnectionString
 
         builder.Append(Scheme switch
         {
-            Scheme.Couchbase => "couchbase://",
-            Scheme.Couchbases => "couchbases://",
-            _ => "http://"
+            Scheme.Http => "http://",
+            Scheme.Https => "https://",
+            _ => throw new ArgumentException($"Unknown scheme {Scheme}")
         });
 
         if (!string.IsNullOrEmpty(Username))
@@ -317,20 +312,14 @@ internal class ConnectionString
 internal enum Scheme
 {
     /// <summary>
-    /// Standard on-premise couchbase clusters.
+    /// Non-TLS couchbase clusters.
     /// </summary>
     Http,
-
+    
     /// <summary>
-    /// For on-premise clusters.
+    /// For TLS/SSL clusters.
     /// </summary>
-    Couchbase,
-
-    /// <summary>
-    /// For TLS/SSL on-premise and Capella clusters.
-    /// </summary>
-    // ReSharper disable once IdentifierTypo
-    Couchbases,
+    Https
 }
 
 /* ************************************************************
