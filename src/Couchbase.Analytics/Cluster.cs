@@ -1,5 +1,8 @@
 ﻿using System.Collections.Concurrent;
+using System.Net;
 using Couchbase.Analytics2.Internal;
+using Couchbase.Analytics2.Internal.HTTP;
+using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2;
 
@@ -8,19 +11,30 @@ public class Cluster : IDisposable
     private readonly string _httpEndpoint;
     private readonly Credential _credential;
     private readonly ClusterOptions _clusterOptions;
-    private readonly List<IAnalyticsService> _analyticsServices;
     private readonly ConcurrentDictionary<string, Database> _databases = new();
     private readonly Lazy<LinkManager> _linkManager;
     private readonly Lazy<DatabaseManager> _databaseManager;
+    private readonly Lazy<IAnalyticsService> _analyticsService;
+    private readonly ConnectionString _connectionString;
 
-    private Cluster(string httpEndpoint, Credential credential, ClusterOptions? clusterOptions = null)
+    private Cluster(string httpEndpoint, Credential credential,
+        ClusterOptions? clusterOptions = null)
     {
         _httpEndpoint = httpEndpoint ?? throw new ArgumentNullException(nameof(httpEndpoint));
         _credential = credential ?? throw new ArgumentNullException(nameof(credential));
-        _clusterOptions = clusterOptions;
+        _clusterOptions = clusterOptions ?? new ClusterOptions();
+        _connectionString = ConnectionString.Parse(httpEndpoint);
         _linkManager = new Lazy<LinkManager>(() => new LinkManager(this));
         _databaseManager = new Lazy<DatabaseManager>(() => new DatabaseManager(this));
-        //_analyticsServices = new List<IAnalyticsService>() => new AnalyticsService(_clusterOptions);
+
+        _analyticsService = new Lazy<IAnalyticsService>(() =>
+        {
+            var hostEndpointWithPort = _connectionString.GetBootstrapEndpoints(false).First();
+            var address = Dns.GetHostAddresses(hostEndpointWithPort.Host).First();
+            return new AnalyticsService(_clusterOptions,
+                new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, null, null),
+                new IPEndPoint(address, hostEndpointWithPort.Port), null);
+        });
     }
 
     public static Cluster Create(string httpEndpoint, Credential credential, ClusterOptions clusterOptions = null)
@@ -28,16 +42,17 @@ public class Cluster : IDisposable
         return new Cluster(httpEndpoint, credential, clusterOptions);
     }
 
-    public Task<QueryResult<T>> ExecuteQueryAsync<T>(string statement, Action<QueryOptions> options)
+    public Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, Action<QueryOptions> options)
     {
         var queryOptions = new QueryOptions();
         options?.Invoke(queryOptions);
         return ExecuteQueryAsync<T>(statement, queryOptions);
     }
 
-    public Task<QueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions? options = null)
+    public async Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions? options = null)
     {
-        throw new NotImplementedException();
+       var service = _analyticsService.Value;
+       return await service.SendAsync<T>(statement, options ?? new QueryOptions());
     }
 
     public Database Database(string databaseName)

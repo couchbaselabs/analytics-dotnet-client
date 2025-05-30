@@ -22,7 +22,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
         _credential = credential;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _redactor = redactor;
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;// ?? throw new ArgumentNullException(nameof(logger));
         _sharedHandler = CreateClientHandler();
     }
 
