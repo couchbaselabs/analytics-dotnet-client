@@ -16,9 +16,19 @@ public record SecurityOptions
     private X509Certificate2Collection _certificates;
     private bool _ignoreRemoteCertificateMismatch = false;
     private RemoteCertificateValidationCallback _remoteCertificateValidationCallback;
+    private ClusterOptions _clusterOptions;
 
     private SslProtocols _sslProtocols = System.Security.Authentication.SslProtocols.Tls13 | System.Security.Authentication.SslProtocols.Tls12;
 
+    internal SecurityOptions()
+    {
+        _clusterOptions = new ClusterOptions();
+    }
+    
+    internal SecurityOptions(ClusterOptions clusterOptions)
+    {
+        _clusterOptions = clusterOptions;
+    }
     internal bool TrustOnlyCapellaValue => _trustOnlyCapella;
 
     internal bool TrustOnlyPemFileValue => _trustOnlyPemFile;
@@ -44,11 +54,11 @@ public record SecurityOptions
     /// to trust only the Capella CA certificate(s) bundled with
     /// the SDK.
     /// </summary>
-    public SecurityOptions TrustOnlyCapella()
+    public ClusterOptions TrustOnlyCapella()
     {
         ClearAll();
         _trustOnlyCapella = true;
-        return this;
+        return _clusterOptions;
     }
 
     /// <summary>
@@ -56,12 +66,12 @@ public record SecurityOptions
     /// trust only the PEM-encoded certificate(s) in the file at
     /// the given FS path.
     /// </summary>
-    public SecurityOptions TrustOnlyPemFile(string pathToPemFile)
+    public ClusterOptions TrustOnlyPemFile(string pathToPemFile)
     {
         ClearAll();
         _trustOnlyPemFile = true;
         _pathToPemFile = pathToPemFile;
-        return this;
+        return _clusterOptions;
     }
 
     /// <summary>
@@ -69,24 +79,24 @@ public record SecurityOptions
     /// trust only the PEM-encoded certificate(s) in the given
     /// string.
     /// </summary>
-    public SecurityOptions TrustOnlyPemString(string certificate)
+    public ClusterOptions TrustOnlyPemString(string certificate)
     {
         ClearAll();
         _trustOnlyPemString = true;
         _certificate = certificate;
-        return this;
+        return _clusterOptions;
     }
 
     /// <summary>
     /// Clears any existing trust settings, and tells the SDK to
     /// trust only the specified certificates.
     /// </summary>
-    public SecurityOptions TrustOnlyCertificates(X509Certificate2Collection certificates)
+    public ClusterOptions TrustOnlyCertificates(X509Certificate2Collection certificates)
     {
         ClearAll();
         _trustOnlyCertificates = true;
         _certificates = certificates;
-        return this;
+        return _clusterOptions;
     }
 
     /// <summary>
@@ -98,10 +108,10 @@ public record SecurityOptions
     /// settings.
     /// <remarks>The default is false. If disabled an error will be logged.</remarks>
     /// </summary>
-    public SecurityOptions DisableCertificateVerification(bool disable = false)
+    public ClusterOptions DisableCertificateVerification(bool disable = false)
     {
         _disableServerCertificateValidation = disable;
-        return this;
+        return _clusterOptions;
     }
 
     /// <summary>
@@ -111,23 +121,23 @@ public record SecurityOptions
     /// environment.
     /// <remarks>An empty list.</remarks>
     /// </summary>
-    public SecurityOptions SslProtocols(SslProtocols sslProtocols)
+    public ClusterOptions SslProtocols(SslProtocols sslProtocols)
     {
         _sslProtocols = sslProtocols;
-        return this;
+        return _clusterOptions;
     }
 
-    internal SecurityOptions IgnoreRemoteCertificateMismatch(
+    internal ClusterOptions IgnoreRemoteCertificateMismatch(
         bool ignoreRemoteCertificateMismatch)
     {
         _ignoreRemoteCertificateMismatch = ignoreRemoteCertificateMismatch;
-        return this;
+        return _clusterOptions;
     }
 
-    internal SecurityOptions RemoteCertificateValidationCallback(RemoteCertificateValidationCallback remoteCertificateValidationCallback)
+    internal ClusterOptions RemoteCertificateValidationCallback(RemoteCertificateValidationCallback remoteCertificateValidationCallback)
     {
         _remoteCertificateValidationCallback = remoteCertificateValidationCallback;
-        return this;
+        return _clusterOptions;
     }
 
     /// <summary>

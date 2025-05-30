@@ -14,8 +14,8 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var securityOptions = new SecurityOptions()
-            .DisableCertificateVerification(true);
+        var securityOptions = new SecurityOptions();
+        securityOptions.DisableCertificateVerification(true);
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
@@ -55,7 +55,8 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Credential("Administrator", "password");
-        var securityOptions = new SecurityOptions().SslProtocols(SslProtocols.Tls12);
+        var securityOptions = new SecurityOptions();
+        securityOptions.SslProtocols(SslProtocols.Tls12);
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
         var factory = new CouchbaseHttpClientFactory(credential, securityOptions, redactor, logger);
@@ -73,9 +74,9 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var securityOptions = new SecurityOptions()
-            .SslProtocols(SslProtocols.Tls12)
-            .DisableCertificateVerification(true);
+        var securityOptions = new SecurityOptions();
+        securityOptions.SslProtocols(SslProtocols.Tls12);
+        securityOptions.DisableCertificateVerification(true);
 
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;

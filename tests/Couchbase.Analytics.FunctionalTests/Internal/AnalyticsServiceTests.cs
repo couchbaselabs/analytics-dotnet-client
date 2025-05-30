@@ -5,6 +5,7 @@ using Couchbase.Analytics2.Internal;
 using Xunit;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
+using DnsClient;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -34,6 +35,13 @@ public class AnalyticsServiceTests
 
         var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());
         Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task Test_DNSLookupAsync()
+    {
+        var lookupClient = new LookupClient();
+        var results = await lookupClient.QueryAsync("5e07bed7-20250516.cb-sdk.bemdas.com", QueryType.A);
     }
 
     private const string cert =
