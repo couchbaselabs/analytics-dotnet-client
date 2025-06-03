@@ -18,6 +18,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytices.Performer", "fit\Couchbase.Analytices.Performer\Couchbase.Analytices.Performer.csproj", "{04159D2F-74A8-4200-818F-B279DBCBBC5A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fit", "fit", "{A58FEC0E-429F-460F-AF40-52DC21C93576}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.Performer.UnitTests", "fit\Couchbase.Analytics.Performer.UnitTests\Couchbase.Analytics.Performer.UnitTests.csproj", "{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +36,8 @@ Global
 		{700EC51C-9F32-4C1A-826E-9252522E953F} = {50354FD0-1B81-4AAE-990A-80549EA6C4CF}
 		{3E0EE6AE-0579-4AFE-B4A1-14C6C72DF5F5} = {98962587-231C-4D1F-AC3D-4C21302C331B}
 		{890378AD-7F74-4C86-923B-24DB7539574F} = {98962587-231C-4D1F-AC3D-4C21302C331B}
+		{04159D2F-74A8-4200-818F-B279DBCBBC5A} = {A58FEC0E-429F-460F-AF40-52DC21C93576}
+		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B} = {A58FEC0E-429F-460F-AF40-52DC21C93576}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{700EC51C-9F32-4C1A-826E-9252522E953F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -44,5 +52,13 @@ Global
 		{890378AD-7F74-4C86-923B-24DB7539574F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{890378AD-7F74-4C86-923B-24DB7539574F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{890378AD-7F74-4C86-923B-24DB7539574F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04159D2F-74A8-4200-818F-B279DBCBBC5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04159D2F-74A8-4200-818F-B279DBCBBC5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04159D2F-74A8-4200-818F-B279DBCBBC5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04159D2F-74A8-4200-818F-B279DBCBBC5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
