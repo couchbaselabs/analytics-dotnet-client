@@ -37,6 +37,13 @@ public class Cluster : IDisposable
         });
     }
 
+    public static Cluster Create(string httpEndpoint, Credential credential, Action<ClusterOptions> clusterOptions)
+    {
+        var options = new ClusterOptions();
+        clusterOptions?.Invoke(options);
+        return new Cluster(httpEndpoint, credential, options);
+    }
+
     public static Cluster Create(string httpEndpoint, Credential credential, ClusterOptions clusterOptions = null)
     {
         return new Cluster(httpEndpoint, credential, clusterOptions);
