@@ -1,60 +1,61 @@
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using Couchbase.Analytics2.Internal.Utils;
 
 namespace Couchbase.Analytics2;
 
 public record SecurityOptions
 {
-    private bool _disableServerCertificateValidation;
-    private bool _trustOnlyPemFile;
-    private bool _trustOnlyCapella; // From RFC: "By default, the SDK MUST trust the Capella CA certificate(s), and should not trust any other certificates."
-    private bool _trustOnlyPemString;
-    private bool _trustOnlyCertificates;
-    private string? _pathToPemFile;
-    private string? _certificate;
-    private X509Certificate2Collection _certificates = new();
-    private ClusterOptions _clusterOptions;
+    /// <summary>
+    /// The certificate trust mode that determines which certificates to trust.
+    /// </summary>
+    internal CertificateTrustMode TrustMode { get; init; } = CertificateTrustMode.Default;
 
-    private SslProtocols _sslProtocols = System.Security.Authentication.SslProtocols.Tls13 | System.Security.Authentication.SslProtocols.Tls12;
+    /// <summary>
+    /// Path to the PEM file (used when TrustMode is PemFile).
+    /// </summary>
+    internal string? PemFilePath { get; init; }
 
-    internal SecurityOptions()
-    {
-        _clusterOptions = new ClusterOptions();
-    }
+    /// <summary>
+    /// PEM-encoded certificate string (used when TrustMode is PemString).
+    /// </summary>
+    internal string? PemString { get; init; }
 
-    internal SecurityOptions(ClusterOptions clusterOptions)
-    {
-        _clusterOptions = clusterOptions;
-    }
-    internal bool TrustOnlyCapellaValue => _trustOnlyCapella;
+    /// <summary>
+    /// Certificate collection (used when TrustMode is Certificates).
+    /// </summary>
+    internal X509Certificate2Collection? Certificates { get; init; }
 
-    internal bool TrustOnlyPemFileValue => _trustOnlyPemFile;
+    /// <summary>
+    /// If true, the SDK trusts ANY certificate regardless of validity.
+    /// </summary>
+    /// <remarks>The default is false. Use with caution in production environments.</remarks>
+    internal bool DisableServerCertificateValidation { get; init; }
 
-    internal bool TrustOnlyPemStringValue => _trustOnlyPemString;
+    /// <summary>
+    /// SSL protocols the SDK is allowed to use when negotiating TLS settings.
+    /// </summary>
+    internal SslProtocols SslProtocols { get; init; } = SslProtocols.Tls13 | SslProtocols.Tls12;
 
-    internal bool TrustOnlyCertificatesValue => _trustOnlyCertificates;
-
-    internal string PathToPemFileValue => _pathToPemFile;
-
-    internal string CertificateValue => _certificate;
-
-    internal X509Certificate2Collection CertificatesValue => _certificates;
-
-    internal SslProtocols SslProtocolsValue => _sslProtocols;
-
-    internal bool DisableServerCertificateValidation => _disableServerCertificateValidation;
+    internal string? PathToPemFileValue => PemFilePath;
+    internal string? CertificateValue => PemString;
+    internal X509Certificate2Collection? CertificatesValue => Certificates;
 
     /// <summary>
     /// Clears any existing trust settings, and tells the SDK
     /// to trust only the Capella CA certificate(s) bundled with
     /// the SDK.
     /// </summary>
-    public ClusterOptions TrustOnlyCapella()
+    public SecurityOptions WithTrustOnlyCapella()
     {
-        ClearAll();
-        _trustOnlyCapella = true;
-        return _clusterOptions;
+        return this with
+            {
+                TrustMode = CertificateTrustMode.CapellaOnly,
+                PemFilePath = null,
+                PemString = null,
+                Certificates = null
+            };
     }
 
     /// <summary>
@@ -62,12 +63,15 @@ public record SecurityOptions
     /// trust only the PEM-encoded certificate(s) in the file at
     /// the given FS path.
     /// </summary>
-    public ClusterOptions TrustOnlyPemFile(string pathToPemFile)
+    public SecurityOptions WithTrustOnlyPemFile(string pathToPemFile)
     {
-        ClearAll();
-        _trustOnlyPemFile = true;
-        _pathToPemFile = pathToPemFile;
-        return _clusterOptions;
+        return this with
+            {
+                TrustMode = CertificateTrustMode.PemFilePath,
+                PemFilePath = pathToPemFile,
+                PemString = null,
+                Certificates = null
+            };
     }
 
     /// <summary>
@@ -75,24 +79,30 @@ public record SecurityOptions
     /// trust only the PEM-encoded certificate(s) in the given
     /// string.
     /// </summary>
-    public ClusterOptions TrustOnlyPemString(string certificate)
+    public SecurityOptions WithTrustOnlyPemString(string certificate)
     {
-        ClearAll();
-        _trustOnlyPemString = true;
-        _certificate = certificate;
-        return _clusterOptions;
+        return this with
+        {
+            TrustMode = CertificateTrustMode.PemString,
+            PemString = certificate,
+            PemFilePath = null,
+            Certificates = null
+        };
     }
 
     /// <summary>
     /// Clears any existing trust settings, and tells the SDK to
     /// trust only the specified certificates.
     /// </summary>
-    public ClusterOptions TrustOnlyCertificates(X509Certificate2Collection certificates)
+    public SecurityOptions WithTrustOnlyCertificates(X509Certificate2Collection certificates)
     {
-        ClearAll();
-        _trustOnlyCertificates = true;
-        _certificates = certificates;
-        return _clusterOptions;
+        return this with
+        {
+            TrustMode = CertificateTrustMode.CertificatesOnly,
+            Certificates = certificates,
+            PemFilePath = null,
+            PemString = null
+        };
     }
 
     /// <summary>
@@ -104,33 +114,16 @@ public record SecurityOptions
     /// settings.
     /// <remarks>The default is false. If disabled an error will be logged.</remarks>
     /// </summary>
-    public ClusterOptions DisableCertificateVerification(bool disable = false)
+    public SecurityOptions WithDisableCertificateVerification(bool disable = false)
     {
-        _disableServerCertificateValidation = disable;
-        return _clusterOptions;
+        return this with { DisableServerCertificateValidation = disable };
     }
 
     /// <summary>
-    /// Names of TLS cipher suites the SDK is allowed to use
-    /// when negotiating TLS settings, or an empty list to
-    /// use any cipher suite supported by the runtime
-    /// environment.
-    /// <remarks>An empty list.</remarks>
+    /// Sets the SSL protocols the SDK is allowed to use when negotiating TLS settings.
     /// </summary>
-    public ClusterOptions SslProtocols(SslProtocols sslProtocols)
+    public SecurityOptions WithSslProtocols(SslProtocols protocols)
     {
-        _sslProtocols = sslProtocols;
-        return _clusterOptions;
-    }
-
-    private void ClearAll()
-    {
-        _trustOnlyCapella = false;
-        _trustOnlyPemFile = false;
-        _trustOnlyPemString = false;
-        _trustOnlyCertificates = false;
-        _pathToPemFile = null;
-        _certificate = null;
-        _certificates = null;
+        return this with { SslProtocols = protocols };
     }
 }

@@ -18,7 +18,7 @@ public class Analytics2Fixture
         FixtureSettings = GetFixtureSettings();
         ClusterOptions = new ClusterOptions()
         {
-            ConnectionString = ConnectionString.Parse(FixtureSettings.ConnectionString!),
+            ConnectionString = FixtureSettings.ConnectionString,
             SecurityOptions = new SecurityOptions()
         };
     }

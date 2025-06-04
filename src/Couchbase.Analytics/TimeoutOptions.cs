@@ -2,18 +2,18 @@ namespace Couchbase.Analytics2;
 
 public record TimeoutOptions
 {
-    private TimeSpan _connectTimeout = TimeSpan.FromSeconds(10);
-    private TimeSpan _dispatchTimeout = TimeSpan.FromSeconds(30);
-    private TimeSpan _queryTimeout = TimeSpan.FromMinutes(10);
+    internal TimeSpan ConnectTimeout = TimeSpan.FromSeconds(10);
+    internal TimeSpan DispatchTimeout = TimeSpan.FromSeconds(30);
+    internal TimeSpan QueryTimeout = TimeSpan.FromMinutes(10);
 
     /// <summary>
     /// Socket connection timeout, or more broadly the timeout
     /// for establishing an individual authenticated connection.
     /// <remarks>The default is 10s.</remarks>
     /// </summary>
-    public TimeoutOptions ConnectTimeout(TimeSpan connectTimeout )
+    public TimeoutOptions WithConnectTimeout(TimeSpan connectTimeout )
     {
-        _connectTimeout = connectTimeout;
+        ConnectTimeout = connectTimeout;
         return this;
     }
 
@@ -24,9 +24,9 @@ public record TimeoutOptions
     /// timeout, since recovery may involve multiple connection attempts.
     /// <remarks>The default is 30s.</remarks>
     /// </summary>
-    public TimeoutOptions DispatchTimeout(TimeSpan dispatchTimeout )
+    public TimeoutOptions WithDispatchTimeout(TimeSpan dispatchTimeout )
     {
-        _dispatchTimeout = dispatchTimeout;
+        DispatchTimeout = dispatchTimeout;
         return this;
     }
 
@@ -34,11 +34,9 @@ public record TimeoutOptions
     /// Columnar query timeout.
     /// <remarks>The default is 10m.</remarks>
     /// </summary>
-    public TimeoutOptions QueryTimeout(TimeSpan queryTimeout )
+    public TimeoutOptions WithQueryTimeout(TimeSpan queryTimeout )
     {
-        _queryTimeout = queryTimeout;
+        QueryTimeout = queryTimeout;
         return this;
     }
 }
-
-

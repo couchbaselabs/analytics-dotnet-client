@@ -1,3 +1,4 @@
+using System.Net;
 using Xunit;
 using Xunit.Abstractions;
 
