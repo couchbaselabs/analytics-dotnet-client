@@ -2,13 +2,14 @@
 using System.Net;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.Analytics2.Internal.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Couchbase.Analytics2;
 
 public class Cluster : IDisposable
 {
-    private readonly string _httpEndpoint;
     private readonly Credential _credential;
     private readonly ClusterOptions _clusterOptions;
     private readonly ConcurrentDictionary<string, Database> _databases = new();
@@ -20,7 +21,6 @@ public class Cluster : IDisposable
     private Cluster(string httpEndpoint, Credential credential,
         ClusterOptions? clusterOptions = null)
     {
-        _httpEndpoint = httpEndpoint ?? throw new ArgumentNullException(nameof(httpEndpoint));
         _credential = credential ?? throw new ArgumentNullException(nameof(credential));
         _clusterOptions = clusterOptions ?? new ClusterOptions();
         _connectionString = ConnectionString.Parse(httpEndpoint);
@@ -29,12 +29,14 @@ public class Cluster : IDisposable
 
         _analyticsService = new Lazy<IAnalyticsService>(() =>
         {
-            var hostEndpointWithPort = _connectionString.GetBootstrapEndpoints(false).First();
-            var address = Dns.GetHostAddresses(hostEndpointWithPort.Host).First();
-            return new AnalyticsService(_clusterOptions,
-                new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, null, null),
-                new IPEndPoint(address, hostEndpointWithPort.Port), null);
+            var hostEndpointWithPort = _connectionString.GetBootstrapEndpoints().First();
+            var httpClientFactory = new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, new Redactor(new TypedRedactor(RedactionLevel.None)), new NullLogger<CouchbaseHttpClientFactory>());
+            var analyticsService = new AnalyticsService(_clusterOptions, httpClientFactory, hostEndpointWithPort, new NullLogger<AnalyticsService>());
+
+            return analyticsService;
         });
+
+        Console.WriteLine($"[DEBUG] Cluster creation complete");
     }
 
     public static Cluster Create(string httpEndpoint, Credential credential, Action<ClusterOptions> clusterOptions)

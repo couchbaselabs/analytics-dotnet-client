@@ -8,14 +8,12 @@ public record SecurityOptions
 {
     private bool _disableServerCertificateValidation;
     private bool _trustOnlyPemFile;
-    private bool _trustOnlyCapella;
+    private bool _trustOnlyCapella; // From RFC: "By default, the SDK MUST trust the Capella CA certificate(s), and should not trust any other certificates."
     private bool _trustOnlyPemString;
     private bool _trustOnlyCertificates;
-    private string _pathToPemFile;
-    private string _certificate;
-    private X509Certificate2Collection _certificates;
-    private bool _ignoreRemoteCertificateMismatch = false;
-    private RemoteCertificateValidationCallback _remoteCertificateValidationCallback;
+    private string? _pathToPemFile;
+    private string? _certificate;
+    private X509Certificate2Collection _certificates = new();
     private ClusterOptions _clusterOptions;
 
     private SslProtocols _sslProtocols = System.Security.Authentication.SslProtocols.Tls13 | System.Security.Authentication.SslProtocols.Tls12;
@@ -24,7 +22,7 @@ public record SecurityOptions
     {
         _clusterOptions = new ClusterOptions();
     }
-    
+
     internal SecurityOptions(ClusterOptions clusterOptions)
     {
         _clusterOptions = clusterOptions;
@@ -46,8 +44,6 @@ public record SecurityOptions
     internal SslProtocols SslProtocolsValue => _sslProtocols;
 
     internal bool DisableServerCertificateValidation => _disableServerCertificateValidation;
-
-    internal RemoteCertificateValidationCallback RemoteCertificateValidationCallbackValue => _remoteCertificateValidationCallback;
 
     /// <summary>
     /// Clears any existing trust settings, and tells the SDK
@@ -125,36 +121,6 @@ public record SecurityOptions
     {
         _sslProtocols = sslProtocols;
         return _clusterOptions;
-    }
-
-    internal ClusterOptions IgnoreRemoteCertificateMismatch(
-        bool ignoreRemoteCertificateMismatch)
-    {
-        _ignoreRemoteCertificateMismatch = ignoreRemoteCertificateMismatch;
-        return _clusterOptions;
-    }
-
-    internal ClusterOptions RemoteCertificateValidationCallback(RemoteCertificateValidationCallback remoteCertificateValidationCallback)
-    {
-        _remoteCertificateValidationCallback = remoteCertificateValidationCallback;
-        return _clusterOptions;
-    }
-
-    /// <summary>
-    /// For development only
-    /// </summary>
-    internal RemoteCertificateValidationCallback DangerousRemoteCertificateValidationCallback { get; } =
-        (o, certificate, chain, errors) =>
-            SkipServerCertificateValidation(o, certificate, chain, errors);
-
-    private static bool SkipServerCertificateValidation(
-        object sender,
-        X509Certificate? certificate,
-        X509Chain? chain,
-        SslPolicyErrors sslPolicyErrors)
-    {
-        //temporarily skip cert validation
-        return true;
     }
 
     private void ClearAll()

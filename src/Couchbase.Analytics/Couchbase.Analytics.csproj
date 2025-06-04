@@ -16,8 +16,4 @@
       <Compile Remove="Internal\CouchbaseHttpClientFactory.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Internal\Authentication\" />
-    </ItemGroup>
-
 </Project>

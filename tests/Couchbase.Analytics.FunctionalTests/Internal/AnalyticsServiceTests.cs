@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Xml.Xsl;
+using Couchbase.Analytics2.FunctionalTests.Fixtures;
 using Couchbase.Analytics2.Internal;
 using Xunit;
 using Couchbase.Analytics2.Internal.HTTP;
@@ -8,11 +9,22 @@ using Couchbase.Analytics2.Internal.Logging;
 using DnsClient;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit.Abstractions;
 
 namespace Couchbase.Analytics2.FunctionalTests.Internal;
 
+[Collection(TestCollection.Name)]
 public class AnalyticsServiceTests
 {
+    private readonly Analytics2Fixture _analytics2Fixture;
+    private readonly ITestOutputHelper _outputHelper;
+
+    public AnalyticsServiceTests(Analytics2Fixture analytics2Fixture, ITestOutputHelper outputHelper)
+    {
+        _analytics2Fixture = analytics2Fixture;
+        _outputHelper = outputHelper;
+    }
+
     [Fact]
     public async Task TestGetAnalyticsAsync()
     {
@@ -29,9 +41,8 @@ public class AnalyticsServiceTests
             mockRedactor.Object,
             mockHttpClientFactory.Object);
 
-        var addresses = System.Net.Dns.GetHostAddresses("5e07bed7-20250516.cb-sdk.bemdas.com");
-        var ipEndpoint = new IPEndPoint(addresses.First(), 8095);
-        var service = new AnalyticsService(options, httpClientFactory, ipEndpoint, mockAnalyticsLogger.Object);
+        var endpoint = new HostEndpointWithPort("5e07bed7-20250516.cb-sdk.bemdas.com", 8095);
+        var service = new AnalyticsService(options, httpClientFactory, endpoint, mockAnalyticsLogger.Object);
 
         var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());
         Assert.NotNull(response);
@@ -42,6 +53,7 @@ public class AnalyticsServiceTests
     {
         var lookupClient = new LookupClient();
         var results = await lookupClient.QueryAsync("5e07bed7-20250516.cb-sdk.bemdas.com", QueryType.A);
+        Assert.NotNull(results);
     }
 
     private const string cert =

@@ -13,19 +13,19 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     private const string ExecuteQueryPath = "/api/v1/request";
     private const string AnalyticsPriorityHeaderName = "Analytics-Priority";
 
-    public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, IPEndPoint endPoint,
+    public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, HostEndpointWithPort endPoint,
         ILogger<AnalyticsService> logger) : base(httpClientFactory)
     {
         _options = options;
         _logger = logger;
         HttpClientFactory = httpClientFactory;
         EndPoint = endPoint;
-        Uri = new Uri($"http://{endPoint.Address}:{endPoint.Port}{ExecuteQueryPath}");
+        Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
     }
 
     public Uri Uri { get; private set; }
 
-    public IPEndPoint EndPoint { get; private set; }
+    public HostEndpointWithPort EndPoint { get; private set; }
 
     public async Task<IQueryResult<T>> SendAsync<T>(string statement, QueryOptions options)
     {
