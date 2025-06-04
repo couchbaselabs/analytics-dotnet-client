@@ -1,0 +1,7 @@
+{
+  "TestSettings": {
+    "ConnectionString": "couchbases://cb.2xg3vwszqgqcrsix.cloud.couchbase.com:18095",
+    "Username": "Administrator",
+    "Password": "Password123!"
+  }
+}

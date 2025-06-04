@@ -1,5 +1,3 @@
-// filepath: /Users/jeffry.morris/Documents/source/couchbase-net-client/src/Couchbase.Analytics/Internal/AnalyticsServiceTest.cs
-
 using System.Net;
 using System.Text;
 using Couchbase.Analytics2.Internal;
@@ -17,14 +15,14 @@ namespace Couchbase.Analytics2.UnitTests.Internal
         private readonly Mock<ILogger<AnalyticsService>> _loggerMock;
         private readonly Mock<ICouchbaseHttpClientFactory> _httpClientFactoryMock;
         private readonly Mock<HttpClient> _httpClientMock;
-        private readonly IPEndPoint _endPoint;
+        private readonly Uri _endPoint;
 
         public AnalyticsServiceTest()
         {
             _loggerMock = new Mock<ILogger<AnalyticsService>>();
             _httpClientFactoryMock = new Mock<ICouchbaseHttpClientFactory>();
             _httpClientMock = new Mock<HttpClient>();
-            _endPoint = new IPEndPoint(IPAddress.Loopback, 8095);
+            _endPoint = new Uri($"https://{IPAddress.Loopback}:8095");
 
             _httpClientFactoryMock
                 .Setup(factory => factory.Create())
@@ -42,8 +40,10 @@ namespace Couchbase.Analytics2.UnitTests.Internal
 
             // Assert
             Assert.NotNull(service.Uri);
-            Assert.Equal($"https://{_endPoint.Address}:{_endPoint.Port}/api/v1/request", service.Uri.ToString());
-            Assert.Equal(_endPoint, service.EndPoint);
+            Assert.Equal($"https://{_endPoint.Host}:{_endPoint.Port}/api/v1/request", service.Uri.ToString());
+            Assert.Equal(_endPoint.Scheme, service.Uri.Scheme);
+            Assert.Equal(_endPoint.Host, service.Uri.Host);
+            Assert.Equal(_endPoint.Port, service.Uri.Port);
         }
 
         [Fact]

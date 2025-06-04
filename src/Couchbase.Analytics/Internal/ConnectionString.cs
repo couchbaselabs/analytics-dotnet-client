@@ -60,8 +60,8 @@ internal class ConnectionString
         {
             connectionString.Scheme = match.Groups["scheme"].Value switch
             {
-                "http" => Scheme.Http,
-                "https" => Scheme.Https,
+                "http" or "couchbase" => Scheme.Http,
+                "https" or "couchbases" => Scheme.Https,
                 _ => throw new ArgumentException($"Unknown scheme {match.Groups["scheme"].Value}")
             };
         }

@@ -3,6 +3,7 @@ using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
+using Couchbase.Analytics2.Internal.Certificates;
 
 namespace Couchbase.Columnar.Internal;
 
@@ -122,7 +123,7 @@ namespace Couchbase.Columnar.Internal;
                 // from the list which is eligible for use as a client certificate based on having a private key and
                 // the correct key usage flags.
                 handler.SslOptions.LocalCertificateSelectionCallback =
-                    (_, _, _, _, _) => GetClientCertificate(certs)!;
+                    (_, _, _, _, _) => CertificateValidation.GetClientCertificate(certs)!;
             }
 
             // We don't need to check for unsupported platforms here, because this code path only applies to recent
@@ -203,23 +204,6 @@ namespace Couchbase.Columnar.Internal;
 
             return OnCertificateValidation;
         }
-#else
-        private const string ClientAuthenticationOid = "1.3.6.1.5.5.7.3.2";
-
-        private static X509Certificate2? GetClientCertificate(X509Certificate2Collection candidateCerts) =>
-            candidateCerts.Cast<X509Certificate2>()
-                .FirstOrDefault(cert => cert.HasPrivateKey && IsValidClientCertificate(cert));
-
-        private static bool IsValidClientCertificate(X509Certificate2 cert) =>
-            !cert.Extensions.Cast<X509Extension>().Any(extension =>
-                (extension is X509EnhancedKeyUsageExtension eku && !IsValidForClientAuthentication(eku)) ||
-                (extension is X509KeyUsageExtension keyUsageExtenstion && !IsValidForDigitalSignatureUsage(keyUsageExtenstion)));
-
-        private static bool IsValidForClientAuthentication(X509EnhancedKeyUsageExtension enhancedKeyUsageExtension) =>
-            enhancedKeyUsageExtension.EnhancedKeyUsages.Cast<Oid>().Any(oid => oid.Value == ClientAuthenticationOid);
-
-        private static bool IsValidForDigitalSignatureUsage(X509KeyUsageExtension keyUsageExtenstion) =>
-            keyUsageExtenstion.KeyUsages.HasFlag(X509KeyUsageFlags.DigitalSignature);
 #endif
     }
 }

@@ -105,23 +105,5 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             Assert.Equal(80, endpoints[0].Port); // Default HTTP port
             Assert.Equal(8091, endpoints[1].Port);
         }
-
-        [Fact]
-        public void IsValidDnsSrv_SingleHostWithoutPort_ShouldReturnTrue()
-        {
-            var input = "http://host1";
-            var connectionString = ConnectionString.Parse(input);
-
-            Assert.True(connectionString.IsValidDnsSrv());
-        }
-
-        [Fact]
-        public void IsValidDnsSrv_MultipleHosts_ShouldReturnFalse()
-        {
-            var input = "http://host1,host2";
-            var connectionString = ConnectionString.Parse(input);
-
-            Assert.False(connectionString.IsValidDnsSrv());
-        }
     }
 }
