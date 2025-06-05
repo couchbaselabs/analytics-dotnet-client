@@ -121,7 +121,8 @@ internal class ConnectionString
         return new UriBuilder
         {
             Scheme = Scheme.ToString(),
-            Host = Hosts.First().Host
+            Host = Hosts.First().Host,
+            Port = Hosts.First().Port ?? (Scheme == Scheme.Https ? HttpsPort : HttpPort)
         }.Uri;
     }
 

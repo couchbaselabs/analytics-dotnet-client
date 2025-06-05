@@ -41,7 +41,7 @@ public class AnalyticsServiceTests
             mockRedactor.Object,
             mockHttpClientFactory.Object);
 
-        var endpoint = new HostEndpointWithPort("5e07bed7-20250516.cb-sdk.bemdas.com", 8095);
+        var endpoint = new Uri("5e07bed7-20250516.cb-sdk.bemdas.com:8095");
         var service = new AnalyticsService(options, httpClientFactory, endpoint, mockAnalyticsLogger.Object);
 
         var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());

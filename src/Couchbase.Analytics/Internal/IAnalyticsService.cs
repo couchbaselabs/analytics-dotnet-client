@@ -5,7 +5,7 @@ namespace Couchbase.Analytics2.Internal;
 
 internal interface IAnalyticsService
 {
-    HostEndpointWithPort EndPoint { get; }
+    Uri EndPoint { get; }
 
     Task<IQueryResult<T>> SendAsync<T>(string statement, QueryOptions options);
 }
