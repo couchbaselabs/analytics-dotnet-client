@@ -11,7 +11,10 @@ public class ClusterTests
             new Credential("Administrator", "password"),  
             new ClusterOptions().SecurityOptions.TrustOnlyPemString(cert));
         
-        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;");
+        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", options =>
+        {
+            options.AsStreaming = false;
+        });
         
         Assert.NotNull(response);
     }

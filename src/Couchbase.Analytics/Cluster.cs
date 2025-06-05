@@ -2,6 +2,7 @@
 using System.Net;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.Analytics2.Internal.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2;
@@ -33,7 +34,7 @@ public class Cluster : IDisposable
             var address = Dns.GetHostAddresses(hostEndpointWithPort.Host).First();
             return new AnalyticsService(_clusterOptions,
                 new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, null, null),
-                new IPEndPoint(address, hostEndpointWithPort.Port), null);
+                new IPEndPoint(address, hostEndpointWithPort.Port), null, new DefaultSerializer());
         });
     }
 

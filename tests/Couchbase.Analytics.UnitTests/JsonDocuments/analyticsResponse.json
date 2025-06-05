@@ -1,0 +1,42 @@
+{
+  "requestID": "94c7f89f-92b6-4aba-a90d-be715ca47309",
+  "signature": {
+    "*": "*"
+  },
+  "results": [
+    {
+      "airline": {
+        "id": 10,
+        "type": "airline",
+        "name": "40-Mile Air",
+        "iata": "Q5",
+        "icao": "MLA",
+        "callsign": "MILE-AIR",
+        "country": "United States"
+      }
+    },
+    {
+      "airline": {
+        "id": 10123,
+        "type": "airline",
+        "name": "Texas Wings",
+        "iata": "TQ",
+        "icao": "TXW",
+        "callsign": "TXW",
+        "country": "United States"
+      }
+    }
+  ],
+  "plans": {},
+  "status": "success",
+  "metrics": {
+    "elapsedTime": "14.927542ms",
+    "executionTime": "12.875792ms",
+    "compileTime": "4.178042ms",
+    "queueWaitTime": "0ns",
+    "resultCount": 2,
+    "resultSize": 300,
+    "processedObjects": 2,
+    "bufferCacheHitRatio": "100.00%"
+  }
+}

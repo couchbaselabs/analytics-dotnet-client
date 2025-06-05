@@ -1,3 +1,5 @@
+using Couchbase.Analytics2.Internal;
+
 namespace Couchbase.Analytics2;
 
 public sealed class QueryMetrics
@@ -21,6 +23,11 @@ public sealed class QueryMetrics
         ResultSize = resultSize;
         ProcessedObjects = processedObjects;
         BufferCacheHitRatio = bufferCacheHitRatio;
+    }
+
+    internal QueryMetrics(Metrics metrics)
+        : this(metrics.elapsedTime, metrics.executionTime, metrics.compileTime, metrics.queueWaitTime, metrics.resultCount, metrics.resultSize, metrics.processedObjects, metrics.bufferCacheHitRatio)
+    {
     }
 
     public string ElapsedTime { get; }

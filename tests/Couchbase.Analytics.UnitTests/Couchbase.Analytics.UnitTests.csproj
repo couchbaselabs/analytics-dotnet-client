@@ -20,5 +20,11 @@
       <PackageReference Include="xunit.extensibility.core" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="JsonDocuments\analyticsResponse.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 
 </Project>
