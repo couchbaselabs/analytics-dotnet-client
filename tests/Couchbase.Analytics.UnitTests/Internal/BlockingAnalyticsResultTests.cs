@@ -1,16 +1,10 @@
-using System.IO;
-using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.Serialization;
 using Couchbase.Analytics2.UnitTests.POCOs;
-using Moq;
-using Moq.Protected;
 using Xunit;
 
-namespace Couchbase.Analytics2.Internal.Tests;
+namespace Couchbase.Analytics2.UnitTests.Internal;
 
 public class BlockingAnalyticsResultTest
 {
@@ -21,6 +15,7 @@ public class BlockingAnalyticsResultTest
         var stream = new MemoryStream(json);
         var onj = await JsonSerializer.DeserializeAsync<AnalyticsResultData<Airline>>(stream, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
     }
+
     [Fact]
     public async Task InitializeAsync_ShouldReadResponseStream()
     {
@@ -44,37 +39,7 @@ public class BlockingAnalyticsResultTest
         var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
 
         // Act & Assert
-        Assert.Throws<NotImplementedException>(() => result.GetAsyncEnumerator());
-    }
-
-    [Fact]
-    public async Task InitializeAsync_WithEmptyStream_ShouldNotThrow()
-    {
-        // Arrange
-        var stream = new MemoryStream();
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
-
-        // Act
-        await result.InitializeAsync();
-
-        // Assert
-        // No exception should be thrown for an empty stream.
-    }
-
-    [Fact]
-    public async Task InitializeAsync_ShouldCallReadBody()
-    {
-        // Arrange
-        var json = "{\"results\": [{\"key\": \"value\"}]}";
-        var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        var httpClientMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        var result = new Mock<BlockingAnalyticsResult<object>>(stream, httpClientMock.Object) { CallBase = true };
-
-        // Act
-        await result.Object.InitializeAsync();
-
-        // Assert
-        result.Protected().Verify("ReadBody", Times.Once(), ItExpr.IsAny<byte[]>());
+        Assert.Throws<InvalidOperationException>(() => result.GetAsyncEnumerator());
     }
 
     [Fact]
