@@ -1,3 +1,4 @@
+using System.Security.Authentication;
 using Xunit;
 using Moq;
 
@@ -5,6 +6,24 @@ namespace Couchbase.Analytics2.UnitTests
 {
     public class ClusterTest
     {
+        [Fact]
+        public void Create_ValidParameters_Lambda_ReturnsClusterInstance()
+        {
+            // Arrange
+            var httpEndpoint = "http://localhost:8091";
+            var credential = Credential.Create("Administrator", "password");
+
+            // Act
+            var cluster = Cluster.Create(httpEndpoint, credential, options=>
+            {
+                options.SecurityOptions.SslProtocols(SslProtocols.Tls13);
+                options.SecurityOptions.IgnoreRemoteCertificateMismatch(true);
+            });
+
+            // Assert
+            Assert.NotNull(cluster);
+        }
+
         [Fact]
         public void Create_ValidParameters_ReturnsClusterInstance()
         {
