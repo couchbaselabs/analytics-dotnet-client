@@ -5,27 +5,29 @@ namespace Couchbase.Analytics2;
 
 public record QueryOptions
 {
-    public TimeSpan? Timeout { get; init; } = TimeSpan.FromSeconds(100);
+    public bool AsStreaming { get; set; } = true;
 
-    public string ClientContextId { get; init; } = Guid.NewGuid().ToString();
+    public TimeSpan? Timeout { get; set; } = TimeSpan.FromSeconds(100);
 
-    public Dictionary<string, object> NamedParameters { get; init; } = new();
+    public string ClientContextId { get; set; } = Guid.NewGuid().ToString();
 
-    public List<object> PositionalParameters { get; init; } = new();
+    public Dictionary<string, object> NamedParameters { get; set; } = new();
+
+    public List<object> PositionalParameters { get; set; } = new();
 
     public bool Priority { get; init; }
 
-    public QueryScanConsistency ScanConsistency { get; init; }
+    public QueryScanConsistency ScanConsistency { get; set; }
 
-    public TimeSpan? ScanWait { get; init; }
+    public TimeSpan? ScanWait { get; set; }
 
     //public JsonSerializer Serializer { get; init; }
 
-    public bool ReadOnly { get; init; }
+    public bool ReadOnly { get; set; }
 
-    public Dictionary<string, object> Raw {get;init;} = new();
+    public Dictionary<string, object> Raw {get; set;} = new();
 
-    public CancellationToken CancellationToken { get; init; }
+    public CancellationToken CancellationToken { get; set; }
 
     internal string GetFormValuesAsJson(string statement)
     {

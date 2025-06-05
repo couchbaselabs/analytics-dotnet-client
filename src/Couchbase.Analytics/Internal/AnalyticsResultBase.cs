@@ -2,7 +2,7 @@ namespace Couchbase.Analytics2.Internal;
 
 internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
 {
-    private readonly Stream _responseStream;
+    protected readonly Stream ResponseStream;
     private readonly IDisposable? _ownedForCleanup;
 
     /// <summary>
@@ -12,15 +12,14 @@ internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
     /// <param name="ownedForCleanup">Additional object to dispose when complete.</param>
     protected AnalyticsResultBase(Stream responseStream, IDisposable? ownedForCleanup = null)
     {
-        _responseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
+        ResponseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
         _ownedForCleanup = ownedForCleanup;
     }
 
-    public IAsyncEnumerator<T> GetAsyncEnumerator(
-        CancellationToken cancellationToken = new CancellationToken())
-    {
-        throw new NotImplementedException();
-    }
+    public abstract IAsyncEnumerator<T> GetAsyncEnumerator(
+        CancellationToken cancellationToken = new CancellationToken());
+
+    public abstract Task InitializeAsync(CancellationToken cancellationToken = default);
 
     public IAsyncEnumerable<T> Rows { get; protected set; }
     public QueryMetaData MetaData { get; protected set; }
@@ -28,7 +27,7 @@ internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
 
     public void Dispose()
     {
-        _responseStream?.Dispose();
+        ResponseStream?.Dispose();
         _ownedForCleanup?.Dispose();
     }
 }

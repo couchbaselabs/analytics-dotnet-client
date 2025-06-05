@@ -5,6 +5,7 @@ using Couchbase.Analytics2.Internal;
 using Xunit;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
+using Couchbase.Analytics2.Internal.Serialization;
 using DnsClient;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -31,7 +32,7 @@ public class AnalyticsServiceTests
 
         var addresses = System.Net.Dns.GetHostAddresses("5e07bed7-20250516.cb-sdk.bemdas.com");
         var ipEndpoint = new IPEndPoint(addresses.First(), 8095);
-        var service = new AnalyticsService(options, httpClientFactory, ipEndpoint, mockAnalyticsLogger.Object);
+        var service = new AnalyticsService(options, httpClientFactory, ipEndpoint, mockAnalyticsLogger.Object, new DefaultSerializer());
 
         var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());
         Assert.NotNull(response);

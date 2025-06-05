@@ -10,6 +10,7 @@
     <ItemGroup>
       <PackageReference Include="DnsClient" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+      <PackageReference Include="System.Linq.Async" />
     </ItemGroup>
 
     <ItemGroup>
