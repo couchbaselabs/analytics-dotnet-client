@@ -1,4 +1,3 @@
-// filepath: /Users/jeffry.morris/Documents/source/analytics-dotnet-client/src/Couchbase.Analytics/Internal/BlockingAnalyticsResultTest.cs
 using System.IO;
 using System.Net.WebSockets;
 using System.Text;
