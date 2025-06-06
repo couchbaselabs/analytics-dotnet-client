@@ -26,10 +26,6 @@ internal class ConnectionString
     public IList<HostEndpoint> Hosts { get; private set; } = new List<HostEndpoint>();
     public IDictionary<string, string> Parameters { get; private set; } = new Dictionary<string, string>();
 
-    public bool IsDnsSrv { get; private set; }
-
-    public Uri? DnsSrvUri { get; private set; }
-
     /// <summary>
     /// Gets or sets a value that determines whether host names are provided in random order during bootstrapping. (default: false)
     /// </summary>
@@ -48,19 +44,9 @@ internal class ConnectionString
         Parameters = source.Parameters;
     }
 
-    internal ConnectionString(ConnectionString source, IEnumerable<HostEndpoint> newHosts, bool isDnsSrv, Uri dnsSrvUri)
-        : this(source, newHosts)
-    {
-        IsDnsSrv = isDnsSrv;
-        DnsSrvUri = dnsSrvUri;
-    }
-
     internal static ConnectionString Parse(string input)
     {
-        if (input == null)
-        {
-            throw new ArgumentNullException(nameof(input));
-        }
+        ArgumentNullException.ThrowIfNull(input);
 
         var match = ConnectionStringRegex.Match(input);
         if (!match.Success)
@@ -72,17 +58,12 @@ internal class ConnectionString
 
         if (match.Groups["scheme"].Success)
         {
-            switch (match.Groups["scheme"].Value)
+            connectionString.Scheme = match.Groups["scheme"].Value switch
             {
-                case "http":
-                    connectionString.Scheme = Scheme.Http;
-                    break;
-                case "https":
-                    connectionString.Scheme = Scheme.Https;
-                    break;
-                default:
-                    throw new ArgumentException($"Unknown scheme {match.Groups["scheme"].Value}");
-            }
+                "http" => Scheme.Http,
+                "https" => Scheme.Https,
+                _ => throw new ArgumentException($"Unknown scheme {match.Groups["scheme"].Value}")
+            };
         }
 
         if (match.Groups["username"].Success)
@@ -114,7 +95,7 @@ internal class ConnectionString
         return connectionString;
     }
 
-    public IEnumerable<HostEndpointWithPort> GetBootstrapEndpoints(bool? overrideTls = null)
+    public IEnumerable<HostEndpointWithPort> GetBootstrapEndpoints()
     {
         var hosts = new List<HostEndpoint>(Hosts);
         if (RandomizeSeedHosts)
@@ -130,8 +111,7 @@ internal class ConnectionString
             }
             else
             {
-                yield return new HostEndpointWithPort(endpoint.Host,
-                    overrideTls.GetValueOrDefault(Scheme == Scheme.Https) ? HttpsPort: HttpPort);
+                yield return new HostEndpointWithPort(endpoint.Host, Scheme == Scheme.Https ? HttpsPort: HttpPort);
             }
         }
     }
@@ -141,32 +121,9 @@ internal class ConnectionString
         return new UriBuilder
         {
             Scheme = Scheme.ToString(),
-            Host = Hosts.First().Host
+            Host = Hosts.First().Host,
+            Port = Hosts.First().Port ?? (Scheme == Scheme.Https ? HttpsPort : HttpPort)
         }.Uri;
-    }
-
-    /// <summary>
-    /// Identifies if this connection string is valid for use with DNS SRV lookup.
-    /// </summary>
-    /// <returns>True if valid for DNS SRV lookup.</returns>
-    /// <seealso cref="GetDnsBootStrapUri"/>.
-    public bool IsValidDnsSrv()
-    {
-        if(IsDnsSrv)
-        {
-            return true;
-        }
-        if (Scheme != Scheme.Http && Scheme != Scheme.Https)
-        {
-            return false;
-        }
-
-        if (Hosts.Count > 1)
-        {
-            return false;
-        }
-
-        return Hosts.Single().Port == null;
     }
 
     public bool TryGetParameter(string key, out object parameter)
@@ -315,7 +272,7 @@ internal enum Scheme
     /// Non-TLS couchbase clusters.
     /// </summary>
     Http,
-    
+
     /// <summary>
     /// For TLS/SSL clusters.
     /// </summary>
