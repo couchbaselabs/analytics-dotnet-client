@@ -1,24 +1,30 @@
+using System.Net;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Couchbase.Analytics2.FunctionalTests;
 
 public class ClusterTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public ClusterTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
     [Fact]
     public async Task Test_QueryAsync()
     {
-        var cluster = Cluster.Create("5e07bed7-20250516.cb-sdk.bemdas.com:8095", 
-            new Credential("Administrator", "password"),  
+        var cluster = Cluster.Create("5e07bed7-20250516.cb-sdk.bemdas.com:8095",
+            new Credential("Administrator", "password"),
             new ClusterOptions().SecurityOptions.TrustOnlyPemString(cert));
-        
-        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", options =>
-        {
-            options.AsStreaming = false;
-        });
-        
+
+        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;");
+
         Assert.NotNull(response);
     }
-    
+
      private const string cert =
         "-----BEGIN CERTIFICATE-----\n"+
         "MIIFWzCCA0OgAwIBAgIBATANBgkqhkiG9w0BAQsFADA4MTYwNAYDVQQDEy1kaW5v\n" +

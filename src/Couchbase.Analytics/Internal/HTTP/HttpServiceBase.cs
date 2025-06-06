@@ -54,7 +54,8 @@ internal abstract class HttpServiceBase
         var httpClient = HttpClientFactory.Create();
 
         // set custom header for client / connection ID
-        httpClient.DefaultRequestHeaders.Add(ConnectionIdHeaderName, ClientIdentifier.FormatConnectionString(ConnectionId));
+        var connectionIdValue = ClientIdentifier.FormatConnectionString(ConnectionId);
+        httpClient.DefaultRequestHeaders.Add(ConnectionIdHeaderName, connectionIdValue);
 
         if (timeout != null)
         {
@@ -87,4 +88,3 @@ internal abstract class HttpServiceBase
  * ************************************************************/
 
 #endregion
-

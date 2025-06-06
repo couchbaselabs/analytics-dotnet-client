@@ -14,20 +14,17 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     private const string AnalyticsPriorityHeaderName = "Analytics-Priority";
     private readonly IJsonSerializer _jsonSerializer;
 
-    public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, IPEndPoint endPoint,
+    public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, Uri endPoint,
         ILogger<AnalyticsService> logger, IJsonSerializer jsonSerializer) : base(httpClientFactory)
     {
         _options = options;
         _logger = logger;
         _jsonSerializer = jsonSerializer;
         HttpClientFactory = httpClientFactory;
-        EndPoint = endPoint;
-        Uri = new Uri($"http://{endPoint.Address}:{endPoint.Port}{ExecuteQueryPath}");
+        Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
     }
 
     public Uri Uri { get; private set; }
-
-    public IPEndPoint EndPoint { get; private set; }
 
     public async Task<IQueryResult<T>> SendAsync<T>(string statement, QueryOptions options)
     {
@@ -54,7 +51,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
             var stream = await response.Content.ReadAsStreamAsync()
                 .ConfigureAwait(false);
-            
+
             AnalyticsResultBase<T> result = null;
             if (options.AsStreaming)
             {

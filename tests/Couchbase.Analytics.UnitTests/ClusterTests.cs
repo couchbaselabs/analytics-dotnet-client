@@ -17,7 +17,6 @@ namespace Couchbase.Analytics2.UnitTests
             var cluster = Cluster.Create(httpEndpoint, credential, options=>
             {
                 options.SecurityOptions.SslProtocols(SslProtocols.Tls13);
-                options.SecurityOptions.IgnoreRemoteCertificateMismatch(true);
             });
 
             // Assert
