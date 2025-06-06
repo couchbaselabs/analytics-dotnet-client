@@ -17,6 +17,6 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
 
     public override Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 }

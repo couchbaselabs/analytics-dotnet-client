@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Headers;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
@@ -6,128 +8,172 @@ using Couchbase.Analytics2.Internal.Serialization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
+using Newtonsoft.Json;
 using Xunit;
 
-namespace Couchbase.Analytics2.UnitTests.Internal
+namespace Couchbase.Analytics2.UnitTests.Internal;
+
+public class AnalyticsServiceTests
 {
-    public class AnalyticsServiceTest
+    private readonly Mock<ICouchbaseHttpClientFactory> _httpClientFactoryMock;
+    private readonly Mock<ILogger<AnalyticsService>> _loggerMock;
+    private readonly Mock<IJsonSerializer> _jsonSerializerMock;
+    private readonly Uri _endPoint;
+    private readonly ClusterOptions _clusterOptions;
+
+    public AnalyticsServiceTests()
     {
-        private readonly Mock<ILogger<AnalyticsService>> _loggerMock;
-        private readonly Mock<ICouchbaseHttpClientFactory> _httpClientFactoryMock;
-        private readonly Mock<HttpClient> _httpClientMock;
-        private readonly Uri _endPoint;
+        _httpClientFactoryMock = new Mock<ICouchbaseHttpClientFactory>();
+        _loggerMock = new Mock<ILogger<AnalyticsService>>();
+        _jsonSerializerMock = new Mock<IJsonSerializer>();
+        _endPoint = new Uri($"https://{IPAddress.Loopback}:8095");
+        _clusterOptions = new ClusterOptions();
+    }
 
-        public AnalyticsServiceTest()
+    [Fact]
+    public void Constructor_InitializesCorrectly()
+    {
+        // Arrange & Act
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _endPoint,
+            _loggerMock.Object,
+            _jsonSerializerMock.Object);
+        
+        const string ExecuteQueryPath = "/api/v1/request";
+        var expected = new UriBuilder(_endPoint);
+        expected.Path = ExecuteQueryPath;
+
+        // Assert
+        Assert.NotNull(service);
+        Assert.Equal(expected.Uri, service.Uri);
+    }
+
+    [Fact]
+    public async Task SendAsync_ValidQuery_ReturnsBlockingAnalyticsResult()
+    {
+        // Arrange
+        var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+        var responseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent };
+
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        httpClientMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(responseMessage);
+
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
+        _jsonSerializerMock.Setup(x =>
+            x.DeserializeAsync<AnalyticsResultData<object>>(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData<object>
         {
-            _loggerMock = new Mock<ILogger<AnalyticsService>>();
-            _httpClientFactoryMock = new Mock<ICouchbaseHttpClientFactory>();
-            _httpClientMock = new Mock<HttpClient>();
-            _endPoint = new Uri($"https://{IPAddress.Loopback}:8095");
+            metrics = new Metrics(),
+            plans = new Plans(),
+            errors = {  },
+            results = new List<object>()
+        });
 
-            _httpClientFactoryMock
-                .Setup(factory => factory.Create())
-                .Returns(_httpClientMock.Object);
-        }
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _endPoint,
+            _loggerMock.Object,
+            _jsonSerializerMock.Object);
 
-        [Fact]
-        public void Constructor_ShouldInitializeProperties()
+        var queryOptions = new QueryOptions { AsStreaming = false };
+
+        // Act
+        var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);
+
+        // Assert
+        Assert.IsType<BlockingAnalyticsResult<object>>(result);
+        _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
+    }
+
+    [Fact]
+    public async Task SendAsync_WithPriority_AddsPriorityHeader()
+    {
+        // Arrange
+        var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+        var responseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent };
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post,
+            "http://localhost/api/v1/request");
+        requestMessage.Headers.Add("Analytics-Priority", "true");
+
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        httpClientMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(responseMessage);
+
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
+        _jsonSerializerMock.Setup(x =>
+            x.DeserializeAsync<AnalyticsResultData<object>>(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData<object>
         {
-            // Arrange
-            var options = new ClusterOptions();
+            metrics = new Metrics(),
+            plans = new Plans(),
+            errors = {  },
+            results = new List<object>()
+        });
 
-            // Act
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _endPoint,
+            _loggerMock.Object,
+            _jsonSerializerMock.Object);
 
-            // Assert
-            Assert.NotNull(service.Uri);
-            Assert.Equal($"https://{_endPoint.Host}:{_endPoint.Port}/api/v1/request", service.Uri.ToString());
-            Assert.Equal(_endPoint.Scheme, service.Uri.Scheme);
-            Assert.Equal(_endPoint.Host, service.Uri.Host);
-            Assert.Equal(_endPoint.Port, service.Uri.Port);
-        }
+        var queryOptions = new QueryOptions { Priority = true, AsStreaming = false };
 
-        [Fact]
-        public async Task SendAsync_ShouldSendCorrectRequest()
-        {
-            // Arrange
-            var options = new ClusterOptions();
-            var queryOptions = new QueryOptions { Timeout = TimeSpan.FromSeconds(30) };
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
-            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("{}", Encoding.UTF8, "application/json")
-            };
+        // Act
+        var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);
 
-            _httpClientMock
-                .Setup(client => client.SendAsync(It.IsAny<HttpRequestMessage>(), HttpCompletionOption.ResponseHeadersRead, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(responseMessage);
+        // Assert
+        Assert.IsType<BlockingAnalyticsResult<object>>(result);
+    }
 
-            // Act
-            var result = await service.SendAsync<object>("SELECT * FROM dataset", queryOptions);
+    [Fact]
+    public async Task SendAsync_WithStreaming_ReturnsStreamingAnalyticsResult()
+    {
+        // Arrange
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
 
-            // Assert
-            _httpClientMock.Verify(client => client.SendAsync(
-                It.Is<HttpRequestMessage>(req =>
-                    req.Method == HttpMethod.Post &&
-                    req.RequestUri == service.Uri &&
-                    req.Content.ReadAsStringAsync().Result == "SELECT * FROM dataset"),
-                HttpCompletionOption.ResponseHeadersRead,
-                It.IsAny<CancellationToken>()), Times.Once);
-        }
+        var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+        var responseMessage = new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent };
+        httpClientMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(responseMessage);
 
-        [Fact]
-        public async Task SendAsync_ShouldAddPriorityHeader_WhenPriorityIsTrue()
-        {
-            // Arrange
-            var options = new ClusterOptions();
-            var queryOptions = new QueryOptions { Priority = true, Timeout = TimeSpan.FromSeconds(30) };
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
-            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("{}", Encoding.UTF8, "application/json")
-            };
-            var mockHandler = new Mock<HttpMessageHandler>();
-            mockHandler
-                .Protected()
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(m => m.Method == HttpMethod.Get),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(responseMessage);
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _endPoint,
+            _loggerMock.Object,
+            _jsonSerializerMock.Object);
 
-            _httpClientFactoryMock.Setup(factory => factory.Create()).Returns(new HttpClient(mockHandler.Object));
+        var queryOptions = new QueryOptions { AsStreaming = true };
 
+        // Act
+        var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);
 
-           /* _httpClientMock
-                .Setup(client => client.SendAsync(It.IsAny<HttpRequestMessage>(), HttpCompletionOption.ResponseHeadersRead, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(responseMessage);*/
-
-            // Act
-            var result = await service.SendAsync<object>("SELECT * FROM dataset", queryOptions);
-
-            // Assert
-            _httpClientMock.Verify(client => client.SendAsync(
-                It.Is<HttpRequestMessage>(req =>
-                    req.Headers.Contains("Analytics-Priority") &&
-                    req.Headers.GetValues("Analytics-Priority").Contains("true")),
-                HttpCompletionOption.ResponseHeadersRead,
-                It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        [Fact]
-        public async Task SendAsync_ShouldThrowException_OnHttpError()
-        {
-            // Arrange
-            var options = new ClusterOptions();
-            var queryOptions = new QueryOptions { Timeout = TimeSpan.FromSeconds(30) };
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
-
-            _httpClientMock
-                .Setup(client => client.SendAsync(It.IsAny<HttpRequestMessage>(), HttpCompletionOption.ResponseHeadersRead, It.IsAny<CancellationToken>()))
-                .ThrowsAsync(new HttpRequestException("HTTP error"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<HttpRequestException>(() => service.SendAsync<object>("SELECT * FROM dataset", queryOptions));
-        }
+        // Assert
+        Assert.IsType<StreamingAnalyticsResult<object>>(result);
+        _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
     }
 }

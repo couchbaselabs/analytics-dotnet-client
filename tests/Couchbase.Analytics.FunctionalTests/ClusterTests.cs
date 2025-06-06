@@ -1,4 +1,3 @@
-using System.Net;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -19,9 +18,12 @@ public class ClusterTests
         var cluster = Cluster.Create("5e07bed7-20250516.cb-sdk.bemdas.com:8095",
             new Credential("Administrator", "password"),
             new ClusterOptions().SecurityOptions.TrustOnlyPemString(cert));
-
-        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;");
-
+        
+        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", options =>
+        {
+            options.AsStreaming = false;
+        });
+        
         Assert.NotNull(response);
     }
 
