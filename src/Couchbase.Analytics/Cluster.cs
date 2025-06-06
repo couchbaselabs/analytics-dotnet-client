@@ -35,8 +35,6 @@ public class Cluster : IDisposable
 
             return analyticsService;
         });
-
-        Console.WriteLine($"[DEBUG] Cluster creation complete");
     }
 
     public static Cluster Create(string httpEndpoint, Credential credential, Action<ClusterOptions> clusterOptions)

@@ -19,13 +19,10 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         _options = options;
         _logger = logger;
         HttpClientFactory = httpClientFactory;
-        EndPoint = endPoint;
         Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
     }
 
     public Uri Uri { get; private set; }
-
-    public Uri EndPoint { get; private set; }
 
     public async Task<IQueryResult<T>> SendAsync<T>(string statement, QueryOptions options)
     {

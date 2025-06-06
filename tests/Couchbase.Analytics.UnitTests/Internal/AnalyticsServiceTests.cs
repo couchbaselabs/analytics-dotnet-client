@@ -42,7 +42,7 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             // Assert
             Assert.NotNull(service.Uri);
             Assert.Equal($"https://{_endPoint.Host}:{_endPoint.Port}/api/v1/request", service.Uri.ToString());
-            Assert.Equal(_endPoint, service.EndPoint);
+            Assert.Equal(_endPoint, service.Uri);
         }
 
         [Fact]
