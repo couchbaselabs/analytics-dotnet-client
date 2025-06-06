@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Utils;
+using Couchbase.Analytics2.Internal.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2.Internal;
@@ -12,12 +12,15 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     private readonly ILogger<AnalyticsService> _logger;
     private const string ExecuteQueryPath = "/api/v1/request";
     private const string AnalyticsPriorityHeaderName = "Analytics-Priority";
+    private readonly IJsonSerializer _jsonSerializer;
+
 
     public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, Uri endPoint,
-        ILogger<AnalyticsService> logger) : base(httpClientFactory)
+        ILogger<AnalyticsService> logger, IJsonSerializer jsonSerializer) : base(httpClientFactory)
     {
         _options = options;
         _logger = logger;
+        _jsonSerializer = jsonSerializer;
         HttpClientFactory = httpClientFactory;
         Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
     }
@@ -49,10 +52,21 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
             var stream = await response.Content.ReadAsStreamAsync()
                 .ConfigureAwait(false);
+            
+            AnalyticsResultBase<T> result = null;
+            if (options.AsStreaming)
+            {
+                result = new StreamingAnalyticsResult<T>(stream, httpClient);
+            }
+            else
+            {
+                result = new BlockingAnalyticsResult<T>(stream, _jsonSerializer, httpClient);
+            }
 
-            return new StreamingAnalyticsResult<T>(stream, httpClient);
+            await result.InitializeAsync(options.CancellationToken)
+                .ConfigureAwait(false);
+
+            return result;
         }
-
-        throw new NotImplementedException();
     }
 }

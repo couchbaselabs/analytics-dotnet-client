@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.Analytics2.Internal.Serialization;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -37,7 +38,7 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             var options = new ClusterOptions();
 
             // Act
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object);
+            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
 
             // Assert
             Assert.NotNull(service.Uri);
@@ -51,7 +52,7 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             // Arrange
             var options = new ClusterOptions();
             var queryOptions = new QueryOptions { Timeout = TimeSpan.FromSeconds(30) };
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object);
+            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
             var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("{}", Encoding.UTF8, "application/json")
@@ -80,7 +81,7 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             // Arrange
             var options = new ClusterOptions();
             var queryOptions = new QueryOptions { Priority = true, Timeout = TimeSpan.FromSeconds(30) };
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object);
+            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
             var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("{}", Encoding.UTF8, "application/json")
@@ -119,7 +120,7 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             // Arrange
             var options = new ClusterOptions();
             var queryOptions = new QueryOptions { Timeout = TimeSpan.FromSeconds(30) };
-            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object);
+            var service = new AnalyticsService(options, _httpClientFactoryMock.Object, _endPoint, _loggerMock.Object, new DefaultSerializer());
 
             _httpClientMock
                 .Setup(client => client.SendAsync(It.IsAny<HttpRequestMessage>(), HttpCompletionOption.ResponseHeadersRead, It.IsAny<CancellationToken>()))
