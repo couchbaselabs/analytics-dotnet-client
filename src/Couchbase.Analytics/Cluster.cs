@@ -9,7 +9,6 @@ namespace Couchbase.Analytics2;
 
 public class Cluster : IDisposable
 {
-    private readonly string _httpEndpoint;
     private readonly Credential _credential;
     private readonly ClusterOptions _clusterOptions;
     private readonly ConcurrentDictionary<string, Database> _databases = new();
@@ -21,7 +20,6 @@ public class Cluster : IDisposable
     private Cluster(string httpEndpoint, Credential credential,
         ClusterOptions? clusterOptions = null)
     {
-        _httpEndpoint = httpEndpoint ?? throw new ArgumentNullException(nameof(httpEndpoint));
         _credential = credential ?? throw new ArgumentNullException(nameof(credential));
         _clusterOptions = clusterOptions ?? new ClusterOptions();
         _connectionString = ConnectionString.Parse(httpEndpoint);
