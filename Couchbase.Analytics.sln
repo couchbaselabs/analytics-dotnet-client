@@ -18,7 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Packages.props = Directory.Packages.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytices.Performer", "fit\Couchbase.Analytices.Performer\Couchbase.Analytices.Performer.csproj", "{04159D2F-74A8-4200-818F-B279DBCBBC5A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.Performer", "fit\Couchbase.Analytics.Performer\Couchbase.Analytics.Performer.csproj", "{04159D2F-74A8-4200-818F-B279DBCBBC5A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fit", "fit", "{A58FEC0E-429F-460F-AF40-52DC21C93576}"
 EndProject
