@@ -12,5 +12,4 @@ public class FixtureSettings
 
     [JsonPropertyName("Password")]
     public string? Password { get; set; } = "password";
-
 }

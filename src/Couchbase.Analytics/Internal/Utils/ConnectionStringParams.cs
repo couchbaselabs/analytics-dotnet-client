@@ -1,6 +1,6 @@
 namespace Couchbase.Analytics2.Internal.Utils;
 
-internal static class CStringParams
+internal static class ConnectionStringParams
 {
     public const string ConnectTimeout = "timeout.connect_timeout";
     public const string DispatchTimeout = "timeout.dispatch_timeout";

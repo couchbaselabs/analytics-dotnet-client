@@ -28,27 +28,27 @@ public record ClusterOptions
 
             if (ConnectionStringValue == null) return;
 
-            if (ConnectionStringValue.TryGetParameter(CStringParams.ConnectTimeout, out TimeSpan connectTimeout))
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.ConnectTimeout, out TimeSpan connectTimeout))
             {
                 TimeoutOptions = TimeoutOptions.WithConnectTimeout(connectTimeout);
             }
-            if (ConnectionStringValue.TryGetParameter(CStringParams.DispatchTimeout, out TimeSpan dispatchTimeout))
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.DispatchTimeout, out TimeSpan dispatchTimeout))
             {
                 TimeoutOptions = TimeoutOptions.WithDispatchTimeout(dispatchTimeout);
             }
-            if (ConnectionStringValue.TryGetParameter(CStringParams.QueryTimeout, out TimeSpan queryTimeout))
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.QueryTimeout, out TimeSpan queryTimeout))
             {
                 TimeoutOptions = TimeoutOptions.WithQueryTimeout(queryTimeout);
             }
-            if (ConnectionStringValue.TryGetParameter(CStringParams.TrustOnlyPemFile, out string pathToPemFile))
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.TrustOnlyPemFile, out string pathToPemFile))
             {
                 SecurityOptions = SecurityOptions.WithTrustOnlyPemFile(pathToPemFile);
             }
-            if (ConnectionStringValue.TryGetParameter(CStringParams.DisableServerCertificateVerification, out bool disableServerCertificateVerification))
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.DisableServerCertificateVerification, out bool disableServerCertificateVerification))
             {
                 SecurityOptions = SecurityOptions.WithDisableCertificateVerification(disableServerCertificateVerification);
             }
-            if (ConnectionStringValue.TryGetParameter(CStringParams.CipherSuites, out string? cipherSuites))
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.CipherSuites, out string? cipherSuites))
             {
                 var protocolStrings = cipherSuites.Split(',');
                 var protocols = SslProtocols.None;
