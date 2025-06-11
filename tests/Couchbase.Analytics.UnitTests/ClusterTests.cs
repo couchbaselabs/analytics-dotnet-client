@@ -3,6 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 using Couchbase.Analytics2.Internal.Utils;
 using Xunit;
 using Moq;
+#nullable enable
 
 namespace Couchbase.Analytics2.UnitTests
 {
@@ -47,7 +48,7 @@ namespace Couchbase.Analytics2.UnitTests
             Credential credential = Credential.Create("Administrator", "password");
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => Cluster.Create(null, credential));
+            Assert.Throws<ArgumentException>(() => Cluster.Create(null, credential));
         }
 
         [Fact]
@@ -110,9 +111,9 @@ namespace Couchbase.Analytics2.UnitTests
         public void Dispose_ReleasesResources()
         {
             // Arrange
-            var httpEndpoint = "http://localhost:8091";
+            var connectionString = "http://localhost:8091";
             var credential = Credential.Create("Administrator", "password");
-            var cluster = Cluster.Create(httpEndpoint, credential);
+            var cluster = Cluster.Create(connectionString, credential);
 
             // Act
             cluster.Dispose();

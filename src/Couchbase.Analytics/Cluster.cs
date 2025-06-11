@@ -15,20 +15,24 @@ public class Cluster : IDisposable
     private readonly Lazy<LinkManager> _linkManager;
     private readonly Lazy<DatabaseManager> _databaseManager;
     private readonly Lazy<IAnalyticsService> _analyticsService;
-    private readonly ConnectionString _connectionString;
 
-    private Cluster(string httpEndpoint, Credential credential,
-        ClusterOptions? clusterOptions = null)
+    private Cluster(Credential credential, ClusterOptions clusterOptions)
     {
         _credential = credential ?? throw new ArgumentNullException(nameof(credential));
-        _clusterOptions = clusterOptions ?? new ClusterOptions();
-        _connectionString = ConnectionString.Parse(httpEndpoint);
+        _clusterOptions = clusterOptions ?? throw new ArgumentNullException(nameof(clusterOptions));
+
+        // Validate that connection string is provided
+        if (string.IsNullOrWhiteSpace(_clusterOptions.ConnectionString))
+        {
+            throw new ArgumentException("ConnectionString cannot be null or empty.", nameof(clusterOptions));
+        }
+
         _linkManager = new Lazy<LinkManager>(() => new LinkManager(this));
         _databaseManager = new Lazy<DatabaseManager>(() => new DatabaseManager(this));
 
         _analyticsService = new Lazy<IAnalyticsService>(() =>
         {
-            var endpoint = _connectionString.GetDnsBootStrapUri();
+            var endpoint = _clusterOptions.ConnectionStringValue!.GetDnsBootStrapUri();
             var httpClientFactory = new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, new Redactor(new TypedRedactor(RedactionLevel.None)), new NullLogger<CouchbaseHttpClientFactory>());
             var analyticsService = new AnalyticsService(_clusterOptions, httpClientFactory, endpoint, new NullLogger<AnalyticsService>(), new DefaultSerializer());
 
@@ -36,22 +40,79 @@ public class Cluster : IDisposable
         });
     }
 
-    public static Cluster Create(string httpEndpoint, Credential credential, Action<ClusterOptions> clusterOptions)
+    /// <summary>
+    /// Creates a cluster with a connection string and credentials, allowing configuration of cluster options.
+    /// </summary>
+    /// <param name="connectionString">The connection string for the cluster</param>
+    /// <param name="credential">The credentials to use for authentication</param>
+    /// <param name="configureOptions">Action to configure cluster options</param>
+    /// <returns>A Cluster instance</returns>
+    /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
+    public static Cluster Create(string connectionString, Credential credential, Action<ClusterOptions> configureOptions)
     {
-        var options = new ClusterOptions();
-        clusterOptions?.Invoke(options);
-        return new Cluster(httpEndpoint, credential, options);
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
+
+        ArgumentNullException.ThrowIfNull(credential);
+
+        var options = new ClusterOptions
+        {
+            ConnectionString = connectionString
+        };
+
+        configureOptions.Invoke(options);
+        return new Cluster(credential, options);
     }
 
-    public static Cluster Create(string httpEndpoint, Credential credential, ClusterOptions clusterOptions = null)
+    /// <summary>
+    /// Creates a cluster with a connection string and credentials, allowing configuration of cluster options.
+    /// </summary>
+    /// <param name="connectionString">The connection string for the cluster</param>
+    /// <param name="credential">The credentials to use for authentication</param>
+    /// <param name="clusterOptions">The cluster options to use for the cluster</param>
+    /// <returns>A Cluster instance</returns>
+    /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
+    public static Cluster Create(string connectionString, Credential credential, ClusterOptions clusterOptions){
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
+
+        ArgumentNullException.ThrowIfNull(credential);
+        clusterOptions ??= new ClusterOptions();
+        clusterOptions.ConnectionString = connectionString;
+
+        return new Cluster(credential, clusterOptions);
+    }
+
+    /// <summary>
+    /// Creates a cluster with a connection string and credentials, allowing configuration of cluster options.
+    /// </summary>
+    /// <param name="connectionString">The connection string for the cluster</param>
+    /// <param name="credential">The credentials to use for authentication</param>
+    /// <returns>A Cluster instance</returns>
+    /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
+    public static Cluster Create(string connectionString, Credential credential){
+        return Create(connectionString, credential, (ClusterOptions?)null);
+    }
+
+    /// <summary>
+    /// Creates a cluster with cluster options that must include a connection string.
+    /// </summary>
+    /// <param name="credential">The credentials to use for authentication</param>
+    /// <param name="clusterOptions">Pre-configured cluster options with connection string</param>
+    /// <returns>A Cluster instance</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the credential or cluster options are null</exception>
+    public static Cluster Create(Credential credential, ClusterOptions clusterOptions)
     {
-        return new Cluster(httpEndpoint, credential, clusterOptions);
+        ArgumentNullException.ThrowIfNull(credential);
+        ArgumentNullException.ThrowIfNull(clusterOptions);
+
+        return new Cluster(credential, clusterOptions);
     }
 
     public Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, Action<QueryOptions> options)
     {
         var queryOptions = new QueryOptions();
-        options?.Invoke(queryOptions);
+        options.Invoke(queryOptions);
         return ExecuteQueryAsync<T>(statement, queryOptions);
     }
 
