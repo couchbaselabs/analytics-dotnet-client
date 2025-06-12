@@ -36,14 +36,6 @@ internal class ConnectionString
     {
     }
 
-    public ConnectionString(ConnectionString source, IEnumerable<HostEndpoint> newHosts)
-    {
-        Scheme = source.Scheme;
-        Username = source.Username;
-        Hosts = newHosts.ToList();
-        Parameters = source.Parameters;
-    }
-
     internal static ConnectionString Parse(string input)
     {
         ArgumentNullException.ThrowIfNull(input);

@@ -1,6 +1,9 @@
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using Couchbase.Analytics2.Internal.Utils;
 using Xunit;
 using Moq;
+#nullable enable
 
 namespace Couchbase.Analytics2.UnitTests
 {
@@ -16,7 +19,7 @@ namespace Couchbase.Analytics2.UnitTests
             // Act
             var cluster = Cluster.Create(httpEndpoint, credential, options=>
             {
-                options.SecurityOptions.SslProtocols(SslProtocols.Tls13);
+                options.SecurityOptions.WithSslProtocols(SslProtocols.Tls13);
             });
 
             // Assert
@@ -45,7 +48,7 @@ namespace Couchbase.Analytics2.UnitTests
             Credential credential = Credential.Create("Administrator", "password");
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => Cluster.Create(null, credential));
+            Assert.Throws<ArgumentException>(() => Cluster.Create(null, credential));
         }
 
         [Fact]
@@ -108,15 +111,58 @@ namespace Couchbase.Analytics2.UnitTests
         public void Dispose_ReleasesResources()
         {
             // Arrange
-            var httpEndpoint = "http://localhost:8091";
+            var connectionString = "http://localhost:8091";
             var credential = Credential.Create("Administrator", "password");
-            var cluster = Cluster.Create(httpEndpoint, credential);
+            var cluster = Cluster.Create(connectionString, credential);
 
             // Act
             cluster.Dispose();
 
             // Assert
             // No exceptions should be thrown, and resources should be released.
+        }
+
+        /// <summary>
+        /// Calls all methods in the ClusterOptions class to ensure they are all callable and do not throw exceptions.
+        /// If the API changes, this test will fail to compile.
+        /// This also displays how to use the options which are immutable records, as opposed to classes.
+        /// </summary>
+        [Fact]
+        public void Create_ClusterOptions_With_All_Parameters()
+        {
+            var clusterOptions = new ClusterOptions()
+            {
+                SecurityOptions = new SecurityOptions()
+                    .WithDisableCertificateVerification(true)
+                    .WithSslProtocols(SslProtocols.Tls12)
+                    .WithTrustOnlyCertificates(new X509Certificate2Collection())
+                    .WithTrustOnlyPemFile("path/to/certificate.pem")
+                    .WithTrustOnlyCapella()
+                    .WithTrustOnlyPemString("pem_string"),
+
+                TimeoutOptions = new TimeoutOptions()
+                    .WithDispatchTimeout(TimeSpan.Zero)
+                    .WithConnectTimeout(TimeSpan.Zero)
+                    .WithQueryTimeout(TimeSpan.Zero),
+
+                ConnectionString = "https://unit_test.cloud.couchbase.com:9999"
+            };
+
+            clusterOptions = clusterOptions with
+            {
+                TimeoutOptions = clusterOptions.TimeoutOptions with
+                {
+                    QueryTimeout = TimeSpan.FromSeconds(30),
+                    ConnectTimeout = TimeSpan.FromSeconds(10),
+                    DispatchTimeout = TimeSpan.FromSeconds(5)
+                }
+            };
+
+            clusterOptions.SecurityOptions = clusterOptions.SecurityOptions.WithDisableCertificateVerification(true);
+
+            Assert.NotNull(clusterOptions.SecurityOptions);
+            Assert.NotNull(clusterOptions.TimeoutOptions);
+            Assert.NotNull(clusterOptions.ConnectionStringValue);
         }
     }
 }

@@ -42,27 +42,27 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     private AuthenticationHandler CreateClientHandler()
     {
         var handler = new SocketsHttpHandler();
-        handler.SslOptions.EnabledSslProtocols = _options.SslProtocolsValue;
+        handler.SslOptions.EnabledSslProtocols = _options.SslProtocols;
 
         X509Certificate2Collection certCollection = new X509Certificate2Collection();
-        if (_options.TrustOnlyCapellaValue)
+        if (_options.TrustMode == CertificateTrustMode.CapellaOnly)
         {
             certCollection.Add(CertificateValidation.CapellaCaCert);
         }
-        else if (_options.TrustOnlyCertificatesValue)
+        else if (_options.TrustMode == CertificateTrustMode.CertificatesOnly)
         {
             certCollection.AddRange(_options.CertificatesValue);
         }
-        else if (_options.TrustOnlyPemFileValue)
+        else if (_options.TrustMode == CertificateTrustMode.PemFilePath)
         {
             certCollection.Add(new X509Certificate2(_options.PathToPemFileValue));
         }
-        else if (_options.TrustOnlyPemStringValue)
+        else if (_options.TrustMode == CertificateTrustMode.PemString)
         {
             certCollection.Add(new X509Certificate2(
                 rawData: System.Text.Encoding.ASCII.GetBytes(_options.CertificateValue)));
         }
-        handler.SslOptions.EnabledSslProtocols = _options.SslProtocolsValue;
+
         handler.SslOptions.ClientCertificates = certCollection;
 
         // This emulates the behavior of HttpClientHandler in Manual mode, which selects the first certificate

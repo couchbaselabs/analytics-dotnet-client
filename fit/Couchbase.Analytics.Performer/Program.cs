@@ -1,4 +1,4 @@
-﻿namespace Couchbase.Analytices.Performer;
+﻿namespace Couchbase.Analytics.Performer;
 
 class Program
 {

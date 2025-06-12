@@ -1,6 +1,6 @@
-// filepath: /Users/jeffry.morris/Documents/source/analytics-dotnet-client/src/Couchbase.Analytics/Internal/ConnectionStringTest.cs
-
 using Couchbase.Analytics2.Internal;
+using Couchbase.Analytics2.Internal.Utils;
+using System.Security.Authentication;
 using Xunit;
 
 namespace Couchbase.Analytics2.UnitTests.Internal
@@ -102,8 +102,239 @@ namespace Couchbase.Analytics2.UnitTests.Internal
             var endpoints = connectionString.GetBootstrapEndpoints().ToList();
 
             Assert.Equal(2, endpoints.Count);
-            Assert.Equal(80, endpoints[0].Port); // Default HTTP port
+            Assert.Equal(80, endpoints[0].Port);
             Assert.Equal(8091, endpoints[1].Port);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_TimeoutParameters()
+        {
+            var cstring = "http://localhost:8095?" +
+                         "timeout.connect_timeout=5000&" +
+                         "timeout.dispatch_timeout=15000&" +
+                         "timeout.query_timeout=300000";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(TimeSpan.FromMilliseconds(5000), options.TimeoutOptions.ConnectTimeout);
+            Assert.Equal(TimeSpan.FromMilliseconds(15000), options.TimeoutOptions.DispatchTimeout);
+            Assert.Equal(TimeSpan.FromMilliseconds(300000), options.TimeoutOptions.QueryTimeout);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_PemFile()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.trust_only_pem_file=/path/to/certificate.pem";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal("/path/to/certificate.pem", options.SecurityOptions.PathToPemFileValue);
+            Assert.Equal(CertificateTrustMode.PemFilePath, options.SecurityOptions.TrustMode);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_DisableCertificateVerification()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.disable_server_certificate_verification=true";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.True(options.SecurityOptions.DisableServerCertificateValidation);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_DisableCertificateVerification_False()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.disable_server_certificate_verification=false";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.False(options.SecurityOptions.DisableServerCertificateValidation);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_CipherSuites_Single()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.cipher_suites=Tls12";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(SslProtocols.Tls12, options.SecurityOptions.SslProtocols);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_CipherSuites_Multiple()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.cipher_suites=Tls12,Tls13";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(SslProtocols.Tls12 | SslProtocols.Tls13, options.SecurityOptions.SslProtocols);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_CipherSuites_WithSpaces()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.cipher_suites=Tls12,Tls13";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(SslProtocols.Tls12 | SslProtocols.Tls13, options.SecurityOptions.SslProtocols);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_SecurityParameters_CipherSuites_InvalidProtocol()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "security.cipher_suites=Tls12,InvalidProtocol,Tls13";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            // Invalid protocols should be ignored, only valid ones should be set
+            Assert.Equal(SslProtocols.Tls12 | SslProtocols.Tls13, options.SecurityOptions.SslProtocols);
+        }
+
+        [Fact]
+        public void Test_ConnectionString_AllParameters()
+        {
+            var cstring = "https://localhost:8095?" +
+                         "timeout.connect_timeout=5000&" +
+                         "timeout.dispatch_timeout=15000&" +
+                         "timeout.query_timeout=300000&" +
+                         "security.trust_only_pem_file=/path/to/certificate.pem&" +
+                         "security.disable_server_certificate_verification=true&" +
+                         "security.cipher_suites=Tls12,Tls13";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            // Verify timeout options
+            Assert.Equal(TimeSpan.FromMilliseconds(5000), options.TimeoutOptions.ConnectTimeout);
+            Assert.Equal(TimeSpan.FromMilliseconds(15000), options.TimeoutOptions.DispatchTimeout);
+            Assert.Equal(TimeSpan.FromMilliseconds(300000), options.TimeoutOptions.QueryTimeout);
+
+            // Verify security options
+            Assert.Equal("/path/to/certificate.pem", options.SecurityOptions.PathToPemFileValue);
+            Assert.Equal(CertificateTrustMode.PemFilePath, options.SecurityOptions.TrustMode);
+            Assert.True(options.SecurityOptions.DisableServerCertificateValidation);
+            Assert.Equal(SslProtocols.Tls12 | SslProtocols.Tls13, options.SecurityOptions.SslProtocols);
+        }
+
+        [Theory]
+        [InlineData("1000", 1000)]
+        [InlineData("0", 0)]
+        [InlineData("60000", 60000)]
+        public void Test_ConnectionString_TimeoutParameter_ConnectTimeout_Values(string timeoutValue, int expectedMilliseconds)
+        {
+            var cstring = $"http://localhost:8095?timeout.connect_timeout={timeoutValue}";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(TimeSpan.FromMilliseconds(expectedMilliseconds), options.TimeoutOptions.ConnectTimeout);
+        }
+
+        [Theory]
+        [InlineData("2000", 2000)]
+        [InlineData("0", 0)]
+        [InlineData("120000", 120000)]
+        public void Test_ConnectionString_TimeoutParameter_DispatchTimeout_Values(string timeoutValue, int expectedMilliseconds)
+        {
+            var cstring = $"http://localhost:8095?timeout.dispatch_timeout={timeoutValue}";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(TimeSpan.FromMilliseconds(expectedMilliseconds), options.TimeoutOptions.DispatchTimeout);
+        }
+
+        [Theory]
+        [InlineData("30000", 30000)]
+        [InlineData("0", 0)]
+        [InlineData("600000", 600000)]
+        public void Test_ConnectionString_TimeoutParameter_QueryTimeout_Values(string timeoutValue, int expectedMilliseconds)
+        {
+            var cstring = $"http://localhost:8095?timeout.query_timeout={timeoutValue}";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(TimeSpan.FromMilliseconds(expectedMilliseconds), options.TimeoutOptions.QueryTimeout);
+        }
+
+        [Theory]
+        [InlineData("true", true)]
+        [InlineData("false", false)]
+        [InlineData("True", true)]
+        [InlineData("False", false)]
+        [InlineData("TRUE", true)]
+        [InlineData("FALSE", false)]
+        public void Test_ConnectionString_DisableServerCertificateVerification_Values(string boolValue, bool expectedValue)
+        {
+            var cstring = $"https://localhost:8095?security.disable_server_certificate_verification={boolValue}";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(expectedValue, options.SecurityOptions.DisableServerCertificateValidation);
+        }
+
+        [Theory]
+        [InlineData("/etc/ssl/certs/certificate.pem")]
+        [InlineData("C:\\certificates\\cert.pem")]
+        [InlineData("./relative/path/to/cert.pem")]
+        [InlineData("~/home/user/cert.pem")]
+        public void Test_ConnectionString_TrustOnlyPemFile_Values(string pemFilePath)
+        {
+            var cstring = $"https://localhost:8095?security.trust_only_pem_file={pemFilePath}";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = cstring
+            };
+
+            Assert.Equal(pemFilePath, options.SecurityOptions.PathToPemFileValue);
+            Assert.Equal(CertificateTrustMode.PemFilePath, options.SecurityOptions.TrustMode);
         }
     }
 }

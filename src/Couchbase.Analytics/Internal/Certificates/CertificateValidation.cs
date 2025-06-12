@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
+using Couchbase.Analytics2.Internal.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2.Internal.Certificates;
@@ -90,10 +91,7 @@ public static partial class CertificateValidation
             }
 
             // Determine validation mode based on security options
-            var useCustomTrustOnly = securityOptions.TrustOnlyCapellaValue ||
-                                     securityOptions.TrustOnlyPemFileValue ||
-                                     securityOptions.TrustOnlyPemStringValue ||
-                                     securityOptions.TrustOnlyCertificatesValue;
+            var useCustomTrustOnly = securityOptions.TrustMode != CertificateTrustMode.Default;
 
             if (!useCustomTrustOnly)
             {
@@ -185,20 +183,20 @@ public static partial class CertificateValidation
 
         try
         {
-            if (securityOptions.TrustOnlyCapellaValue)
+            if (securityOptions.TrustMode == CertificateTrustMode.CapellaOnly)
             {
                 trustedCertificates.Add(CapellaCaCert);
             }
-            else if (securityOptions.TrustOnlyPemFileValue)
+            else if (securityOptions.TrustMode == CertificateTrustMode.PemFilePath)
             {
                 trustedCertificates.Add(new X509Certificate2(securityOptions.PathToPemFileValue));
             }
-            else if (securityOptions.TrustOnlyPemStringValue)
+            else if (securityOptions.TrustMode == CertificateTrustMode.PemString)
             {
                 trustedCertificates.Add(new X509Certificate2(
                     rawData: System.Text.Encoding.ASCII.GetBytes(securityOptions.CertificateValue)));
             }
-            else if (securityOptions.TrustOnlyCertificatesValue)
+            else if (securityOptions.TrustMode == CertificateTrustMode.CertificatesOnly)
             {
                 trustedCertificates.AddRange(securityOptions.CertificatesValue);
             }
