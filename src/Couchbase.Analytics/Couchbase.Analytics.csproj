@@ -12,10 +12,15 @@
       <PackageReference Include="Microsoft.Extensions.Logging" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
       <PackageReference Include="System.Linq.Async" />
+      <PackageReference Include="System.Net.Http.Json" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Remove="Internal\CouchbaseHttpClientFactory.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Couchbase.Text.Json\Couchbase.Text.Json.csproj" />
     </ItemGroup>
 
 </Project>

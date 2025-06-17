@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fit", "fit", "{A58FEC0E-429
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.Performer.UnitTests", "fit\Couchbase.Analytics.Performer.UnitTests\Couchbase.Analytics.Performer.UnitTests.csproj", "{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Text.Json", "Couchbase.Text.Json\Couchbase.Text.Json.csproj", "{451EB46E-E3F0-4AB6-BE27-92992CA4E9E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,7 @@ Global
 		{890378AD-7F74-4C86-923B-24DB7539574F} = {98962587-231C-4D1F-AC3D-4C21302C331B}
 		{04159D2F-74A8-4200-818F-B279DBCBBC5A} = {A58FEC0E-429F-460F-AF40-52DC21C93576}
 		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B} = {A58FEC0E-429F-460F-AF40-52DC21C93576}
+		{451EB46E-E3F0-4AB6-BE27-92992CA4E9E2} = {50354FD0-1B81-4AAE-990A-80549EA6C4CF}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{700EC51C-9F32-4C1A-826E-9252522E953F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -60,5 +63,9 @@ Global
 		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{451EB46E-E3F0-4AB6-BE27-92992CA4E9E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{451EB46E-E3F0-4AB6-BE27-92992CA4E9E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{451EB46E-E3F0-4AB6-BE27-92992CA4E9E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{451EB46E-E3F0-4AB6-BE27-92992CA4E9E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

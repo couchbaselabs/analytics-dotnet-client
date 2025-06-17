@@ -1,7 +1,9 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2.Internal;
@@ -21,7 +23,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         _logger = logger;
         _jsonSerializer = jsonSerializer;
         HttpClientFactory = httpClientFactory;
-        Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
+        Uri = new Uri($"http://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
     }
 
     public Uri Uri { get; private set; }
@@ -44,8 +46,9 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             }
 
             var httpClient = CreateHttpClient(options.Timeout);
+
             var response = await httpClient.SendAsync(request,
-                    HttpClientFactory.DefaultCompletionOption,
+                    HttpCompletionOption.ResponseHeadersRead,
                     options.CancellationToken)
                 .ConfigureAwait(false);
 
@@ -55,11 +58,12 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             AnalyticsResultBase<T> result = null;
             if (options.AsStreaming)
             {
-                result = new StreamingAnalyticsResult<T>(stream, httpClient);
+                
+                result = new StreamingAnalyticsResult<T>(new JsonStreamReader(stream), httpClient);
             }
             else
             {
-                result = new BlockingAnalyticsResult<T>(stream, _jsonSerializer, httpClient);
+               result = new BlockingAnalyticsResult<T>(new JsonStreamReader(stream), _jsonSerializer, httpClient);
             }
 
             await result.InitializeAsync(options.CancellationToken)

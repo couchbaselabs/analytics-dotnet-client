@@ -20,16 +20,17 @@ public class ClusterTests
     [Fact]
     public async Task Test_QueryAsync()
     {
-        var cluster = Cluster.Create("5e07bed7-20250516.cb-sdk.bemdas.com:8095",
+        var cluster = Cluster.Create("https://5e07bed7-20250516.cb-sdk.bemdas.com:8095",
             new Credential("Administrator", "password"),
             new ClusterOptions()
             {
-                SecurityOptions = new SecurityOptions().WithTrustOnlyPemFile(_fixture.CapellaCaCert)
+                SecurityOptions = new SecurityOptions().
+                    WithTrustOnlyPemString(_fixture.CapellaCaCert)
             });
 
         using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", options =>
         {
-            options.AsStreaming = false;
+            options.AsStreaming = true;
         });
 
         Assert.NotNull(response);

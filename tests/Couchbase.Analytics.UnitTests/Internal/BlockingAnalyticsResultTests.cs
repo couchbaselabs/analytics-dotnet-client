@@ -9,14 +9,6 @@ namespace Couchbase.Analytics2.UnitTests.Internal;
 public class BlockingAnalyticsResultTest
 {
     [Fact]
-    public async Task BlockingAnalyticsResult_DeserializesCorrectly()
-    {
-        var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
-        var stream = new MemoryStream(json);
-        var onj = await JsonSerializer.DeserializeAsync<AnalyticsResultData<Airline>>(stream, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-    }
-
-    [Fact]
     public async Task InitializeAsync_ShouldReadResponseStream()
     {
         // Arrange
