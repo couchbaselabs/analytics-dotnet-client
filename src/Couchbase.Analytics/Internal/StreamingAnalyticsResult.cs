@@ -3,15 +3,23 @@ using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
 
+/// <summary>
+/// A streaming response class for Analytics queries.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <remarks>This is the default response type.</remarks>
 internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
 {
     private bool _hasReadToResult;
     private bool _hasReadResult;
     private bool _hasFinishedReading;
+    private IJsonStreamReader _jsonReader;
+    private bool _disposed;
     
-    public StreamingAnalyticsResult(IJsonStreamReader reader, IDisposable? ownedForCleanup = null) 
-        : base(reader, ownedForCleanup)
+    public StreamingAnalyticsResult(Stream stream, IJsonSerializer serializer, IDisposable? ownedForCleanup = null) 
+        : base(stream, serializer, ownedForCleanup)
     {
+        _jsonReader = serializer.CreateJsonStreamReader(stream);
     }
     
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -61,7 +69,7 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
     {
         if (_jsonReader == null)
         {
-            throw new InvalidOperationException("_reader is null");
+            throw new InvalidOperationException("_jsonReader is null");
         }
 
         MetaData = new QueryMetaData();
@@ -99,5 +107,13 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
         }
 
         _hasFinishedReading = true;
+    }
+
+    public override void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _jsonReader?.Dispose();
+        base.Dispose();
     }
 }

@@ -386,6 +386,7 @@ public sealed class JsonStreamReader : IJsonStreamReader
 
     private static bool TryGetInternalTypeInfo<T>([NotNullWhen(true)] out JsonTypeInfo<T>? typeInfo)
     {
+        //TODO revisit this
         typeInfo = JsonTypeInfo.CreateJsonTypeInfo<T>(new JsonSerializerOptions(JsonSerializerDefaults.General));
         /*if (QuerySerializerContext.Default.TryGetTypeInfo(out typeInfo))
         {

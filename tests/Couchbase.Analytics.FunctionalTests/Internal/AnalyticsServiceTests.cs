@@ -6,7 +6,7 @@ using Couchbase.Analytics2.Internal;
 using Xunit;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
-using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using DnsClient;
 using Microsoft.Extensions.Logging;
 using Moq;

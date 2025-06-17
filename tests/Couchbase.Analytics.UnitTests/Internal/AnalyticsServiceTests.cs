@@ -4,7 +4,7 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -26,6 +26,9 @@ public class AnalyticsServiceTests
         _httpClientFactoryMock = new Mock<ICouchbaseHttpClientFactory>();
         _loggerMock = new Mock<ILogger<AnalyticsService>>();
         _jsonSerializerMock = new Mock<IJsonSerializer>();
+        _jsonSerializerMock.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(new Mock<IJsonStreamReader>().Object);
         _endPoint = new Uri($"https://{IPAddress.Loopback}:8095");
         _clusterOptions = new ClusterOptions();
     }

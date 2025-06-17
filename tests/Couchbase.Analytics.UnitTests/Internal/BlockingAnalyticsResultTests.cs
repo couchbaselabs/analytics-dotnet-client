@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.Serialization;
-using Couchbase.Analytics2.UnitTests.POCOs;
+using Couchbase.Text.Json;
 using Xunit;
 
 namespace Couchbase.Analytics2.UnitTests.Internal;

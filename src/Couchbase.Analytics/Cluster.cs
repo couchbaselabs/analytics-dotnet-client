@@ -2,7 +2,7 @@
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
-using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Couchbase.Analytics2;

@@ -4,27 +4,24 @@ namespace Couchbase.Analytics2.Internal;
 
 internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
 {
-    protected readonly IJsonStreamReader _jsonReader;
     protected readonly Stream ResponseStream;
-    protected readonly IDisposable? _ownedForCleanup;
+    protected readonly IJsonSerializer Serializer;
+    private readonly IDisposable? _ownedForCleanup;
+    private bool _disposed;
 
     /// <summary>
     /// Creates a new AnalyticsResultBase.
     /// </summary>
     /// <param name="responseStream"><see cref="Stream"/> to read.</param>
+    /// <param name="serializer">The <see cref="IJsonSerializer"/> to use for converting the response to an object.</param>
     /// <param name="ownedForCleanup">Additional object to dispose when complete.</param>
-    protected AnalyticsResultBase(Stream responseStream, IDisposable? ownedForCleanup = null)
+    protected AnalyticsResultBase(Stream responseStream, IJsonSerializer serializer, IDisposable? ownedForCleanup = null)
     {
         ResponseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
+        Serializer = serializer;
         _ownedForCleanup = ownedForCleanup;
     }
     
-    protected AnalyticsResultBase(IJsonStreamReader jsonReader, IDisposable? ownedForCleanup = null)
-    {
-        _jsonReader = jsonReader ?? throw new ArgumentNullException(nameof(jsonReader));
-        _ownedForCleanup = ownedForCleanup;
-    }
-
     public abstract IAsyncEnumerator<T> GetAsyncEnumerator(
         CancellationToken cancellationToken = new CancellationToken());
 
@@ -35,10 +32,11 @@ internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
     
     public IReadOnlyList<Error> Errors { get; protected set; }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         ResponseStream?.Dispose();
         _ownedForCleanup?.Dispose();
-        _jsonReader?.Dispose();
     }
 }
