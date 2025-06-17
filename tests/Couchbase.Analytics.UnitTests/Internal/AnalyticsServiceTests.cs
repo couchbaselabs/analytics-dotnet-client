@@ -17,7 +17,7 @@ public class AnalyticsServiceTests
 {
     private readonly Mock<ICouchbaseHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<ILogger<AnalyticsService>> _loggerMock;
-    private readonly Mock<IJsonSerializer> _jsonSerializerMock;
+    private readonly Mock<ISerializer> _jsonSerializerMock;
     private readonly Uri _endPoint;
     private readonly ClusterOptions _clusterOptions;
 
@@ -25,7 +25,7 @@ public class AnalyticsServiceTests
     {
         _httpClientFactoryMock = new Mock<ICouchbaseHttpClientFactory>();
         _loggerMock = new Mock<ILogger<AnalyticsService>>();
-        _jsonSerializerMock = new Mock<IJsonSerializer>();
+        _jsonSerializerMock = new Mock<ISerializer>();
         _jsonSerializerMock.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(),
             It.IsAny<CancellationToken>()))
             .Returns(new Mock<IJsonStreamReader>().Object);

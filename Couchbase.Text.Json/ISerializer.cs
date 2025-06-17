@@ -3,7 +3,7 @@ namespace Couchbase.Text.Json;
 /// <summary>
 /// The Default serializer that is based on System.Text.Json
 /// </summary>
-public interface IJsonSerializer
+public interface ISerializer
 {
    /// <summary>
    /// Deserializes a stream of JSON into an object.

@@ -56,7 +56,7 @@ public class StreamingAnalyticsResultTests
     {
         // Arrange
         var mockStream = new MemoryStream();
-        var mockDisposable = new Mock<IJsonSerializer>();
+        var mockDisposable = new Mock<ISerializer>();
 
         // Act
         var result = new StreamingAnalyticsResult<object>(mockStream, mockDisposable.Object);
@@ -70,7 +70,7 @@ public class StreamingAnalyticsResultTests
     {
         // Arrange
         var mockStream = new MemoryStream();
-        var mockSerializer = new Mock<IJsonSerializer>();
+        var mockSerializer = new Mock<ISerializer>();
         mockSerializer.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(), 
             It.IsAny<CancellationToken>()))
             .Returns(new Mock<IJsonStreamReader>().Object);

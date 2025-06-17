@@ -14,8 +14,8 @@ internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
     private IEnumerable<T> _rows;
     private bool _enumerated;
 
-    public BlockingAnalyticsResult(Stream responseStream, IJsonSerializer jsonSerializer, IDisposable? ownedForCleanup = null) 
-        : base(responseStream, jsonSerializer, ownedForCleanup)
+    public BlockingAnalyticsResult(Stream responseStream, ISerializer serializer, IDisposable? ownedForCleanup = null) 
+        : base(responseStream, serializer, ownedForCleanup)
     {
     }
 

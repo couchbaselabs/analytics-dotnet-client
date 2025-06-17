@@ -4,7 +4,7 @@ namespace Couchbase.Text.Json;
 
 /// <inheritdoc />
 public class DefaultSerializer(JsonSerializerOptions jsonSerializerOptions)
-    : IJsonSerializer
+    : ISerializer
 {
     /// <inheritdoc />
     public DefaultSerializer() : this(JsonSerializerOptions.Default)

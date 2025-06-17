@@ -13,14 +13,14 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     private readonly ILogger<AnalyticsService> _logger;
     private const string ExecuteQueryPath = "/api/v1/request";
     private const string AnalyticsPriorityHeaderName = "Analytics-Priority";
-    private readonly IJsonSerializer _jsonSerializer;
+    private readonly ISerializer _serializer;
 
     public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, Uri endPoint,
-        ILogger<AnalyticsService> logger, IJsonSerializer jsonSerializer) : base(httpClientFactory)
+        ILogger<AnalyticsService> logger, ISerializer serializer) : base(httpClientFactory)
     {
         _options = options;
         _logger = logger;
-        _jsonSerializer = jsonSerializer;
+        _serializer = serializer;
         HttpClientFactory = httpClientFactory;
         Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
     }
@@ -58,11 +58,11 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             if (options.AsStreaming)
             {
                 
-                result = new StreamingAnalyticsResult<T>(stream, _jsonSerializer, httpClient);
+                result = new StreamingAnalyticsResult<T>(stream, _serializer, httpClient);
             }
             else
             {
-               result = new BlockingAnalyticsResult<T>(stream, _jsonSerializer, httpClient);
+               result = new BlockingAnalyticsResult<T>(stream, _serializer, httpClient);
             }
 
             await result.InitializeAsync(options.CancellationToken)
