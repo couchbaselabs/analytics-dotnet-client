@@ -16,7 +16,7 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
     private IJsonStreamReader _jsonReader;
     private bool _disposed;
     
-    public StreamingAnalyticsResult(Stream stream, ISerializer serializer, IDisposable? ownedForCleanup = null) 
+    public StreamingAnalyticsResult(Stream stream, IDeserializer serializer, IDisposable? ownedForCleanup = null) 
         : base(stream, serializer, ownedForCleanup)
     {
         _jsonReader = serializer.CreateJsonStreamReader(stream);

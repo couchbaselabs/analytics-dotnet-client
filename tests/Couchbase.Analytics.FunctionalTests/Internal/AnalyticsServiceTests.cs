@@ -42,7 +42,7 @@ public class AnalyticsServiceTests
             mockHttpClientFactory.Object);
 
         var endpoint = new Uri($"https://{_analytics2Fixture.FixtureSettings.ConnectionString}");
-        var service = new AnalyticsService(_analytics2Fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new DefaultSerializer());
+        var service = new AnalyticsService(_analytics2Fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new StjJsonDeserializer());
 
         var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());
         Assert.NotNull(response);

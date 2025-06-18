@@ -22,7 +22,7 @@ public class StreamingAnalyticsResultTests
         var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
         var stream = new MemoryStream(json);
         
-       var analyticsResult = new StreamingAnalyticsResult<Root>(stream, new DefaultSerializer(), new Mock<IDisposable?>().Object);
+       var analyticsResult = new StreamingAnalyticsResult<Root>(stream,new StjJsonDeserializer(), new Mock<IDisposable?>().Object);
        await analyticsResult.InitializeAsync(CancellationToken.None);
 
        var airlines = await analyticsResult.ToListAsync();
@@ -56,7 +56,7 @@ public class StreamingAnalyticsResultTests
     {
         // Arrange
         var mockStream = new MemoryStream();
-        var mockDisposable = new Mock<ISerializer>();
+        var mockDisposable = new Mock<IDeserializer>();
 
         // Act
         var result = new StreamingAnalyticsResult<object>(mockStream, mockDisposable.Object);
@@ -70,7 +70,7 @@ public class StreamingAnalyticsResultTests
     {
         // Arrange
         var mockStream = new MemoryStream();
-        var mockSerializer = new Mock<ISerializer>();
+        var mockSerializer = new Mock<IDeserializer>();
         mockSerializer.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(), 
             It.IsAny<CancellationToken>()))
             .Returns(new Mock<IJsonStreamReader>().Object);

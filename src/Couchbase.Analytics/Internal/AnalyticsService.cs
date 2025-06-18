@@ -13,10 +13,10 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     private readonly ILogger<AnalyticsService> _logger;
     private const string ExecuteQueryPath = "/api/v1/request";
     private const string AnalyticsPriorityHeaderName = "Analytics-Priority";
-    private readonly ISerializer _serializer;
+    private readonly IDeserializer _serializer;
 
     public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory, Uri endPoint,
-        ILogger<AnalyticsService> logger, ISerializer serializer) : base(httpClientFactory)
+        ILogger<AnalyticsService> logger, IDeserializer serializer) : base(httpClientFactory)
     {
         _options = options;
         _logger = logger;

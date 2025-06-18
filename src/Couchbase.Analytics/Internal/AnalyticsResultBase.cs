@@ -5,7 +5,7 @@ namespace Couchbase.Analytics2.Internal;
 internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
 {
     protected readonly Stream ResponseStream;
-    protected readonly ISerializer Serializer;
+    protected readonly IDeserializer Serializer;
     private readonly IDisposable? _ownedForCleanup;
     private bool _disposed;
 
@@ -15,7 +15,7 @@ internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
     /// <param name="responseStream"><see cref="Stream"/> to read.</param>
     /// <param name="serializer">The <see cref="ISerializer"/> to use for converting the response to an object.</param>
     /// <param name="ownedForCleanup">Additional object to dispose when complete.</param>
-    protected AnalyticsResultBase(Stream responseStream, ISerializer serializer, IDisposable? ownedForCleanup = null)
+    protected AnalyticsResultBase(Stream responseStream, IDeserializer serializer, IDisposable? ownedForCleanup = null)
     {
         ResponseStream = responseStream ?? throw new ArgumentNullException(nameof(responseStream));
         Serializer = serializer;

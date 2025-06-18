@@ -12,7 +12,7 @@ public class BlockingAnalyticsResultTest
         // Arrange
         var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
         var stream = new MemoryStream(json);
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
+        var result = new BlockingAnalyticsResult<object>(stream, new StjJsonDeserializer());
 
         // Act
         await result.InitializeAsync();
@@ -26,7 +26,7 @@ public class BlockingAnalyticsResultTest
     {
         // Arrange
         var stream = new MemoryStream();
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
+        var result = new BlockingAnalyticsResult<object>(stream, new StjJsonDeserializer());
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => result.GetAsyncEnumerator());
@@ -39,7 +39,7 @@ public class BlockingAnalyticsResultTest
         var stream = new MemoryStream();
 
         // Act
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
+        var result = new BlockingAnalyticsResult<object>(stream, new StjJsonDeserializer());
 
         // Assert
         Assert.NotNull(result);
