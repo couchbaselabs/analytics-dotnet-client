@@ -1,14 +1,8 @@
 using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
-
-namespace Couchbase.Analytics2.Internal.DnsUtil;
 using System.Net;
 using System.Net.Sockets;
 
-internal enum EndpointSelectionMode
-{
-    RoundRobin,
-    Random
-}
+namespace Couchbase.Analytics2.Internal.DnsUtil;
 
 /// <summary>
 /// Adapted from https://github.com/MihaZupan/DnsRoundRobin.
