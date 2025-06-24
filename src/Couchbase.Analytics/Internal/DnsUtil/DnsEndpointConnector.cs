@@ -30,7 +30,9 @@ internal sealed class DnsEndpointConnector : IDisposable
         _selectionStrategy = endpointSelectionMode switch
         {
             EndpointSelectionMode.Random => new RandomEndpointSelector(),
+            EndpointSelectionMode.RandomFromUnusedEndpoints => new RandomEndpointSelector(pickFromUnused: true),
             EndpointSelectionMode.RoundRobin => new RoundRobinEndpointSelector(),
+            EndpointSelectionMode.RoundRobinRandomStart => new RoundRobinEndpointSelector(startAtRandom: true),
             _ => throw new ArgumentOutOfRangeException(nameof(endpointSelectionMode))
         };
     }

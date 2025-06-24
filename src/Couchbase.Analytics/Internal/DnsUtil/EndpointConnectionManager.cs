@@ -24,13 +24,11 @@ internal class EndpointConnectionManager
             throw new InvalidOperationException("No addresses provided for connection.");
         }
 
-        var allExceptions = new List<Exception>();
-        var startIndex = selectionStrategy.SelectEndpointIndex(addresses);
+        var allExceptions = new List<Exception>(addresses.Length);
 
-        // Try all addresses starting from the selected one
-        for (var attempt = 0; attempt < addresses.Length; attempt++)
+        for (var i = 0; i <= addresses.Length; i++)
         {
-            var currentIndex = (startIndex + attempt) % addresses.Length;
+            var currentIndex = selectionStrategy.SelectEndpointIndex(addresses);
             var address = addresses[currentIndex];
 
             try

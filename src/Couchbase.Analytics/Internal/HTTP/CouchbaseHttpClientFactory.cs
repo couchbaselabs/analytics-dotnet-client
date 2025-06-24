@@ -107,7 +107,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
         var connector = new DnsEndpointConnector(
             new CountBasedDnsRefreshStrategy(1), // Refresh DNS entries on every request
             _timeoutOptions.ConnectTimeout,
-            EndpointSelectionMode.Random
+            EndpointSelectionMode.RandomFromUnusedEndpoints
         );
 
         handler.ConnectCallback = async (context, cancellation) =>
