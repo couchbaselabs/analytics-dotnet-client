@@ -2,7 +2,7 @@
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
-using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Couchbase.Analytics2;
@@ -34,7 +34,7 @@ public class Cluster : IDisposable
         {
             var endpoint = _clusterOptions.ConnectionStringValue!.GetDnsBootStrapUri();
             var httpClientFactory = new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, new Redactor(new TypedRedactor(RedactionLevel.None)), new NullLogger<CouchbaseHttpClientFactory>());
-            var analyticsService = new AnalyticsService(_clusterOptions, httpClientFactory, endpoint, new NullLogger<AnalyticsService>(), new DefaultSerializer());
+            var analyticsService = new AnalyticsService(_clusterOptions, httpClientFactory, endpoint, new NullLogger<AnalyticsService>(), new StjJsonDeserializer());
 
             return analyticsService;
         });

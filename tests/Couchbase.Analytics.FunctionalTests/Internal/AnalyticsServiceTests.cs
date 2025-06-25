@@ -6,7 +6,7 @@ using Couchbase.Analytics2.Internal;
 using Xunit;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
-using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using DnsClient;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -42,7 +42,7 @@ public class AnalyticsServiceTests
             mockHttpClientFactory.Object);
 
         var endpoint = new Uri($"https://{_analytics2Fixture.FixtureSettings.ConnectionString}");
-        var service = new AnalyticsService(_analytics2Fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new DefaultSerializer());
+        var service = new AnalyticsService(_analytics2Fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new StjJsonDeserializer());
 
         var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());
         Assert.NotNull(response);

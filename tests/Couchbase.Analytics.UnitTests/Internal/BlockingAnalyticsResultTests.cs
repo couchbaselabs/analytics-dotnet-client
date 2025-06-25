@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.Serialization;
-using Couchbase.Analytics2.UnitTests.POCOs;
+using Couchbase.Text.Json;
 using Xunit;
 
 namespace Couchbase.Analytics2.UnitTests.Internal;
@@ -9,20 +7,12 @@ namespace Couchbase.Analytics2.UnitTests.Internal;
 public class BlockingAnalyticsResultTest
 {
     [Fact]
-    public async Task BlockingAnalyticsResult_DeserializesCorrectly()
-    {
-        var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
-        var stream = new MemoryStream(json);
-        var onj = await JsonSerializer.DeserializeAsync<AnalyticsResultData<Airline>>(stream, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-    }
-
-    [Fact]
     public async Task InitializeAsync_ShouldReadResponseStream()
     {
         // Arrange
         var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
         var stream = new MemoryStream(json);
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
+        var result = new BlockingAnalyticsResult<object>(stream, new StjJsonDeserializer());
 
         // Act
         await result.InitializeAsync();
@@ -36,7 +26,7 @@ public class BlockingAnalyticsResultTest
     {
         // Arrange
         var stream = new MemoryStream();
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
+        var result = new BlockingAnalyticsResult<object>(stream, new StjJsonDeserializer());
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => result.GetAsyncEnumerator());
@@ -49,7 +39,7 @@ public class BlockingAnalyticsResultTest
         var stream = new MemoryStream();
 
         // Act
-        var result = new BlockingAnalyticsResult<object>(stream, new DefaultSerializer());
+        var result = new BlockingAnalyticsResult<object>(stream, new StjJsonDeserializer());
 
         // Assert
         Assert.NotNull(result);

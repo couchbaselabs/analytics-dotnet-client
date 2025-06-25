@@ -1,19 +1,22 @@
 using System.Text.Json.Serialization;
-using Couchbase.Analytics2.Internal.Serialization;
 using Couchbase.Analytics2.Internal.Utils;
+using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
 
+/// <summary>
+/// A "blocking" result class for Analytics queries.
+/// </summary>
+/// <typeparam name="T">The Type of the object in each row.</typeparam>
+/// <remarks>For large result sets use the <see cref="StreamingAnalyticsResult{T}"/> class by setting <see cref="QueryOptions.AsStreaming"/> to true, which is the default.</remarks>
 internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
 {
-    private readonly IJsonSerializer _jsonSerializer;
     private IEnumerable<T> _rows;
     private bool _enumerated;
 
-    public BlockingAnalyticsResult(Stream responseStream, IJsonSerializer jsonSerializer, IDisposable? ownedForCleanup = null) 
-        : base(responseStream, ownedForCleanup)
+    public BlockingAnalyticsResult(Stream responseStream, IDeserializer serializer, IDisposable? ownedForCleanup = null) 
+        : base(responseStream, serializer, ownedForCleanup)
     {
-        _jsonSerializer = jsonSerializer;
     }
 
     public override IAsyncEnumerator<T> GetAsyncEnumerator(
@@ -36,7 +39,7 @@ internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
 
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var body = await _jsonSerializer.DeserializeAsync<AnalyticsResultData<T>>(ResponseStream, cancellationToken)
+        var body = await Serializer.DeserializeAsync<AnalyticsResultData<T>>(ResponseStream, cancellationToken)
             .ConfigureAwait(false);
 
         if (body == null)
