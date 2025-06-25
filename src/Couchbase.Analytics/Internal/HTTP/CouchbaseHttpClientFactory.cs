@@ -114,7 +114,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
         {
             try
             {
-                using var socket = await connector.ConnectAsync(context.DnsEndPoint, cancellation);
+                var socket = await connector.ConnectAsync(context.DnsEndPoint, cancellation).ConfigureAwait(false);
                 return new NetworkStream(socket, ownsSocket: true);
             }
             catch (AggregateException ex)

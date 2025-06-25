@@ -11,6 +11,8 @@ public class Analytics2Fixture : IDisposable
     public ClusterOptions ClusterOptions { get; private set; }
     public Cluster Cluster { get; private set; }
 
+    public Credential Credential { get; private set; }
+
     public string CapellaCaCert =
         "-----BEGIN CERTIFICATE-----\n" +
         "MIIFWzCCA0OgAwIBAgIBATANBgkqhkiG9w0BAQsFADA4MTYwNAYDVQQDEy1kaW5v\n" +
@@ -48,6 +50,7 @@ public class Analytics2Fixture : IDisposable
     {
         FixtureSettings = GetFixtureSettings();
         ClusterOptions = CreateClusterOptions();
+        Credential = new Credential(FixtureSettings.Username, FixtureSettings.Password!);
         Cluster = CreateCluster();
     }
 
@@ -73,7 +76,7 @@ public class Analytics2Fixture : IDisposable
     {
         return Cluster.Create(
             FixtureSettings.ConnectionString!,
-            new Credential(FixtureSettings.Username, FixtureSettings.Password!),
+            Credential,
             ClusterOptions);
     }
 

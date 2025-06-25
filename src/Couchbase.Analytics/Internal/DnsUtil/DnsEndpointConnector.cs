@@ -46,12 +46,12 @@ internal sealed class DnsEndpointConnector : IDisposable
                 [address],
                 endPoint.Port,
                 _selectionStrategy,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
         }
 
         // Resolve hostname to IP addresses and connect
-        var addresses = await _dnsResolver.ResolveEndpointsAsync(endPoint.Host, cancellationToken);
-        return await _connectionManager.ConnectToEndpointsAsync(addresses, endPoint.Port, _selectionStrategy, cancellationToken);
+        var addresses = await _dnsResolver.ResolveEndpointsAsync(endPoint.Host, cancellationToken).ConfigureAwait(false);
+        return await _connectionManager.ConnectToEndpointsAsync(addresses, endPoint.Port, _selectionStrategy, cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()

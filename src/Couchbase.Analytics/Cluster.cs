@@ -119,7 +119,7 @@ public class Cluster : IDisposable
     public async Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions? options = null)
     {
        var service = _analyticsService.Value;
-       return await service.SendAsync<T>(statement, options ?? new QueryOptions());
+       return await service.SendAsync<T>(statement, options ?? new QueryOptions()).ConfigureAwait(false);
     }
 
     public Database Database(string databaseName)

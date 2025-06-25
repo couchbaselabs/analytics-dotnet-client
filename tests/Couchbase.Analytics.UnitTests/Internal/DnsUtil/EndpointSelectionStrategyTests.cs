@@ -58,24 +58,14 @@ public class EndpointSelectionStrategyTests
     {
         var selector = new RandomEndpointSelector(pickFromUnused: true);
 
-        var selections = Enumerable.Range(0, 3)
+        var selections = Enumerable.Range(0, 6)
             .Select(_ => selector.SelectEndpointIndex(_addresses))
             .ToArray();
 
         // Assert the selections contain each address exactly twice
-        Assert.Equal(1, selections.Count(x => x == 0));
-        Assert.Equal(1, selections.Count(x => x == 1));
-        Assert.Equal(1, selections.Count(x => x == 2));
-    }
-
-    // With 3 addresses in the list, trying to select 4 times should throw an exception
-    [Fact]
-    public void RandomEndpointSelector_With_PickFromUnused_Should_Throw_If_No_More_Endpoints()
-    {
-        var selector = new RandomEndpointSelector(pickFromUnused: true);
-
-        Assert.Throws<InvalidOperationException>( () => Enumerable.Range(0, 4).Select(_ => selector.SelectEndpointIndex(_addresses)).ToList());
-
+        Assert.Equal(2, selections.Count(x => x == 0));
+        Assert.Equal(2, selections.Count(x => x == 1));
+        Assert.Equal(2, selections.Count(x => x == 2));
     }
 
     /// <summary>

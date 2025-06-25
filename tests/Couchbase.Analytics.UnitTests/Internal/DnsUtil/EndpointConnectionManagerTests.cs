@@ -27,6 +27,6 @@ public class EndpointConnectionManagerTests
         };
 
         var strategy = new RoundRobinEndpointSelector();
-        await Assert.ThrowsAsync<AggregateException>( async () => await manager.ConnectToEndpointsAsync(addresses, 80, strategy, CancellationToken.None));
+        await Assert.ThrowsAsync<AggregateException>( async () => await manager.ConnectToEndpointsAsync(addresses, 80, strategy, CancellationToken.None).ConfigureAwait(false));
     }
 }

@@ -33,7 +33,7 @@ internal class EndpointConnectionManager
 
             try
             {
-                return await ConnectToSingleEndpointAsync(address, port, cancellationToken);
+                return await ConnectToSingleEndpointAsync(address, port, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -82,7 +82,7 @@ internal class EndpointConnectionManager
                 effectiveToken = timeoutCts.Token;
             }
 
-            await socket.ConnectAsync(address, port, effectiveToken);
+            await socket.ConnectAsync(address, port, effectiveToken).ConfigureAwait(false);
             return socket;
         }
         catch (Exception ex)

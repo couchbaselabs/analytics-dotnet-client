@@ -90,8 +90,5 @@ public class ConnectCallbackRoundRobinTests
         Assert.Equal(1, selections.Count(x => x == 0));
         Assert.Equal(1, selections.Count(x => x == 1));
         Assert.Equal(1, selections.Count(x => x == 2));
-
-        // Assert trying to select again throws an exception, since we already select all addresses
-        Assert.Throws<InvalidOperationException>(() => strategy.SelectEndpointIndex(addresses));
     }
 }

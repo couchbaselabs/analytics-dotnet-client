@@ -28,7 +28,7 @@ internal class RandomEndpointSelector : IEndpointSelectionStrategy
         if (_pickFromUnused && (_previousAddresses is null && _unusedIndexes is null))
         {
             _previousAddresses = addresses;
-            _unusedIndexes = Enumerable.Range(0, addresses.Length).ToArray();
+            ResetUnusedIndexes(ref _unusedIndexes, addresses.Length);
         }
 
         // If the DNS record was refreshed and the list of addresses has changed,
@@ -36,19 +36,24 @@ internal class RandomEndpointSelector : IEndpointSelectionStrategy
         else if (_previousAddresses is not null && addresses != _previousAddresses)
         {
             _previousAddresses = addresses;
-            _unusedIndexes = Enumerable.Range(0, addresses.Length).ToArray();
+            ResetUnusedIndexes(ref _unusedIndexes, addresses.Length);
         }
 
-        // Pick a random index from the remaining unused indexes,
-        // and remove it from the list of unused indexes.
         if (_unusedIndexes!.Length == 0)
         {
-            // If there are no unused indexes left, throw
-            throw new InvalidOperationException("All endpoints in the given addresses list have been used.");
+            // Since we reuse the same handler for all clients, if there are no unused indexes left, reset it.
+            ResetUnusedIndexes(ref _unusedIndexes, addresses.Length);
         }
+        // Pick a random index from the remaining unused indexes,
+        // and remove it from the list of unused indexes.
         var nextIndex = _unusedIndexes![Random.Shared.Next(_unusedIndexes.Length)];
         _unusedIndexes = _unusedIndexes.Where(i => i != nextIndex).ToArray();
         return nextIndex;
+    }
+
+    private static void ResetUnusedIndexes(ref int[]? unusedIndexes, int range)
+    {
+        unusedIndexes = Enumerable.Range(0, range).ToArray();
     }
 
 }
