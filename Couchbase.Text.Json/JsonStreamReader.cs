@@ -46,8 +46,6 @@ public sealed class JsonStreamReader : IJsonStreamReader
             MaxDepth = Options.MaxDepth
         });
         _buffer = new JsonBuffer(Options.DefaultBufferSize);
-
-        Options = options;
     }
 
     #region Initialize
