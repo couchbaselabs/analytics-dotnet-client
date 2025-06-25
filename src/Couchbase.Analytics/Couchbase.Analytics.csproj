@@ -20,7 +20,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Couchbase.Text.Json\Couchbase.Text.Json.csproj" />
+      <ProjectReference Include="..\Couchbase.Text.Json\Couchbase.Text.Json.csproj" />
     </ItemGroup>
+    
 
 </Project>
