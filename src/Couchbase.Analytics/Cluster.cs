@@ -33,7 +33,7 @@ public class Cluster : IDisposable
         _analyticsService = new Lazy<IAnalyticsService>(() =>
         {
             var endpoint = _clusterOptions.ConnectionStringValue!.GetDnsBootStrapUri();
-            var httpClientFactory = new CouchbaseHttpClientFactory(_credential, _clusterOptions.SecurityOptions, new Redactor(new TypedRedactor(RedactionLevel.None)), new NullLogger<CouchbaseHttpClientFactory>());
+            var httpClientFactory = new CouchbaseHttpClientFactory(_credential, _clusterOptions, new Redactor(new TypedRedactor(RedactionLevel.None)), new NullLogger<CouchbaseHttpClientFactory>());
             var analyticsService = new AnalyticsService(_clusterOptions, httpClientFactory, endpoint, new NullLogger<AnalyticsService>(), new StjJsonDeserializer());
 
             return analyticsService;

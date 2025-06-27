@@ -57,7 +57,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             AnalyticsResultBase<T> result = null;
             if (options.AsStreaming)
             {
-                
+
                 result = new StreamingAnalyticsResult<T>(stream, _serializer, httpClient);
             }
             else
