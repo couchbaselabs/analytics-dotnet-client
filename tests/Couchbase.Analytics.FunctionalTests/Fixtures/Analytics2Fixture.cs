@@ -54,6 +54,11 @@ public class Analytics2Fixture : IDisposable
         Cluster = CreateCluster();
     }
 
+    public void ResetCluster()
+    {
+        Cluster = CreateCluster();
+    }
+
     private FixtureSettings GetFixtureSettings()
     {
         return new ConfigurationBuilder()

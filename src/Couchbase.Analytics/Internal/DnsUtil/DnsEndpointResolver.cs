@@ -3,7 +3,7 @@ using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
 
 namespace Couchbase.Analytics2.Internal.DnsUtil;
 
-internal class DnsEndpointResolver
+internal class DnsEndpointResolver : IDnsEndpointResolver
 {
     private readonly IDnsRefreshStrategy _refreshStrategy;
     private IPAddress[]? _cachedAddresses;

@@ -9,7 +9,7 @@ namespace Couchbase.Analytics2.Internal.DnsUtil;
 /// </summary>
 internal sealed class DnsEndpointConnector : IDisposable
 {
-    private readonly DnsEndpointResolver _dnsResolver;
+    private readonly IDnsEndpointResolver _dnsResolver;
     private readonly EndpointConnectionManager _connectionManager;
     private readonly IEndpointSelectionStrategy _selectionStrategy;
 
