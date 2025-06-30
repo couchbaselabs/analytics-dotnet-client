@@ -3,13 +3,12 @@ using Couchbase.Analytics2.FunctionalTests.Fixtures;
 using Couchbase.Analytics2.Internal.DnsUtil;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Xunit.Abstractions;
 using System.Net;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
-using Couchbase.Analytics2.Internal.Serialization;
+using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -81,11 +80,13 @@ public class CouchbaseHttpClientTests
         }
     }
 
+    // Injects a "fake" IDnsEndpointResolver into the DnsEndpointConnector which can be configured to
+    // replace some al or all of the resolved IPs with unreachable ones.
     [Fact]
     public async Task Test_Requests_Should_Succeed_If_Some_IPs_Are_Unreachable()
     {
         // Reflection region to replace the DnsEndpointResolver in CouchbaseHttpClientFactory
-        var mockHttpClientFactory = new Mock<ILogger<CouchbaseHttpClientFactory>>();
+        var mockHttpClientFactoryLogger = new Mock<ILogger<CouchbaseHttpClientFactory>>();
         var mockAnalyticsLogger = new Mock<ILogger<AnalyticsService>>();
         var mockRedactor = new Mock<IRedactor>();
 
@@ -97,10 +98,10 @@ public class CouchbaseHttpClientTests
             credentials,
             newOptions,
             mockRedactor.Object,
-            mockHttpClientFactory.Object);
+            mockHttpClientFactoryLogger.Object);
 
         var endpoint = new Uri($"{_fixture.FixtureSettings.ConnectionString}");
-        var service = new AnalyticsService(_fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new DefaultSerializer());
+        var service = new AnalyticsService(_fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new StjJsonDeserializer());
 
         //Using reflection to inject another IDnsEndpointResolver into the DnsEndpointConnector
         var sharedHandlerField = typeof(CouchbaseHttpClientFactory).GetField("_sharedHandler", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -139,8 +140,5 @@ public class CouchbaseHttpClientTests
         var testResolverMissingAllIPs = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.All);
         resolverField.SetValue(dnsConnector, testResolverMissingAllIPs);
         await Assert.ThrowsAsync<HttpRequestException>(() => service.SendAsync<dynamic>("SELECT hello as greeting", new QueryOptions()));
-
-        //Re-create the cluster to reset the DnsEndpointConnector (so other tests are not affected)
-        _fixture.ResetCluster();
     }
 }
