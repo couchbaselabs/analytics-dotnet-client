@@ -119,7 +119,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
             }
             catch (AggregateException ex)
             {
-                throw new AnalyticsException("Failed to connect to all endpoints for host " + context.DnsEndPoint.Host, ex);
+                throw new AnalyticsException($"Failed to connect to all endpoints for host: {context.DnsEndPoint.Host}:{context.DnsEndPoint.Port} ", ex);
             }
         };
     }

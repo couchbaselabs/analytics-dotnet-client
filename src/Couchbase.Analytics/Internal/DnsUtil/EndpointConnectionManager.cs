@@ -1,16 +1,20 @@
 using System.Net;
 using System.Net.Sockets;
 using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Couchbase.Analytics2.Internal.DnsUtil;
 
 internal class EndpointConnectionManager
 {
     private readonly TimeSpan _connectionTimeout;
+    private readonly ILogger<EndpointConnectionManager> _logger;
 
-    public EndpointConnectionManager(TimeSpan connectionTimeout)
+    public EndpointConnectionManager(TimeSpan connectionTimeout, ILogger<EndpointConnectionManager>? logger = null)
     {
         _connectionTimeout = connectionTimeout;
+        _logger = logger ?? new NullLogger<EndpointConnectionManager>();
     }
 
     public async Task<Socket> ConnectToEndpointsAsync(
@@ -37,6 +41,7 @@ internal class EndpointConnectionManager
             }
             catch (Exception ex)
             {
+                _logger.LogDebug("Could not connect to endpoint {Address}:{Port} - {Message}", address, port, ex.Message);;
                 allExceptions.Add(ex);
             }
         }
@@ -89,7 +94,6 @@ internal class EndpointConnectionManager
         {
             socket?.Dispose();
 
-            // Wrap timeout exceptions with more descriptive message
             if (timeoutCts?.IsCancellationRequested == true)
             {
                 throw new TimeoutException(
