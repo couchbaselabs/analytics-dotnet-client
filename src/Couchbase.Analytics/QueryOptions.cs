@@ -15,8 +15,6 @@ public record QueryOptions
 
     public List<object> PositionalParameters { get; set; } = new();
 
-    public bool Priority { get; init; }
-
     public QueryScanConsistency ScanConsistency { get; set; }
 
     public TimeSpan? ScanWait { get; set; }
