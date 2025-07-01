@@ -39,11 +39,6 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                 Content = content
             };
 
-            if (options.Priority)
-            {
-                request.Headers.Add(AnalyticsPriorityHeaderName, "true");
-            }
-
             var httpClient = CreateHttpClient(options.Timeout);
 
             var response = await httpClient.SendAsync(request,
@@ -57,7 +52,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             AnalyticsResultBase<T> result = null;
             if (options.AsStreaming)
             {
-                
+
                 result = new StreamingAnalyticsResult<T>(stream, _serializer, httpClient);
             }
             else
