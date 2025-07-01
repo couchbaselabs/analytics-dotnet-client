@@ -19,10 +19,10 @@ internal class RoundRobinEndpointSelector : IEndpointSelectionStrategy
 
     public int SelectEndpointIndex(IPAddress[] addresses)
     {
-        if (addresses.Length == 0) return 0;
+        if (addresses.Length == 1) return 0;
 
         var nextIndex = Interlocked.Increment(ref _index);
         Interlocked.Exchange(ref _index, (uint)(nextIndex % addresses.Length));
-        return (int)(nextIndex % addresses.Length);
+        return (int)_index;
     }
 }

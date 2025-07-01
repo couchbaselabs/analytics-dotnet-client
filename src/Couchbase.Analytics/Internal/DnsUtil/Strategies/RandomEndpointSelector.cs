@@ -22,7 +22,7 @@ internal class RandomEndpointSelector : IEndpointSelectionStrategy
     }
     public int SelectEndpointIndex(IPAddress[] addresses)
     {
-        if (!_pickFromUnused) return addresses.Length == 1 ? 1 : Random.Shared.Next(addresses.Length);
+        if (!_pickFromUnused) return addresses.Length == 1 ? 0 : Random.Shared.Next(addresses.Length);
 
         // If this is the first request, save the addresses and initialize the unused indexes.
         if (_pickFromUnused && (_previousAddresses is null && _unusedIndexes is null))
