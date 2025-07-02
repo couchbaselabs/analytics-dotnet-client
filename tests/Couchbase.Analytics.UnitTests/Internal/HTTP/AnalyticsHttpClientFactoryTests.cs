@@ -14,13 +14,16 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var securityOptions = new SecurityOptions();
-        securityOptions.WithDisableCertificateVerification(true);
+        var options = new ClusterOptions()
+        {
+            SecurityOptions = new SecurityOptions()
+                .WithDisableCertificateVerification(true)
+        };
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
         // Act
-        var factory = new CouchbaseHttpClientFactory(credential, securityOptions, redactor, logger);
+        var factory = new CouchbaseHttpClientFactory(credential, options, redactor, logger);
 
         // Assert
         Assert.NotNull(factory);
@@ -43,11 +46,11 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var securityOptions = new SecurityOptions();
+        var options = new ClusterOptions();
         var redactor = new Mock<IRedactor>().Object;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, securityOptions, redactor, null));
+        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, options, redactor, null));
     }
 
     [Fact]
@@ -55,10 +58,13 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Credential("Administrator", "password");
-        var securityOptions = new SecurityOptions(){SslProtocols = SslProtocols.Tls12};
+        var options = new ClusterOptions()
+        {
+            SecurityOptions = new SecurityOptions().WithSslProtocols(SslProtocols.Tls12)
+        };
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, securityOptions, redactor, logger);
+        var factory = new CouchbaseHttpClientFactory(credential, options, redactor, logger);
 
         // Act
         var httpClient = factory.Create();
@@ -73,13 +79,16 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var securityOptions = new SecurityOptions();
-        securityOptions = securityOptions with { SslProtocols = SslProtocols.Tls12 };
-        securityOptions.WithDisableCertificateVerification(true);
+        var options = new ClusterOptions()
+        {
+            SecurityOptions = new SecurityOptions()
+                .WithDisableCertificateVerification(true)
+                .WithTrustOnlyCapella()
+        };
 
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, securityOptions, redactor, logger);
+        var factory = new CouchbaseHttpClientFactory(credential, options, redactor, logger);
 
         // Act
         var handler = factory.Create().DefaultRequestHeaders;
@@ -93,10 +102,10 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var securityOptions = new SecurityOptions();
+        var options = new ClusterOptions();
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, securityOptions, redactor, logger);
+        var factory = new CouchbaseHttpClientFactory(credential, options, redactor, logger);
 
         // Act
         var completionOption = factory.DefaultCompletionOption;

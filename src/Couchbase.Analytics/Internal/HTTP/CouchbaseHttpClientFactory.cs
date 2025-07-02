@@ -1,9 +1,13 @@
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.Internal.Logging;
 using Couchbase.Analytics2.Internal.Utils;
 using Couchbase.Analytics2.Internal.Certificates;
+using Couchbase.Analytics2.Internal.DnsUtil;
+using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
 using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2.Internal.HTTP;
@@ -11,16 +15,19 @@ namespace Couchbase.Analytics2.Internal.HTTP;
 internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 {
     private readonly ICredential _credential;
-    private readonly SecurityOptions _options;
+    private readonly SecurityOptions _securityOptions;
+    private readonly TimeoutOptions _timeoutOptions;
     private readonly IRedactor _redactor;
     private readonly ILogger<CouchbaseHttpClientFactory> _logger;
     private readonly AuthenticationHandler _sharedHandler;
 
-    public CouchbaseHttpClientFactory(ICredential credential, SecurityOptions options, IRedactor  redactor,
+    public CouchbaseHttpClientFactory(ICredential credential, ClusterOptions options, IRedactor  redactor,
         ILogger<CouchbaseHttpClientFactory> logger)
     {
+        ArgumentNullException.ThrowIfNull(options);
         _credential = credential;
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _securityOptions = options.SecurityOptions ?? throw new ArgumentNullException(nameof(options));
+        _timeoutOptions = options.TimeoutOptions ?? throw new ArgumentNullException(nameof(options));
         _redactor = redactor;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sharedHandler = CreateClientHandler();
@@ -42,25 +49,39 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     private AuthenticationHandler CreateClientHandler()
     {
         var handler = new SocketsHttpHandler();
-        handler.SslOptions.EnabledSslProtocols = _options.SslProtocols;
+
+        ConfigureDnsResolverCallback(handler);
+        ConfigureClientCertificates(handler);
+
+        handler.SslOptions.RemoteCertificateValidationCallback =
+            CertificateValidation.CreateRemoteCertificateValidationCallback(_securityOptions, _logger);
+        return new AuthenticationHandler(handler, _credential);
+    }
+
+    private void ConfigureClientCertificates(SocketsHttpHandler handler)
+    {
+        handler.SslOptions.EnabledSslProtocols = _securityOptions.SslProtocols;
 
         X509Certificate2Collection certCollection = new X509Certificate2Collection();
-        if (_options.TrustMode == CertificateTrustMode.CapellaOnly)
+        switch (_securityOptions.TrustMode)
         {
-            certCollection.Add(CertificateValidation.CapellaCaCert);
-        }
-        else if (_options.TrustMode == CertificateTrustMode.CertificatesOnly)
-        {
-            certCollection.AddRange(_options.CertificatesValue);
-        }
-        else if (_options.TrustMode == CertificateTrustMode.PemFilePath)
-        {
-            certCollection.Add(new X509Certificate2(_options.PathToPemFileValue));
-        }
-        else if (_options.TrustMode == CertificateTrustMode.PemString)
-        {
-            certCollection.Add(new X509Certificate2(
-                rawData: System.Text.Encoding.ASCII.GetBytes(_options.CertificateValue)));
+            case CertificateTrustMode.CapellaOnly:
+                certCollection.Add(CertificateValidation.CapellaCaCert);
+                break;
+            case CertificateTrustMode.CertificatesOnly:
+                certCollection.AddRange(_securityOptions.CertificatesValue);
+                break;
+            case CertificateTrustMode.PemFilePath:
+                certCollection.Add(new X509Certificate2(_securityOptions.PathToPemFileValue));
+                break;
+            case CertificateTrustMode.PemString:
+                certCollection.Add(new X509Certificate2(
+                    rawData: System.Text.Encoding.ASCII.GetBytes(_securityOptions.CertificateValue)));
+                break;
+            case CertificateTrustMode.Default:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(_securityOptions.TrustMode));
         }
 
         handler.SslOptions.ClientCertificates = certCollection;
@@ -70,11 +91,37 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
         // the correct key usage flags.
         handler.SslOptions.LocalCertificateSelectionCallback =
             (_, _, _, _, _) => CertificateValidation.GetClientCertificate(certCollection)!;
+    }
 
-        // Use proper certificate validation instead of dangerous bypass
-        handler.SslOptions.RemoteCertificateValidationCallback =
-            CertificateValidation.CreateRemoteCertificateValidationCallback(_options, _logger);
-        return new AuthenticationHandler(handler, _credential);
+    /// <summary>
+    /// Registers a ConnectCallback to the handler to configure the behaviour of each connection attempt.
+    /// The current behaviour is:
+    /// - Refresh the DNS record on every request
+    /// - Connect to a random endpoint from the resolved DNS record
+    /// - Use the <see cref="TimeoutOptions.ConnectTimeout"/> for each endpoint connection attempt.
+    /// This means that if ConnectTimeout is set to 10 seconds and there are 3 endpoints, the total time to connect could be up to 30 seconds if all endpoints are slow to respond or unavailable.
+    /// </summary>
+    /// <param name="handler">The Http Handler</param>
+    private void ConfigureDnsResolverCallback(SocketsHttpHandler handler)
+    {
+        var connector = new DnsEndpointConnector(
+            new CountBasedDnsRefreshStrategy(1), // Refresh DNS entries on every request
+            _timeoutOptions.ConnectTimeout,
+            EndpointSelectionMode.RandomFromUnusedEndpoints
+        );
+
+        handler.ConnectCallback = async (context, cancellation) =>
+        {
+            try
+            {
+                var socket = await connector.ConnectAsync(context.DnsEndPoint, cancellation).ConfigureAwait(false);
+                return new NetworkStream(socket, ownsSocket: true);
+            }
+            catch (AggregateException ex)
+            {
+                throw new AnalyticsException($"Failed to connect to all endpoints for host: {context.DnsEndPoint.Host}:{context.DnsEndPoint.Port} ", ex);
+            }
+        };
     }
 
     public HttpClient Create()

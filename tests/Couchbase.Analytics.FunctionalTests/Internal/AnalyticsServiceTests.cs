@@ -32,12 +32,12 @@ public class AnalyticsServiceTests
         var mockHttpClientFactory = new Mock<ILogger<CouchbaseHttpClientFactory>>();
         var mockAnalyticsLogger = new Mock<ILogger<AnalyticsService>>();
         var mockRedactor = new Mock<IRedactor>();
-        
+
         var credentials = new Credential(_analytics2Fixture.FixtureSettings.Username, _analytics2Fixture.FixtureSettings.Password!);
 
         var httpClientFactory = new CouchbaseHttpClientFactory(
             credentials,
-            _analytics2Fixture.ClusterOptions.SecurityOptions,
+            _analytics2Fixture.ClusterOptions,
             mockRedactor.Object,
             mockHttpClientFactory.Object);
 

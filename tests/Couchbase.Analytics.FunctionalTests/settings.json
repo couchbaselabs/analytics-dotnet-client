@@ -1,6 +1,6 @@
 {
   "TestSettings": {
-    "ConnectionString": "http://localhost:8095",
+    "ConnectionString": "localhost:8095",
     "Username": "Administrator",
     "Password": "password"
   }
