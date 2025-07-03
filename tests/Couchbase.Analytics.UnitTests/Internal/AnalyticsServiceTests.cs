@@ -43,7 +43,7 @@ public class AnalyticsServiceTests
             _endPoint,
             _loggerMock.Object,
             _jsonSerializerMock.Object);
-        
+
         const string ExecuteQueryPath = "/api/v1/request";
         var expected = new UriBuilder(_endPoint);
         expected.Path = ExecuteQueryPath;
@@ -136,7 +136,7 @@ public class AnalyticsServiceTests
             _loggerMock.Object,
             _jsonSerializerMock.Object);
 
-        var queryOptions = new QueryOptions { Priority = true, AsStreaming = false };
+        var queryOptions = new QueryOptions { AsStreaming = false };
 
         // Act
         var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);

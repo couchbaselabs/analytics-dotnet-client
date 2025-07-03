@@ -39,11 +39,6 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                 Content = content
             };
 
-            if (options.Priority)
-            {
-                request.Headers.Add(AnalyticsPriorityHeaderName, "true");
-            }
-
             var httpClient = CreateHttpClient(options.Timeout);
 
             var response = await httpClient.SendAsync(request,
