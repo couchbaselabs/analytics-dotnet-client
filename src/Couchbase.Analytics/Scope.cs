@@ -13,7 +13,7 @@ public sealed class Scope
         _name = name ?? throw new ArgumentNullException(nameof(name));
     }
 
-    public Task<QueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions? options = null)
+    public Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions? options = null)
     {
         throw new NotImplementedException();
     }

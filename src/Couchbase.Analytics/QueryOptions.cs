@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2;
 
@@ -19,7 +20,7 @@ public record QueryOptions
 
     public TimeSpan? ScanWait { get; set; }
 
-    //public JsonSerializer Serializer { get; init; }
+    public ISerializer Serializer { get; init; }
 
     public bool ReadOnly { get; set; }
 
