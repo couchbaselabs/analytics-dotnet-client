@@ -3,12 +3,9 @@ using System.Reflection;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.DnsUtil;
 using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
-using Couchbase.Analytics2.Internal.Logging;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using System.Linq;
-using System.Net.Http;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -38,7 +35,6 @@ public class ConnectCallbackRoundRobinTests
             .WithTimeoutOptions(new TimeoutOptions()
                 .WithConnectTimeout(TimeSpan.FromMilliseconds(50)));
 
-        var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
         var factory = new CouchbaseHttpClientFactory(credential, options, logger);
 

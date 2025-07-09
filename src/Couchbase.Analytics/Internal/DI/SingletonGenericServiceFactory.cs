@@ -104,9 +104,7 @@ internal sealed class SingletonGenericServiceFactory : IServiceFactory
 
         var type = _genericType.MakeGenericType(typeArgs);
 
-        var constructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-            .OrderByDescending(p => p.GetParameters().Length)
-            .First();
+        var constructor = ConstructorSelector.SelectConstructor(type);
 
         var constructorArgs = constructor.GetParameters()
             .Select(p => _serviceProvider.GetRequiredService(p.ParameterType))

@@ -1,9 +1,6 @@
-using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Couchbase.Analytics2.Exceptions;
-using Couchbase.Analytics2.Internal.Logging;
 using Couchbase.Analytics2.Internal.Utils;
 using Couchbase.Analytics2.Internal.Certificates;
 using Couchbase.Analytics2.Internal.DnsUtil;

@@ -1,15 +1,6 @@
-using System.Diagnostics;
-using System.Net;
-using System.Xml.Xsl;
 using Couchbase.Analytics2.FunctionalTests.Fixtures;
-using Couchbase.Analytics2.Internal;
 using Xunit;
-using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Logging;
-using Couchbase.Text.Json;
 using DnsClient;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit.Abstractions;
 
 namespace Couchbase.Analytics2.FunctionalTests.Internal;
@@ -38,7 +29,7 @@ public class AnalyticsServiceTests
     public async Task Test_DNSLookupAsync()
     {
         var lookupClient = new LookupClient();
-        var hostname = _analytics2Fixture.FixtureSettings.ConnectionString!.Split(':')[0]; // Extract hostname from connection string
+        var hostname = _analytics2Fixture.FixtureSettings.ConnectionString!.Split(':')[0];
         var results = await lookupClient.QueryAsync(hostname, QueryType.A);
         Assert.NotNull(results);
     }
