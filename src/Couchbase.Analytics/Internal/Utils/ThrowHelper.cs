@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Couchbase.Analytics2.Internal.Utils;
@@ -9,8 +11,8 @@ public class ThrowHelper
         throw new ArgumentException(message, paramName);
 
     [DoesNotReturn]
-    public static void ThrowArgumentNullException(string paramName) =>
-        throw new ArgumentNullException(paramName);
+    public static void ThrowInvalidOperationException(string message) =>
+        throw new InvalidOperationException(message);
 
     [DoesNotReturn]
     public static void ThrowArgumentOutOfRangeException() =>
@@ -23,5 +25,15 @@ public class ThrowHelper
     [DoesNotReturn]
     public static void ThrowArgumentException(string message) =>
         throw new ArgumentException(message);
+
+    [DoesNotReturn]
+    public static void ThrowArgumentNullException(string paramName) =>
+        throw new ArgumentNullException(paramName);
+
+    [DoesNotReturn]
+    public static void ThrowNotSupportedException(string message) =>
+        throw new NotSupportedException(message);
+
+
 
 }

@@ -18,6 +18,11 @@ internal sealed class TypedRedactor
     private const string _meta = "md";
     private const string _system = "sd";
 
+    //TODO: The ClusterOptiosn do not include a RedactionLevel, by design.
+    //If they do in the future, replace RedactionLevel.None to the options'.
+    public TypedRedactor(ClusterOptions options) : this(RedactionLevel.None)
+    {
+    }
     internal TypedRedactor(RedactionLevel redactionLevel)
     {
         RedactionLevel = redactionLevel;

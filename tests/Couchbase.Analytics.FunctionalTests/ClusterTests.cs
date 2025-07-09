@@ -20,13 +20,7 @@ public class ClusterTests
     [Fact]
     public async Task Test_QueryAsync()
     {
-        var cluster = Cluster.Create("https://5e07bed7-20250516.cb-sdk.bemdas.com:8095",
-            new Credential("Administrator", "password"),
-            new ClusterOptions()
-            {
-                SecurityOptions = new SecurityOptions().
-                    WithTrustOnlyPemString(_fixture.CapellaCaCert)
-            });
+        var cluster = _fixture.Cluster;
 
         using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", options =>
         {

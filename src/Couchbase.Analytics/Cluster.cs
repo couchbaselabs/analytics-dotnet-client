@@ -1,9 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Logging;
-using Couchbase.Text.Json;
-using Microsoft.Extensions.Logging.Abstractions;
+using Couchbase.Analytics2.Internal.DI;
+using Microsoft.Extensions.Logging;
 
 namespace Couchbase.Analytics2;
 
@@ -11,33 +9,24 @@ public class Cluster : IDisposable
 {
     private readonly Credential _credential;
     private readonly ClusterOptions _clusterOptions;
-    private readonly ConcurrentDictionary<string, Database> _databases = new();
-    private readonly Lazy<LinkManager> _linkManager;
-    private readonly Lazy<DatabaseManager> _databaseManager;
-    private readonly Lazy<IAnalyticsService> _analyticsService;
+    private readonly ILogger<Cluster> _logger;
+    private readonly ICouchbaseServiceProvider _serviceProvider;
+    private readonly LazyService<IAnalyticsService> _analyticsService;
 
     private Cluster(Credential credential, ClusterOptions clusterOptions)
     {
-        _credential = credential ?? throw new ArgumentNullException(nameof(credential));
-        _clusterOptions = clusterOptions ?? throw new ArgumentNullException(nameof(clusterOptions));
-
-        // Validate that connection string is provided
-        if (string.IsNullOrWhiteSpace(_clusterOptions.ConnectionString))
+        if (string.IsNullOrWhiteSpace(clusterOptions.ConnectionString))
         {
             throw new ArgumentException("ConnectionString cannot be null or empty.", nameof(clusterOptions));
         }
 
-        _linkManager = new Lazy<LinkManager>(() => new LinkManager(this));
-        _databaseManager = new Lazy<DatabaseManager>(() => new DatabaseManager(this));
+        _credential = credential ?? throw new ArgumentNullException(nameof(credential));
+        _clusterOptions = clusterOptions ?? throw new ArgumentNullException(nameof(clusterOptions));
+        _serviceProvider = clusterOptions.BuildServiceProvider(_credential);
 
-        _analyticsService = new Lazy<IAnalyticsService>(() =>
-        {
-            var endpoint = _clusterOptions.ConnectionStringValue!.GetDnsBootStrapUri();
-            var httpClientFactory = new CouchbaseHttpClientFactory(_credential, _clusterOptions, new Redactor(new TypedRedactor(RedactionLevel.None)), new NullLogger<CouchbaseHttpClientFactory>());
-            var analyticsService = new AnalyticsService(_clusterOptions, httpClientFactory, endpoint, new NullLogger<AnalyticsService>(), new StjJsonDeserializer());
+        _logger = _serviceProvider.GetRequiredService<ILogger<Cluster>>();
+        _analyticsService = new LazyService<IAnalyticsService>(_serviceProvider);
 
-            return analyticsService;
-        });
     }
 
     /// <summary>
@@ -120,21 +109,6 @@ public class Cluster : IDisposable
     {
        var service = _analyticsService.Value;
        return await service.SendAsync<T>(statement, options ?? new QueryOptions()).ConfigureAwait(false);
-    }
-
-    public Database Database(string databaseName)
-    {
-        return _databases.GetOrAdd(databaseName, database=> new Database(this, database));
-    }
-
-    public LinkManager Links()
-    {
-        return _linkManager.Value;
-    }
-
-    public DatabaseManager Databases()
-    {
-        return _databaseManager.Value;
     }
 
     public void Dispose()

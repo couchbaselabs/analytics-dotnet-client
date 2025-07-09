@@ -32,15 +32,15 @@ public class ConnectCallbackRoundRobinTests
     public void ConnectCallback_Should_Use_RandomEndpointSelector()
     {
         var credential = new Mock<ICredential>().Object;
-        var options = new ClusterOptions
-        {
-            SecurityOptions = new SecurityOptions().WithDisableCertificateVerification(true),
-            TimeoutOptions = new TimeoutOptions().WithConnectTimeout(TimeSpan.FromMilliseconds(50))
-        };
+        var options = new ClusterOptions()
+            .WithSecurityOptions(new SecurityOptions()
+                .WithDisableCertificateVerification(true))
+            .WithTimeoutOptions(new TimeoutOptions()
+                .WithConnectTimeout(TimeSpan.FromMilliseconds(50)));
 
         var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, options, redactor, logger);
+        var factory = new CouchbaseHttpClientFactory(credential, options, logger);
 
         // Extract the underlying SocketsHttpHandler and its ConnectCallback via reflection
         var sharedHandlerField = typeof(CouchbaseHttpClientFactory).GetField("_sharedHandler", BindingFlags.NonPublic | BindingFlags.Instance)!;

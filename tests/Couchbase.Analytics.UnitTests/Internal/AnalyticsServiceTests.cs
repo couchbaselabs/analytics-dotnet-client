@@ -10,19 +10,22 @@ using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Couchbase.Analytics2.UnitTests.Internal;
 
 public class AnalyticsServiceTests
 {
+    private readonly ITestOutputHelper _outputHelper;
     private readonly Mock<ICouchbaseHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<ILogger<AnalyticsService>> _loggerMock;
     private readonly Mock<IDeserializer> _jsonSerializerMock;
     private readonly Uri _endPoint;
     private readonly ClusterOptions _clusterOptions;
 
-    public AnalyticsServiceTests()
+    public AnalyticsServiceTests(ITestOutputHelper outputHelper)
     {
+        _outputHelper = outputHelper;
         _httpClientFactoryMock = new Mock<ICouchbaseHttpClientFactory>();
         _loggerMock = new Mock<ILogger<AnalyticsService>>();
         _jsonSerializerMock = new Mock<IDeserializer>();
@@ -30,7 +33,7 @@ public class AnalyticsServiceTests
             It.IsAny<CancellationToken>()))
             .Returns(new Mock<IJsonStreamReader>().Object);
         _endPoint = new Uri($"https://{IPAddress.Loopback}:8095");
-        _clusterOptions = new ClusterOptions();
+        _clusterOptions = new ClusterOptions { ConnectionString = _endPoint.OriginalString };
     }
 
     [Fact]
@@ -40,7 +43,6 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _endPoint,
             _loggerMock.Object,
             _jsonSerializerMock.Object);
 
@@ -84,7 +86,6 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _endPoint,
             _loggerMock.Object,
             _jsonSerializerMock.Object);
 
@@ -132,7 +133,6 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _endPoint,
             _loggerMock.Object,
             _jsonSerializerMock.Object);
 
@@ -166,7 +166,6 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _endPoint,
             _loggerMock.Object,
             _jsonSerializerMock.Object);
 

@@ -54,8 +54,13 @@ public class Analytics2Fixture : IDisposable
         Cluster = CreateCluster();
     }
 
-    public void ResetCluster()
+    /// <summary>
+    /// Creates new ClusterOptions and Cluster instances.
+    /// </summary>
+    /// <param name="clusterOptions">The ClusterOptions to be passed. If none are specified, the Fixture's are used.</param>
+    public void ResetCluster(ClusterOptions? clusterOptions = null)
     {
+        ClusterOptions = clusterOptions ?? CreateClusterOptions();
         Cluster = CreateCluster();
     }
 

@@ -29,22 +29,8 @@ public class AnalyticsServiceTests
     [Fact]
     public async Task TestGetAnalyticsAsync()
     {
-        var mockHttpClientFactory = new Mock<ILogger<CouchbaseHttpClientFactory>>();
-        var mockAnalyticsLogger = new Mock<ILogger<AnalyticsService>>();
-        var mockRedactor = new Mock<IRedactor>();
+        var response = _analytics2Fixture.Cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", new QueryOptions());
 
-        var credentials = new Credential(_analytics2Fixture.FixtureSettings.Username, _analytics2Fixture.FixtureSettings.Password!);
-
-        var httpClientFactory = new CouchbaseHttpClientFactory(
-            credentials,
-            _analytics2Fixture.ClusterOptions,
-            mockRedactor.Object,
-            mockHttpClientFactory.Object);
-
-        var endpoint = new Uri($"https://{_analytics2Fixture.FixtureSettings.ConnectionString}");
-        var service = new AnalyticsService(_analytics2Fixture.ClusterOptions, httpClientFactory, endpoint, mockAnalyticsLogger.Object, new StjJsonDeserializer());
-
-        var response = await service.SendAsync<dynamic>("SELECT 1;", new QueryOptions());
         Assert.NotNull(response);
     }
 
