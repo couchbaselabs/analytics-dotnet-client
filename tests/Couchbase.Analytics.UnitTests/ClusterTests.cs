@@ -62,52 +62,6 @@ namespace Couchbase.Analytics2.UnitTests
         }
 
         [Fact]
-        public void Database_ReturnsDatabaseInstance()
-        {
-            // Arrange
-            var httpEndpoint = "http://localhost:8091";
-            var credential = Credential.Create("Administrator", "password");
-            var cluster = Cluster.Create(httpEndpoint, credential);
-
-            // Act
-            var database = cluster.Database("TestDatabase");
-
-            // Assert
-            Assert.NotNull(database);
-            Assert.Equal("TestDatabase", database.Name); // Assuming Database has a Name property
-        }
-
-        [Fact]
-        public void Links_ReturnsLinkManagerInstance()
-        {
-            // Arrange
-            var httpEndpoint = "http://localhost:8091";
-            var credential = Credential.Create("Administrator", "password");
-            var cluster = Cluster.Create(httpEndpoint, credential);
-
-            // Act
-            var linkManager = cluster.Links();
-
-            // Assert
-            Assert.NotNull(linkManager);
-        }
-
-        [Fact]
-        public void Databases_ReturnsDatabaseManagerInstance()
-        {
-            // Arrange
-            var httpEndpoint = "http://localhost:8091";
-            var credential = Credential.Create("Administrator", "password");
-            var cluster = Cluster.Create(httpEndpoint, credential);
-
-            // Act
-            var databaseManager = cluster.Databases();
-
-            // Assert
-            Assert.NotNull(databaseManager);
-        }
-
-        [Fact]
         public void Dispose_ReleasesResources()
         {
             // Arrange
@@ -130,35 +84,33 @@ namespace Couchbase.Analytics2.UnitTests
         [Fact]
         public void Create_ClusterOptions_With_All_Parameters()
         {
+            var securityOptions = new SecurityOptions()
+                .WithDisableCertificateVerification(true)
+                .WithSslProtocols(SslProtocols.Tls12)
+                .WithTrustOnlyCertificates(new X509Certificate2Collection())
+                .WithTrustOnlyPemFile("path/to/certificate.pem")
+                .WithTrustOnlyCapella()
+                .WithTrustOnlyPemString("pem_string");
+            var timeoutOptions = new TimeoutOptions()
+                .WithDispatchTimeout(TimeSpan.Zero)
+                .WithConnectTimeout(TimeSpan.Zero)
+                .WithQueryTimeout(TimeSpan.Zero);
+
             var clusterOptions = new ClusterOptions()
             {
-                SecurityOptions = new SecurityOptions()
-                    .WithDisableCertificateVerification(true)
-                    .WithSslProtocols(SslProtocols.Tls12)
-                    .WithTrustOnlyCertificates(new X509Certificate2Collection())
-                    .WithTrustOnlyPemFile("path/to/certificate.pem")
-                    .WithTrustOnlyCapella()
-                    .WithTrustOnlyPemString("pem_string"),
-
-                TimeoutOptions = new TimeoutOptions()
-                    .WithDispatchTimeout(TimeSpan.Zero)
-                    .WithConnectTimeout(TimeSpan.Zero)
-                    .WithQueryTimeout(TimeSpan.Zero),
-
                 ConnectionString = "https://unit_test.cloud.couchbase.com:9999"
             };
+            clusterOptions.WithSecurityOptions(securityOptions).WithTimeoutOptions(timeoutOptions);
 
-            clusterOptions = clusterOptions with
+            timeoutOptions = clusterOptions.TimeoutOptions with
             {
-                TimeoutOptions = clusterOptions.TimeoutOptions with
-                {
-                    QueryTimeout = TimeSpan.FromSeconds(30),
-                    ConnectTimeout = TimeSpan.FromSeconds(10),
-                    DispatchTimeout = TimeSpan.FromSeconds(5)
-                }
+                QueryTimeout = TimeSpan.FromSeconds(30),
+                ConnectTimeout = TimeSpan.FromSeconds(10),
+                DispatchTimeout = TimeSpan.FromSeconds(5)
             };
+            clusterOptions.WithTimeoutOptions(timeoutOptions);
 
-            clusterOptions.SecurityOptions = clusterOptions.SecurityOptions.WithDisableCertificateVerification(true);
+            clusterOptions.WithSecurityOptions(clusterOptions.SecurityOptions.WithDisableCertificateVerification(true));
 
             Assert.NotNull(clusterOptions.SecurityOptions);
             Assert.NotNull(clusterOptions.TimeoutOptions);

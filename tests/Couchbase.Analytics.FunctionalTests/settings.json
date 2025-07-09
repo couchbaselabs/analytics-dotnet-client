@@ -1,7 +1,7 @@
 {
   "TestSettings": {
-    "ConnectionString": "localhost:8095",
-    "Username": "Administrator",
-    "Password": "password"
+    "ConnectionString": "https://cb.2xg3vwszqgqcrsix.cloud.couchbase.com:18095",
+    "Username": "Emilien",
+    "Password": "Password123!"
   }
 }

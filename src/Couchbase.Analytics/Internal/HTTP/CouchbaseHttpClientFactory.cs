@@ -17,18 +17,16 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     private readonly ICredential _credential;
     private readonly SecurityOptions _securityOptions;
     private readonly TimeoutOptions _timeoutOptions;
-    private readonly IRedactor _redactor;
     private readonly ILogger<CouchbaseHttpClientFactory> _logger;
     private readonly AuthenticationHandler _sharedHandler;
 
-    public CouchbaseHttpClientFactory(ICredential credential, ClusterOptions options, IRedactor  redactor,
+    public CouchbaseHttpClientFactory(ICredential credential, ClusterOptions options,
         ILogger<CouchbaseHttpClientFactory> logger)
     {
         ArgumentNullException.ThrowIfNull(options);
         _credential = credential;
         _securityOptions = options.SecurityOptions ?? throw new ArgumentNullException(nameof(options));
         _timeoutOptions = options.TimeoutOptions ?? throw new ArgumentNullException(nameof(options));
-        _redactor = redactor;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sharedHandler = CreateClientHandler();
     }

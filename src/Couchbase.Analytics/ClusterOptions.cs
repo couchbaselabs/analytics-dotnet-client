@@ -1,25 +1,98 @@
+using System.ComponentModel;
 using System.Security.Authentication;
 using Couchbase.Analytics2.Internal;
+using Couchbase.Analytics2.Internal.DI;
 using Couchbase.Analytics2.Internal.Utils;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Couchbase.Analytics2;
 
 public record ClusterOptions
 {
-    public ClusterOptions()
+    public SecurityOptions SecurityOptions { get; private set; } = new();
+
+    public TimeoutOptions TimeoutOptions { get; private set; } = new();
+
+    internal ConnectionString? ConnectionStringValue { get; private set; }
+
+    private ILoggerFactory? Logging { get; set; }
+
+    public ClusterOptions WithSecurityOptions(SecurityOptions securityOptions)
     {
+        return this with { SecurityOptions = securityOptions };
     }
 
-    public SecurityOptions SecurityOptions { get; set; } = new();
+    public ClusterOptions WithTimeoutOptions(TimeoutOptions timeoutOptions)
+    {
+        return this with { TimeoutOptions = timeoutOptions };
+    }
 
-    public TimeoutOptions TimeoutOptions { get; set; } = new();
+    /// <summary>
+    /// Set the <see cref="ILoggerFactory"/> to use for logging.
+    /// </summary>
+    /// <param name="loggerFactory">The logger factory.</param>
+    /// <returns>
+    /// A reference to this <see cref="ClusterOptions"/> object for method chaining.
+    /// </returns>
+    public ClusterOptions WithLogging(ILoggerFactory? loggerFactory = null)
+    {
+        return this with { Logging = loggerFactory };
+    }
 
-    internal ConnectionString? ConnectionStringValue { get; set; }
+    private readonly IDictionary<Type, IServiceFactory> _services = DefaultServices.GetDefaultServices();
+
+    internal ICouchbaseServiceProvider BuildServiceProvider(ICredential? credential = null)
+    {
+        this.AddClusterService(this);
+        this.AddClusterService(Logging ??= new NullLoggerFactory());
+        if (credential is not null) this.AddClusterService(credential);
+        return new CouchbaseServiceProvider(_services);
+    }
+
+    /// <summary>
+    /// Register a service with the cluster's <see cref="CouchbaseServiceProvider"/>.
+    /// </summary>
+    /// <typeparam name="TService">The type of the service which will be requested.</typeparam>
+    /// <typeparam name="TImplementation">The type of the service implementation which is returned.</typeparam>
+    /// <param name="factory">Factory which will create the service.</param>
+    /// <param name="lifetime">Lifetime of the service.</param>
+    /// <returns>The <see cref="ClusterOptions"/>.</returns>
+    public ClusterOptions AddService<TService, TImplementation>(
+        Func<IServiceProvider, TImplementation> factory,
+        ClusterServiceLifetime lifetime)
+        where TImplementation : notnull, TService
+    {
+        _services[typeof(TService)] = lifetime switch
+        {
+            ClusterServiceLifetime.Transient => new TransientServiceFactory(serviceProvider => factory(serviceProvider)),
+            ClusterServiceLifetime.Cluster => new SingletonServiceFactory(serviceProvider => factory(serviceProvider)),
+            _ => throw new InvalidEnumArgumentException(nameof(lifetime), (int) lifetime,
+                typeof(ClusterServiceLifetime))
+        };
+
+        return this;
+    }
+
+    // public ClusterOptions AddService<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+    //     ClusterServiceLifetime lifetime)
+    //     where TImplementation : TService
+    // {
+    //     _services[typeof(TService)] = lifetime switch
+    //     {
+    //         ClusterServiceLifetime.Transient => new TransientServiceFactory(typeof(TImplementation)),
+    //         ClusterServiceLifetime.Cluster => new SingletonServiceFactory(typeof(TImplementation)),
+    //         _ => throw new InvalidEnumArgumentException(nameof(lifetime), (int) lifetime,
+    //             typeof(ClusterServiceLifetime))
+    //     };
+    //
+    //     return this;
+    // }
 
     /// <summary>
     /// The connection string for the cluster.
     /// </summary>
-    public string? ConnectionString
+    internal string? ConnectionString
     {
         get => ConnectionStringValue?.ToString();
         set
