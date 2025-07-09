@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Logging;
 using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -20,9 +19,6 @@ internal static class DefaultServices
     {
         yield return (typeof(ILoggerFactory), new SingletonServiceFactory(new NullLoggerFactory()));
         yield return (typeof(ILogger<>), new SingletonGenericServiceFactory(typeof(Logger<>)));
-        yield return (typeof(IRedactor), new SingletonServiceFactory(typeof(Redactor)));
-        yield return (typeof(TypedRedactor), new SingletonServiceFactory(typeof(TypedRedactor)));
-
 
         yield return (typeof(JsonSerializerOptions), new SingletonServiceFactory(new JsonSerializerOptions()));
 

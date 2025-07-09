@@ -1,6 +1,5 @@
 using System.Security.Authentication;
 using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Logging;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -15,7 +14,6 @@ public class CouchbaseHttpClientFactoryTest
         // Arrange
         var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions().WithSecurityOptions(new SecurityOptions().WithDisableCertificateVerification(true));
-        var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
         // Act
@@ -30,7 +28,6 @@ public class CouchbaseHttpClientFactoryTest
     {
         // Arrange
         var credential = new Mock<ICredential>().Object;
-        var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
         // Act & Assert
@@ -43,7 +40,6 @@ public class CouchbaseHttpClientFactoryTest
         // Arrange
         var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions();
-        var redactor = new Mock<IRedactor>().Object;
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, options, null));
@@ -55,7 +51,6 @@ public class CouchbaseHttpClientFactoryTest
         // Arrange
         var credential = new Credential("Administrator", "password");
         var options = new ClusterOptions().WithSecurityOptions(new SecurityOptions().WithSslProtocols(SslProtocols.Tls12));
-        var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
         var factory = new CouchbaseHttpClientFactory(credential, options, logger);
 
@@ -76,7 +71,6 @@ public class CouchbaseHttpClientFactoryTest
             .WithDisableCertificateVerification(true)
             .WithTrustOnlyCapella());
 
-        var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
         var factory = new CouchbaseHttpClientFactory(credential, options, logger);
 
@@ -93,7 +87,6 @@ public class CouchbaseHttpClientFactoryTest
         // Arrange
         var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions();
-        var redactor = new Mock<IRedactor>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
         var factory = new CouchbaseHttpClientFactory(credential, options, logger);
 

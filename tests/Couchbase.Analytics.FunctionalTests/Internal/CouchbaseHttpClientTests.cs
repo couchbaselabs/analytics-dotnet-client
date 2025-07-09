@@ -2,7 +2,6 @@ using System.Reflection;
 using Couchbase.Analytics2.FunctionalTests.Fixtures;
 using Couchbase.Analytics2.Internal.DnsUtil;
 using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.Logging;
 using Xunit;
 using Xunit.Abstractions;
 using System.Net;
@@ -11,9 +10,6 @@ using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DI;
 using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
-using Couchbase.Text.Json;
-using Microsoft.Extensions.Logging;
-using Moq;
 
 namespace Couchbase.Analytics2.FunctionalTests.Internal;
 

@@ -76,9 +76,7 @@ internal sealed class SingletonServiceFactory : IServiceFactory
     private static Func<IServiceProvider, object> CreateFactory(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType)
     {
-        var constructor = implementationType.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-            .OrderByDescending(p => p.GetParameters().Length)
-            .First();
+        var constructor = ConstructorSelector.SelectConstructor(implementationType);
 
         object Factory(IServiceProvider serviceProvider)
         {
