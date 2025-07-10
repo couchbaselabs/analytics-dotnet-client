@@ -23,9 +23,21 @@ public record ClusterOptions
         return this with { SecurityOptions = securityOptions };
     }
 
+    public ClusterOptions WithSecurityOptions(Func<SecurityOptions, SecurityOptions> securityOptions)
+    {
+        SecurityOptions = securityOptions.Invoke(SecurityOptions);
+        return this;
+    }
+
     public ClusterOptions WithTimeoutOptions(TimeoutOptions timeoutOptions)
     {
         return this with { TimeoutOptions = timeoutOptions };
+    }
+
+    public ClusterOptions WithTimeoutOptions(Func<TimeoutOptions, TimeoutOptions> securityOptions)
+    {
+        TimeoutOptions = securityOptions.Invoke(TimeoutOptions);
+        return this;
     }
 
     /// <summary>
@@ -73,21 +85,6 @@ public record ClusterOptions
 
         return this;
     }
-
-    // public ClusterOptions AddService<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
-    //     ClusterServiceLifetime lifetime)
-    //     where TImplementation : TService
-    // {
-    //     _services[typeof(TService)] = lifetime switch
-    //     {
-    //         ClusterServiceLifetime.Transient => new TransientServiceFactory(typeof(TImplementation)),
-    //         ClusterServiceLifetime.Cluster => new SingletonServiceFactory(typeof(TImplementation)),
-    //         _ => throw new InvalidEnumArgumentException(nameof(lifetime), (int) lifetime,
-    //             typeof(ClusterServiceLifetime))
-    //     };
-    //
-    //     return this;
-    // }
 
     /// <summary>
     /// The connection string for the cluster.
