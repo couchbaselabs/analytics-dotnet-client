@@ -38,7 +38,7 @@ public class CouchbaseHttpClientTests
         public string Greeting { get; set; }
     }
 
-    private ClusterOptions SmallTimeoutOptions =>
+    private static ClusterOptions SmallTimeoutOptions =>
         new ClusterOptions().WithTimeoutOptions(new TimeoutOptions().WithConnectTimeout(TimeSpan.FromSeconds(2)));
 
     //This is a helper meant to allow tests to substitute some or all of the real resolved IPs with unreachable ones.
