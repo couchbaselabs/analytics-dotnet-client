@@ -1,4 +1,21 @@
-using System.Text.Json;
+/* ************************************************************
+ *
+ *    @author Couchbase <info@couchbase.com>
+ *    @copyright 2025 Couchbase, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
+ * ************************************************************/
 using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
@@ -15,23 +32,23 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
     private bool _hasFinishedReading;
     private IJsonStreamReader _jsonReader;
     private bool _disposed;
-    
-    public StreamingAnalyticsResult(Stream stream, IDeserializer serializer, IDisposable? ownedForCleanup = null) 
+
+    public StreamingAnalyticsResult(Stream stream, IDeserializer serializer, IDisposable? ownedForCleanup = null)
         : base(stream, serializer, ownedForCleanup)
     {
         _jsonReader = serializer.CreateJsonStreamReader(stream);
     }
-    
+
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         if (!await _jsonReader.InitializeAsync(cancellationToken).ConfigureAwait(false))
         {
             return;
         }
-        
+
         await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
     }
-    
+
     public override async IAsyncEnumerator<T> GetAsyncEnumerator(
         CancellationToken cancellationToken = new())
     {
@@ -61,7 +78,7 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
         }
 
         _hasReadResult = true;
-        
+
         await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
     }
 
@@ -73,9 +90,9 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
         }
 
         MetaData = new QueryMetaData();
-        
+
         _hasReadToResult = false;
-        
+
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
