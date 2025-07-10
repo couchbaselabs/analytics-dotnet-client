@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using Couchbase.Analytics2.Internal.Utils;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Couchbase.Analytics2.Internal.DI;
 

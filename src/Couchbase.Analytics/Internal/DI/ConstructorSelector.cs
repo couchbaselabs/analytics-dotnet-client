@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 
 namespace Couchbase.Analytics2.Internal.DI;
@@ -36,4 +35,4 @@ internal static class ConstructorSelector
         // Fallback: constructor with most parameters
         return constructors.OrderByDescending(c => c.GetParameters().Length).First();
     }
-} 
+}
