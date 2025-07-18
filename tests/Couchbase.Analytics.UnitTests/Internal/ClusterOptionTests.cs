@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using Couchbase.Analytics2.Internal.Certificates;
 using Couchbase.Analytics2.Internal.Utils;
 using Xunit;
 using Xunit.Abstractions;
