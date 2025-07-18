@@ -1,6 +1,7 @@
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.Utils;
 using System.Security.Authentication;
+using Couchbase.Analytics2.Internal.Certificates;
 using Xunit;
 
 namespace Couchbase.Analytics2.UnitTests.Internal
