@@ -32,6 +32,9 @@ public record ClusterOptions
 
     public TimeoutOptions TimeoutOptions { get; private set; } = new();
 
+    [InterfaceStability(StabilityLevel.Volatile)]
+    public int MaxRetries { get; private set; } = 7;
+
     internal ConnectionString? ConnectionStringValue { get; private set; }
 
     private ILoggerFactory? Logging { get; set; }
@@ -56,6 +59,17 @@ public record ClusterOptions
     {
         TimeoutOptions = securityOptions.Invoke(TimeoutOptions);
         return this;
+    }
+
+    [InterfaceStability(StabilityLevel.Volatile)]
+    public ClusterOptions WithMaxRetries(int maxRetries)
+    {
+        if (maxRetries < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxRetries), "Max retries must be greater than or equal to 0.");
+        }
+
+        return this with { MaxRetries = maxRetries };
     }
 
     /// <summary>
@@ -116,6 +130,10 @@ public record ClusterOptions
 
             if (ConnectionStringValue == null) return;
 
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.MaxRetries, out int maxRetries))
+            {
+                MaxRetries = maxRetries;
+            }
             if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.ConnectTimeout, out TimeSpan connectTimeout))
             {
                 TimeoutOptions = TimeoutOptions.WithConnectTimeout(connectTimeout);

@@ -16,33 +16,23 @@
  *    limitations under the License.
  *
  * ************************************************************/
-using System.Runtime.Serialization;
 
-namespace Couchbase.Analytics2.Exceptions;
+namespace Couchbase.Analytics2.Internal.Utils;
 
 /// <summary>
-/// Base exception type for Analytics.
+/// Annotation for the interface stability of a given API. A stable interface is one that
+/// is guaranteed not to change between versions, meaning that you may use an API of a
+/// given SDK version and be assured that the given API will retain the same parameters
+/// and behavior in subsequent versions. An unstable interface is one which may appear to
+/// work or behave in a specific way within a given SDK version, but may change in its
+/// behavior or arguments in future SDK versions, causing odd application behavior or
+/// compiler/API usage errors.
 /// </summary>
-public class AnalyticsException : Exception
+[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+public class InterfaceStabilityAttribute(StabilityLevel level) : Attribute
 {
     /// <summary>
-    /// The number of attempts made before throwing this exception.
+    /// The interface stability of the API.
     /// </summary>
-    public int Attempts { get; set; }
-
-    public AnalyticsException()
-    {
-    }
-
-    protected AnalyticsException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-
-    public AnalyticsException(string? message) : base(message)
-    {
-    }
-
-    public AnalyticsException(string? message, Exception? innerException) : base(message, innerException)
-    {
-    }
+    public StabilityLevel Level { get; } = level;
 }
