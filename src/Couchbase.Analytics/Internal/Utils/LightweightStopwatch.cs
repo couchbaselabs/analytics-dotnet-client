@@ -1,42 +1,47 @@
-using System.Diagnostics;
+/* ************************************************************
+ *
+ *    @author Couchbase <info@couchbase.com>
+ *    @copyright 2025 Couchbase, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
+ * ************************************************************/
 
 namespace Couchbase.Analytics2.Internal.Utils;
 
+/// <summary>
+/// A lightweight stopwatch implementation for measuring elapsed time.
+/// </summary>
 internal struct LightweightStopwatch
 {
-    private long _startTicks;
+    private readonly long _startTimestamp;
 
-    /// <summary>
-    /// Creates and starts a new <see cref="LightweightStopwatch"/>.
-    /// </summary>
-    /// <returns>The <see cref="LightweightStopwatch"/>.</returns>
-    public static LightweightStopwatch StartNew() =>
-        new()
-        {
-            _startTicks = Stopwatch.GetTimestamp()
-        };
-
-    /// <summary>
-    /// Elapsed milliseconds since the stopwatch was started.
-    /// </summary>
-    /// <remarks>
-    /// Resolution is 10-16 milliseconds.
-    /// </remarks>
-    public readonly long ElapsedMilliseconds => (long)Elapsed.TotalMilliseconds;
-
-    /// <summary>
-    /// Elapsed time since the stopwatch was started.
-    /// </summary>
-    /// <remarks>
-    /// Resolution is 10-16 milliseconds.
-    /// </remarks>
-    public readonly TimeSpan Elapsed => Stopwatch.GetElapsedTime(_startTicks);
-
-    /// <summary>
-    /// Restart the stopwatch from zero.
-    /// </summary>
-    public void Restart()
+    private LightweightStopwatch(long startTimestamp)
     {
-        _startTicks = Stopwatch.GetTimestamp();
+        _startTimestamp = startTimestamp;
+    }
+
+    /// <summary>
+    /// Gets the elapsed time since the stopwatch was started.
+    /// </summary>
+    public TimeSpan Elapsed => TimeSpan.FromTicks((DateTime.UtcNow.Ticks - _startTimestamp));
+
+    /// <summary>
+    /// Creates and starts a new lightweight stopwatch.
+    /// </summary>
+    /// <returns>A started stopwatch instance.</returns>
+    public static LightweightStopwatch StartNew()
+    {
+        return new LightweightStopwatch(DateTime.UtcNow.Ticks);
     }
 }

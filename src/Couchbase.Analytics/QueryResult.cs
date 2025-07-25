@@ -16,6 +16,9 @@
  *    limitations under the License.
  *
  * ************************************************************/
+
+using System.Net;
+
 namespace Couchbase.Analytics2;
 
 public class QueryResult<T> : IQueryResult<T>
@@ -34,6 +37,7 @@ public class QueryResult<T> : IQueryResult<T>
     public QueryMetaData MetaData { get; set; }
 
     public IReadOnlyList<Error> Errors { get; set; }
+    public HttpStatusCode? StatusCode { get; }
 
     private string Status { get; }
 

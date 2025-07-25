@@ -125,15 +125,8 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 
         handler.ConnectCallback = async (context, cancellation) =>
         {
-            try
-            {
-                var socket = await connector.ConnectAsync(context.DnsEndPoint, cancellation).ConfigureAwait(false);
-                return new NetworkStream(socket, ownsSocket: true);
-            }
-            catch (AggregateException ex)
-            {
-                throw new AnalyticsException($"Failed to connect to all endpoints for host: {context.DnsEndPoint.Host}:{context.DnsEndPoint.Port} ", ex);
-            }
+            var socket = await connector.ConnectAsync(context.DnsEndPoint, cancellation).ConfigureAwait(false);
+            return new NetworkStream(socket, ownsSocket: true);
         };
     }
 

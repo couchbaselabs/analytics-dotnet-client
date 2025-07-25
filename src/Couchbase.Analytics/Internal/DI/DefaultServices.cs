@@ -44,6 +44,8 @@ internal static class DefaultServices
         yield return (typeof(ISerializer), new SingletonServiceFactory(typeof(StjJsonSerializer)));
 
         yield return (typeof(ICouchbaseHttpClientFactory), new SingletonServiceFactory(typeof(CouchbaseHttpClientFactory)));
+        
+        // Register AnalyticsService directly (it now includes retry functionality via static utilities)
         yield return (typeof(IAnalyticsService), new SingletonServiceFactory(typeof(AnalyticsService)));
     }
 }

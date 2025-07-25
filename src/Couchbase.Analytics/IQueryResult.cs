@@ -16,6 +16,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+using System.Net;
+
 namespace Couchbase.Analytics2;
 
 public interface IQueryResult<out T> : IDisposable, IAsyncEnumerable<T>
@@ -25,4 +27,6 @@ public interface IQueryResult<out T> : IDisposable, IAsyncEnumerable<T>
     public QueryMetaData MetaData{ get; }
 
     public IReadOnlyList<Error> Errors { get; }
+
+    public HttpStatusCode? StatusCode { get; }
 }
