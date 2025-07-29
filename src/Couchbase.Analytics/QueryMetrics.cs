@@ -23,10 +23,10 @@ namespace Couchbase.Analytics2;
 public sealed class QueryMetrics
 {
     internal QueryMetrics(
-        string elapsedTime,
-        string executionTime,
-        string compileTime,
-        string queueWaitTime,
+        TimeSpan? elapsedTime,
+        TimeSpan? executionTime,
+        TimeSpan? compileTime,
+        TimeSpan? queueWaitTime,
         int resultCount,
         int resultSize,
         int processedObjects,
@@ -48,13 +48,13 @@ public sealed class QueryMetrics
     {
     }
 
-    public string ElapsedTime { get; }
+    public TimeSpan? ElapsedTime { get; }
 
-    public string ExecutionTime { get; }
+    public TimeSpan? ExecutionTime { get; }
 
-    public string CompileTime { get; }
+    public TimeSpan? CompileTime { get; }
 
-    public string QueueWaitTime { get; }
+    public TimeSpan? QueueWaitTime { get; }
 
     public int ResultCount { get; }
 
