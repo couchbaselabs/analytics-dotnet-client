@@ -16,6 +16,7 @@
  *    limitations under the License.
  *
  * ************************************************************/
+
 using System.Text.Json.Serialization;
 using Couchbase.Analytics2.Internal.Utils;
 using Couchbase.Text.Json;
@@ -79,13 +80,24 @@ internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
 #region POCOs
 internal record Metrics
 {
-    public string elapsedTime { get; set; }
-    public string executionTime { get; set; }
-    public string compileTime { get; set; }
-    public string queueWaitTime { get; set; }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    public TimeSpan? elapsedTime { get; set; }
+
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    public TimeSpan? executionTime { get; set; }
+
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    public TimeSpan? compileTime { get; set; }
+
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    public TimeSpan? queueWaitTime { get; set; }
+
     public int resultCount { get; set; }
+
     public int resultSize { get; set; }
+
     public int processedObjects { get; set; }
+
     public string bufferCacheHitRatio { get; set; }
 }
 
