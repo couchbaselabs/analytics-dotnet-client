@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,17 +17,35 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
+using System.Text.Json.Serialization;
+
 namespace Couchbase.Analytics2;
 
 public sealed class Error
 {
     internal Error(int code, string message)
     {
-        this.Code = code;
-        this.Message = message;
+        Code = code;
+        Message = message;
+        Retriable = false;
     }
 
+    [JsonConstructor]
+    internal Error(int code, string msg, bool? retriable = null)
+    {
+        Code = code;
+        Message = msg;
+        Retriable = retriable ?? false; // Default to false if absent as per RFC
+    }
+
+    [JsonPropertyName("code")]
     public int Code { get; }
 
+    [JsonPropertyName("msg")]
     public string Message { get; }
+
+    [JsonPropertyName("retriable")]
+    public bool Retriable { get; }
 }

@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,7 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
 
 using System.Net;
 using System.Net.Sockets;
@@ -25,7 +27,7 @@ using TimeoutException = System.TimeoutException;
 namespace Couchbase.Analytics2.Internal.Retry;
 
 /// <summary>
-/// Static utility for mapping HTTP status codes to Analytics exceptions.
+/// Static utility for mapping HTTP status codes and server error codes to Analytics exceptions.
 /// </summary>
 internal static class AnalyticsErrorMapper
 {
@@ -34,7 +36,7 @@ internal static class AnalyticsErrorMapper
     /// </summary>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <returns>An AnalyticsException or one of its subclasses.</returns>
-    public static AnalyticsException MapHttpErrorCode(HttpStatusCode statusCode)
+    internal static AnalyticsException MapHttpErrorCode(HttpStatusCode statusCode)
     {
         return statusCode switch
         {
@@ -45,11 +47,67 @@ internal static class AnalyticsErrorMapper
     }
 
     /// <summary>
+    /// Maps a server error code to the appropriate Analytics exception type.
+    /// </summary>
+    /// <param name="error">The error from the server response.</param>
+    /// <returns>An AnalyticsException or one of its subclasses.</returns>
+    private static AnalyticsException MapServerErrorCode(Error error)
+    {
+        return error.Code switch
+        {
+            20000 => new InvalidCredentialException(error.Message),
+            21002 => new Couchbase.Analytics2.Exceptions.TimeoutException(error.Message),
+            _ => new QueryException(error.Message) { Code = error.Code, ServerMessage = error.Message }
+        };
+    }
+
+    /// <summary>
+    /// Processes an array of errors and returns the appropriate exception according to RFC rules.
+    /// If the list contains at least one non-retriable error, the first non-retriable error is selected.
+    /// Otherwise, the first retriable error is selected.
+    /// </summary>
+    /// <param name="errors">The errors array from the server response.</param>
+    /// <returns>An AnalyticsException or one of its subclasses.</returns>
+    internal static AnalyticsException MapServiceErrors(IReadOnlyList<Error> errors)
+    {
+        if (errors == null || errors.Count == 0)
+        {
+            return new AnalyticsException("Unknown server error");
+        }
+
+        // Find first non-retriable error
+        var firstNonRetriable = errors.FirstOrDefault(e => !e.Retriable);
+        if (firstNonRetriable != null)
+        {
+            return MapServerErrorCode(firstNonRetriable);
+        }
+
+        // All errors are retriable, return the first one
+        return MapServerErrorCode(errors[0]);
+    }
+
+    /// <summary>
+    /// Determines if errors array indicates a retriable condition.
+    /// Per RFC: eligible for retry if EVERY error in the array has retriable: true.
+    /// </summary>
+    /// <param name="errors">The errors array from the server response.</param>
+    /// <returns>True if all errors are retriable.</returns>
+    internal static bool AreErrorsRetriable(IReadOnlyList<Error> errors)
+    {
+        if (errors == null || errors.Count == 0)
+        {
+            return false;
+        }
+
+        return errors.All(e => e.Retriable);
+    }
+
+    /// <summary>
     /// Determines if an HttpRequestException is eligible for retry.
     /// </summary>
     /// <param name="exception">The HttpRequestException to check.</param>
     /// <returns>True if the exception indicates a retriable condition.</returns>
-    public static bool IsRetriableHttpException(HttpRequestException exception)
+    internal static bool IsRetriableHttpException(HttpRequestException exception)
     {
         var innerException = exception.InnerException;
 
@@ -68,14 +126,14 @@ internal static class AnalyticsErrorMapper
     /// </summary>
     /// <param name="statusCode">The HTTP status code to check.</param>
     /// <returns>True if the status code indicates a retriable condition.</returns>
-    public static bool IsRetriableStatusCode(HttpStatusCode statusCode)
+    internal static bool IsRetriableStatusCode(HttpStatusCode statusCode)
     {
         return statusCode switch
         {
             HttpStatusCode.ServiceUnavailable => true, // 503
             HttpStatusCode.BadGateway => true,
             HttpStatusCode.GatewayTimeout => true,
-            HttpStatusCode.Unauthorized => false,      // Explicitly stating 401s are not retriable
+            HttpStatusCode.Unauthorized => false, // Explicitly stating 401s are not retriable
             _ => false
         };
     }

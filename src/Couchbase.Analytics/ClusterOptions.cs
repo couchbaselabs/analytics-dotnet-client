@@ -21,6 +21,7 @@ using System.Security.Authentication;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DI;
 using Couchbase.Analytics2.Internal.Utils;
+using Couchbase.Text.Json.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
 using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
@@ -116,6 +119,9 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
                     _hasReadToResult = true;
                     return;
                 case "errors":
+                    var errors = await _jsonReader.ReadObjectAsync<Error[]>(cancellationToken).ConfigureAwait(false);
+                    Errors = errors ?? Array.Empty<Error>();
+                    break;
                 case "warnings":
                 case "status":
                     //Ignore for now

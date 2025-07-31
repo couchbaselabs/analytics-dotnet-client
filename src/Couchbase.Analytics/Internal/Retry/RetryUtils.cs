@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,7 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
 
 namespace Couchbase.Analytics2.Internal.Retry;
 
@@ -24,8 +26,6 @@ namespace Couchbase.Analytics2.Internal.Retry;
 /// </summary>
 internal static class RetryUtils
 {
-    private static readonly ThreadLocal<Random> Random = new ThreadLocal<Random>(() => new Random(Environment.TickCount));
-
     private const uint BaseDelayMs = 100;
     private const double ExponentialFactor = 2.0;
     private const uint MaxDelayMs = 60_000;
@@ -45,7 +45,7 @@ internal static class RetryUtils
         var cappedDelay = Math.Min(exponentialDelay, MaxDelayMs);
 
         var jitterRange = cappedDelay * JitterPercent;
-        var jitterOffset = (Random.Value!.NextDouble() - 0.5) * 2 * jitterRange; // -jitterRange to +jitterRange
+        var jitterOffset = (Random.Shared.NextDouble() - 0.5) * 2 * jitterRange; // -jitterRange to +jitterRange
         var finalDelay = cappedDelay + jitterOffset;
 
         // Ensure we don't go below zero

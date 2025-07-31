@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,7 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
 
 using System.Text.Json.Serialization;
 using Couchbase.Analytics2.Internal.Utils;
@@ -73,6 +75,8 @@ internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
            // Warnings = body.warnings
         };
 
+        Errors = body.errors ?? Array.Empty<Error>();
+
         _rows = body.results;
     }
 }
@@ -113,7 +117,7 @@ internal record AnalyticsResultData<T>
     public Plans plans { get; set; }
     public string status { get; set; }
     public Metrics metrics { get; set; }
-    public IReadOnlyList<Error> errors { get; protected set; }
+    public IReadOnlyList<Error> errors { get; set; }
 }
 
 internal record Signature

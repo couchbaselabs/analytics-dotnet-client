@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,8 +17,9 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
 
-namespace Couchbase.Analytics2.Internal.Utils;
+namespace Couchbase.Text.Json.Utils;
 
 /// <summary>
 /// Designates the interface stability of a given API; how likely the interface is to change or be removed entirely.

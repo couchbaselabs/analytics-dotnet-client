@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,14 +17,15 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
 using System.Text;
 using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Analytics2.Internal.Retry;
-using Couchbase.Analytics2.Internal.Utils;
 using Couchbase.Text.Json;
+using Couchbase.Text.Json.Utils;
 using Microsoft.Extensions.Logging;
-using TimeoutException = System.TimeoutException;
 
 namespace Couchbase.Analytics2.Internal;
 
@@ -75,7 +77,6 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         var stream = await response.Content.ReadAsStreamAsync()
             .ConfigureAwait(false);
 
-        // Create appropriate result type based on streaming preference
         AnalyticsResultBase<T> result = options.AsStreaming
             ? new StreamingAnalyticsResult<T>(stream, _serializer, httpClient)
             : new BlockingAnalyticsResult<T>(stream, _serializer, httpClient);
@@ -100,7 +101,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         var stopwatch = LightweightStopwatch.StartNew();
         Exception lastException = new AnalyticsException("Maximum retries exceeded without success.");
 
-        for (uint attempt = 0; attempt < _options.MaxRetries; attempt++)
+        for (uint attempt = 0; attempt <= _options.MaxRetries; attempt++)
         {
             try
             {
@@ -110,23 +111,23 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
                 var result = await ExecuteQueryAsync<T>(statement, options).ConfigureAwait(false);
 
-                _logger.LogDebug(
-                    "Analytics query succeeded on attempt {Attempt} for ClientContextId {ClientContextId} (elapsed: {Elapsed}ms)",
-                    attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
-
-                if (!result.StatusCode.HasValue ||
-                    (int)result.StatusCode.Value >= 200 && (int)result.StatusCode.Value <= 299)
+                // Always read errors from the result
+                if (result.Errors is { Count: > 0 })
                 {
-                    return result;
-                }
-                if (!AnalyticsErrorMapper.IsRetriableStatusCode(result.StatusCode.Value))
-                {
-                    throw AnalyticsErrorMapper.MapHttpErrorCode(result.StatusCode.Value);
+                    // Per RFC: retry if ALL errors are retriable
+                    if (AnalyticsErrorMapper.AreErrorsRetriable(result.Errors))
+                    {
+                        _logger.LogDebug("Received retriable server errors for ClientContextId {ClientContextId}, retrying...", options.ClientContextId);
+                        lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors);
+                        await RetryUtils.BackoffAsync(attempt, options.CancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    // Non-retriable server errors - throw
+                    throw AnalyticsErrorMapper.MapServiceErrors(result.Errors);
                 }
 
-                _logger.LogDebug("Received retriable status code {StatusCode}, retrying...", result.StatusCode.Value);
-
-                await RetryUtils.BackoffAsync(attempt, options.CancellationToken).ConfigureAwait(false);
+                return result;
             }
             catch (HttpRequestException httpRequestException)
             {
@@ -154,11 +155,14 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                 // Check if we exceeded the query timeout
                 if (stopwatch.Elapsed >= _options.TimeoutOptions.QueryTimeout)
                 {
-                    throw new TimeoutException($"Analytics query timed-out after {stopwatch.Elapsed.TotalSeconds:F2} seconds",
+                    var timeoutException = new Exceptions.TimeoutException($"Analytics query timed-out after {stopwatch.Elapsed.TotalSeconds:F2} seconds",
                         operationCanceledException);
+
+                    timeoutException.LastError = lastException;
+
+                    throw timeoutException;
                 }
 
-                // If not a timeout, treat as retriable and continue with retry
                 lastException = operationCanceledException;
 
                 await RetryUtils.BackoffAsync(attempt, options.CancellationToken).ConfigureAwait(false);
