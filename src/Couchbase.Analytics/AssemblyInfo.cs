@@ -5,4 +5,4 @@ using System.Runtime.CompilerServices;
     [assembly: InternalsVisibleTo("Couchbase.Analytics2.FunctionalTests")]
     [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 #endif
-
+[assembly: InternalsVisibleTo("Couchbase.Analytics.Performer")]
