@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,28 +17,25 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
 namespace Couchbase.Analytics2;
 
 public sealed class Database
 {
     private readonly Cluster _cluster;
-    private readonly string _databaseName;
 
-    internal Database(Cluster cluster, string databaseName)
+    internal Database(Cluster cluster, string name)
     {
-         _cluster = cluster ?? throw new ArgumentNullException(nameof(cluster));
-        _databaseName = databaseName ?? throw new ArgumentNullException(nameof(databaseName));
+        _cluster = cluster ?? throw new ArgumentNullException(nameof(cluster));
+        if (string.IsNullOrEmpty(name)) throw new ArgumentException("Database name cannot be null or empty", nameof(name));
+        Name = name;
     }
 
-    public string Name => _databaseName;
+    public string Name { get; }
 
     public Scope Scope(string scopeName)
     {
         return new Scope(this, _cluster, scopeName);
-    }
-
-    public ScopeManager Scopes()
-    {
-        throw new NotImplementedException();
     }
 }
