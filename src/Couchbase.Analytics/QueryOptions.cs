@@ -45,6 +45,8 @@ public record QueryOptions
 
     public CancellationToken CancellationToken { get; set; }
 
+    internal QueryContext? QueryContext { get; set; }
+
     internal string GetFormValuesAsJson(string statement)
     {
         return JsonSerializer.Serialize(GetFormValues(statement));
@@ -61,6 +63,11 @@ public record QueryOptions
             { "readonly", ReadOnly ? "true" : "false" },
             { "scan_consistency", ScanConsistency == QueryScanConsistency.NotBounded ? "not_bounded" : "request_plus" },
         };
+
+        if (QueryContext is not null)
+        {
+            formValues["query_context"] = QueryContext.ToString();
+        }
 
         foreach (var parameter in NamedParameters)
         {

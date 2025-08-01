@@ -5,7 +5,6 @@ using Couchbase.Analytics2.Internal.HTTP;
 using Xunit;
 using Xunit.Abstractions;
 using System.Net;
-using System.Text.Json.Serialization;
 using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DI;
@@ -30,12 +29,6 @@ public class CouchbaseHttpClientTests
     {
         _fixture = fixture;
         _outputHelper = outputHelper;
-    }
-
-    private class GreetingResponse
-    {
-        [JsonPropertyName("greeting")]
-        public string Greeting { get; set; }
     }
 
     private static ClusterOptions SmallTimeoutOptions =>

@@ -16,6 +16,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+
+using System.Net;
 using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
@@ -49,6 +51,8 @@ internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
     public QueryMetaData MetaData { get; protected set; }
 
     public IReadOnlyList<Error> Errors { get; protected set; }
+
+    public HttpStatusCode? StatusCode { get; set; }
 
     public virtual void Dispose()
     {

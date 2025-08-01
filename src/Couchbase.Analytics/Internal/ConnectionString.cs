@@ -170,6 +170,18 @@ internal class ConnectionString
         return false;
     }
 
+    public bool TryGetParameter(string key, out uint parameter)
+    {
+        if (TryGetParameter(key, out string value))
+        {
+            parameter =  Convert.ToUInt32(value);
+            return true;
+        }
+
+        parameter = default;
+        return false;
+    }
+
     public bool TryGetParameter(string key, out float parameter)
     {
         if (TryGetParameter(key, out string value))

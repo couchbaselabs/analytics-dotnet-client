@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,33 +17,33 @@
  *    limitations under the License.
  *
  * ************************************************************/
-using System.Runtime.Serialization;
+#endregion
 
-namespace Couchbase.Analytics2.Exceptions;
+namespace Couchbase.Text.Json.Utils;
 
 /// <summary>
-/// Base exception type for Analytics.
+/// A lightweight stopwatch implementation for measuring elapsed time.
 /// </summary>
-public class AnalyticsException : Exception
+public struct LightweightStopwatch
 {
+    private readonly long _startTimestamp;
+
+    private LightweightStopwatch(long startTimestamp)
+    {
+        _startTimestamp = startTimestamp;
+    }
+
     /// <summary>
-    /// The number of attempts made before throwing this exception.
+    /// Gets the elapsed time since the stopwatch was started.
     /// </summary>
-    public int Attempts { get; set; }
+    public TimeSpan Elapsed => TimeSpan.FromTicks((DateTime.UtcNow.Ticks - _startTimestamp));
 
-    public AnalyticsException()
+    /// <summary>
+    /// Creates and starts a new lightweight stopwatch.
+    /// </summary>
+    /// <returns>A started stopwatch instance.</returns>
+    public static LightweightStopwatch StartNew()
     {
-    }
-
-    protected AnalyticsException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-
-    public AnalyticsException(string? message) : base(message)
-    {
-    }
-
-    public AnalyticsException(string? message, Exception? innerException) : base(message, innerException)
-    {
+        return new LightweightStopwatch(DateTime.UtcNow.Ticks);
     }
 }

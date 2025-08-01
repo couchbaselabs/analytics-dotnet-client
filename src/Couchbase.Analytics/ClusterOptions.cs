@@ -21,6 +21,7 @@ using System.Security.Authentication;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DI;
 using Couchbase.Analytics2.Internal.Utils;
+using Couchbase.Text.Json.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -31,6 +32,9 @@ public record ClusterOptions
     public SecurityOptions SecurityOptions { get; private set; } = new();
 
     public TimeoutOptions TimeoutOptions { get; private set; } = new();
+
+    [InterfaceStability(StabilityLevel.Volatile)]
+    public uint MaxRetries { get; private set; } = 7;
 
     internal ConnectionString? ConnectionStringValue { get; private set; }
 
@@ -56,6 +60,12 @@ public record ClusterOptions
     {
         TimeoutOptions = securityOptions.Invoke(TimeoutOptions);
         return this;
+    }
+
+    [InterfaceStability(StabilityLevel.Volatile)]
+    public ClusterOptions WithMaxRetries(uint maxRetries)
+    {
+        return this with { MaxRetries = maxRetries };
     }
 
     /// <summary>
@@ -116,6 +126,10 @@ public record ClusterOptions
 
             if (ConnectionStringValue == null) return;
 
+            if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.MaxRetries, out uint maxRetries))
+            {
+                MaxRetries = maxRetries;
+            }
             if (ConnectionStringValue.TryGetParameter(ConnectionStringParams.ConnectTimeout, out TimeSpan connectTimeout))
             {
                 TimeoutOptions = TimeoutOptions.WithConnectTimeout(connectTimeout);

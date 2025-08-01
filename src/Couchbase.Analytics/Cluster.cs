@@ -1,4 +1,5 @@
-﻿/* ************************************************************
+﻿#region License
+/* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
  *    @copyright 2025 Couchbase, Inc.
@@ -16,6 +17,9 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
+using System.Collections.Concurrent;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DI;
 using Microsoft.Extensions.Logging;
@@ -29,6 +33,7 @@ public class Cluster : IDisposable
     private readonly ILogger<Cluster> _logger;
     private readonly ICouchbaseServiceProvider _serviceProvider;
     private readonly LazyService<IAnalyticsService> _analyticsService;
+    private readonly ConcurrentDictionary<string, Database> _databases = new();
 
     private Cluster(Credential credential, ClusterOptions clusterOptions)
     {
@@ -126,6 +131,11 @@ public class Cluster : IDisposable
     {
        var service = _analyticsService.Value;
        return await service.SendAsync<T>(statement, options ?? new QueryOptions()).ConfigureAwait(false);
+    }
+
+    public Database Database(string databaseName)
+    {
+        return _databases.GetOrAdd(databaseName, database=> new Database(this, database));
     }
 
     public void Dispose()

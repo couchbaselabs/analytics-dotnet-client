@@ -23,7 +23,7 @@ namespace Couchbase.Analytics2.Exceptions;
 /// <summary>
 /// Thrown if the analytics service returns a response with an error code other than 20000 or 21002.
 /// </summary>
-public class QueryException : ApplicationException
+public class QueryException : AnalyticsException
 {
     public QueryException()
     {
