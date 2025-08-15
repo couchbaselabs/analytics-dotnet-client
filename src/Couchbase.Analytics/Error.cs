@@ -23,29 +23,9 @@ using System.Text.Json.Serialization;
 
 namespace Couchbase.Analytics2;
 
-public sealed class Error
-{
-    internal Error(int code, string message)
-    {
-        Code = code;
-        Message = message;
-        Retriable = false;
-    }
-
-    [JsonConstructor]
-    internal Error(int code, string msg, bool? retriable = null)
-    {
-        Code = code;
-        Message = msg;
-        Retriable = retriable ?? false; // Default to false if absent as per RFC
-    }
-
-    [JsonPropertyName("code")]
-    public int Code { get; }
-
-    [JsonPropertyName("msg")]
-    public string Message { get; }
-
-    [JsonPropertyName("retriable")]
-    public bool Retriable { get; }
-}
+public record Error(
+    [property: JsonPropertyName("code")] int Code,
+    [property: JsonPropertyName("msg")] string Message,
+    [property: JsonPropertyName("retriable")]
+    bool Retriable
+);

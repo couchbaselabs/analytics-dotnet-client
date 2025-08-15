@@ -1,0 +1,24 @@
+{
+  "requestID": "e86379c9-06d6-4621-9abf-91bb89277ca6",
+  "clientContextID": "ecbb7455-2f13-4435-afb5-a1d5548c03c1",
+  "errors": [
+    {
+      "code": 23000,
+      "msg": "Enterprise Analytics is temporarily unavailable",
+      "retriable": true
+    }
+  ],
+  "status": "fatal",
+  "metrics": {
+    "elapsedTime": "105.1973ms",
+    "executionTime": "90.81072ms",
+    "compileTime": "0ns",
+    "queueWaitTime": "0ns",
+    "resultCount": 0,
+    "resultSize": 0,
+    "processedObjects": 0,
+    "bufferCacheHitRatio": "0.00%",
+    "bufferCachePageReadCount": 0,
+    "errorCount": 1
+  }
+}
