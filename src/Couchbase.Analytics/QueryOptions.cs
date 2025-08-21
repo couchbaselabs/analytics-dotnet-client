@@ -37,7 +37,7 @@ public record QueryOptions
 
     public TimeSpan? ScanWait { get; set; }
 
-    public ISerializer Serializer { get; init; }
+    public ISerializer Serializer { get; set; }
 
     public bool ReadOnly { get; set; }
 

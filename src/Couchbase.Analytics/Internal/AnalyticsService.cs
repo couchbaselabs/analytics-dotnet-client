@@ -33,7 +33,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 {
     private readonly ClusterOptions _options;
     private readonly ILogger<AnalyticsService> _logger;
-    private const string ExecuteQueryPath = "/api/v1/request";
+    private const string ExecuteQueryPath = "api/v1/request";
     private readonly IDeserializer _serializer;
 
     public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory,
@@ -44,7 +44,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         _serializer = serializer;
         HttpClientFactory = httpClientFactory;
         var endPoint  = options.ConnectionStringValue!.GetDnsBootStrapUri();
-        Uri = new Uri($"https://{endPoint.Host}:{endPoint.Port}{ExecuteQueryPath}");
+        Uri = new Uri($"{endPoint}{ExecuteQueryPath}");
     }
 
     public Uri Uri { get; private set; }
