@@ -49,15 +49,15 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
     public Uri Uri { get; private set; }
 
-    public async Task<IQueryResult<T>> SendAsync<T>(string statement, QueryOptions options)
+    public async Task<IQueryResult> SendAsync(string statement, QueryOptions options)
     {
-        return await ExecuteWithRetryAsync<T>(statement, options).ConfigureAwait(false);
+        return await ExecuteWithRetryAsync(statement, options).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Core query execution logic - the golden path for sending analytics requests.
     /// </summary>
-    private async Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions options)
+    private async Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions options)
     {
         var body = options.GetFormValuesAsJson(statement);
 
@@ -77,9 +77,9 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         var stream = await response.Content.ReadAsStreamAsync()
             .ConfigureAwait(false);
 
-        AnalyticsResultBase<T> result = options.AsStreaming
-            ? new StreamingAnalyticsResult<T>(stream, _serializer, httpClient)
-            : new BlockingAnalyticsResult<T>(stream, _serializer, httpClient);
+        AnalyticsResultBase result = options.AsStreaming
+            ? new StreamingAnalyticsResult(stream, _serializer, httpClient)
+            : new BlockingAnalyticsResult(stream, _serializer, httpClient);
 
         result.StatusCode = response.StatusCode;
 
@@ -96,7 +96,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     /// <summary>
     /// Retry wrapper around the core query execution logic.
     /// </summary>
-    private async Task<IQueryResult<T>> ExecuteWithRetryAsync<T>(string statement, QueryOptions options)
+    private async Task<IQueryResult> ExecuteWithRetryAsync(string statement, QueryOptions options)
     {
         var stopwatch = LightweightStopwatch.StartNew();
         Exception lastException = new AnalyticsException("Maximum retries exceeded without success.");
@@ -109,7 +109,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)",
                     attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
 
-                var result = await ExecuteQueryAsync<T>(statement, options).ConfigureAwait(false);
+                var result = await ExecuteQueryAsync(statement, options).ConfigureAwait(false);
 
                 // Always read errors from the result
                 if (result.Errors is { Count: > 0 })

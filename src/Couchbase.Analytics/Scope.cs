@@ -36,10 +36,10 @@ public sealed class Scope
 
     public string Name { get; }
 
-    public Task<IQueryResult<T>> ExecuteQueryAsync<T>(string statement, QueryOptions? options = null)
+    public Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null)
     {
         options ??= new QueryOptions();
         options.QueryContext = new QueryContext(_database.Name, Name);
-        return _cluster.ExecuteQueryAsync<T>(statement, options);
+        return _cluster.ExecuteQueryAsync(statement, options);
     }
 }

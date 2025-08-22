@@ -22,7 +22,7 @@ using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
 
-internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
+internal abstract class AnalyticsResultBase : IQueryResult
 {
     protected readonly Stream ResponseStream;
     protected readonly IDeserializer Serializer;
@@ -42,12 +42,12 @@ internal abstract class AnalyticsResultBase<T> : IQueryResult<T>
         _ownedForCleanup = ownedForCleanup;
     }
 
-    public abstract IAsyncEnumerator<T> GetAsyncEnumerator(
+    public abstract IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
         CancellationToken cancellationToken = new CancellationToken());
 
     public abstract Task InitializeAsync(CancellationToken cancellationToken = default);
 
-    public IAsyncEnumerable<T> Rows { get; protected set; }
+    public IAsyncEnumerable<AnalyticsRow> Rows { get; protected set; }
     public QueryMetaData MetaData { get; protected set; }
 
     public IReadOnlyList<Error> Errors { get; protected set; }

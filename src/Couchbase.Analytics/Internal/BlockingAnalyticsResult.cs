@@ -30,9 +30,9 @@ namespace Couchbase.Analytics2.Internal;
 /// </summary>
 /// <typeparam name="T">The Type of the object in each row.</typeparam>
 /// <remarks>For large result sets use the <see cref="StreamingAnalyticsResult{T}"/> class by setting <see cref="QueryOptions.AsStreaming"/> to true, which is the default.</remarks>
-internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
+internal class BlockingAnalyticsResult : AnalyticsResultBase
 {
-    private IEnumerable<T> _rows;
+    private IEnumerable<AnalyticsRow> _rows;
     private bool _enumerated;
 
     public BlockingAnalyticsResult(Stream responseStream, IDeserializer serializer, IDisposable? ownedForCleanup = null)
@@ -40,18 +40,18 @@ internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
     {
     }
 
-    public override IAsyncEnumerator<T> GetAsyncEnumerator(
+    public override IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
         CancellationToken cancellationToken = new())
     {
         if (_rows == null)
         {
             throw new InvalidOperationException(
-                $"{nameof(BlockingAnalyticsResult<T>)} has not been initialized, call InitializeAsync first");
+                $"{nameof(BlockingAnalyticsResult)} has not been initialized, call InitializeAsync first");
         }
 
         if (_enumerated)
         {
-            throw new InvalidOperationException("BlockingAnalyticsResult<T> has already been enumerated");
+            throw new InvalidOperationException("BlockingAnalyticsResult has already been enumerated");
         }
 
         _enumerated = true;
@@ -60,24 +60,51 @@ internal class BlockingAnalyticsResult<T> : AnalyticsResultBase<T>
 
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var body = await Serializer.DeserializeAsync<AnalyticsResultData<T>>(ResponseStream, cancellationToken)
-            .ConfigureAwait(false);
+        var reader = Serializer.CreateJsonStreamReader(ResponseStream);
 
-        if (body == null)
+        if (!await reader.InitializeAsync(cancellationToken).ConfigureAwait(false))
         {
             ThrowHelper.ThrowArgumentNullException("No data received.");
         }
 
-        MetaData = new QueryMetaData
+        MetaData = new QueryMetaData();
+
+        var rows = new List<AnalyticsRow>();
+
+        while (true)
         {
-            Metrics = new QueryMetrics(body.metrics),
-            RequestId = body.requestID,
-           // Warnings = body.warnings
-        };
+            var path = await reader.ReadToNextAttributeAsync(cancellationToken).ConfigureAwait(false);
+            if (path == null)
+            {
+                break;
+            }
 
-        Errors = body.errors ?? Array.Empty<Error>();
+            switch (path)
+            {
+                case "requestID" when reader.ValueType == typeof(string):
+                    MetaData.RequestId = reader.Value?.ToString();
+                    break;
+                case "metrics":
+                    var metrics = await reader.ReadObjectAsync<Metrics>(cancellationToken).ConfigureAwait(false);
+                    MetaData.Metrics = new QueryMetrics(metrics);
+                    break;
+                case "results":
+                {
+                    await foreach (var token in reader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        rows.Add(new AnalyticsRow(token));
+                    }
 
-        _rows = body.results;
+                    break;
+                }
+                case "errors":
+                    var errors = await reader.ReadObjectAsync<Error[]>(cancellationToken).ConfigureAwait(false);
+                    Errors = errors ?? Array.Empty<Error>();
+                    break;
+            }
+        }
+
+        _rows = rows;
     }
 }
 
@@ -109,11 +136,11 @@ internal record Plans
 {
 }
 
-internal record AnalyticsResultData<T>
+internal record AnalyticsResultData
 {
     public string requestID { get; set; }
     public Signature signature { get; set; }
-    public IEnumerable<T> results { get; set; }
+    public IEnumerable<AnalyticsRow> results { get; set; }
     public Plans plans { get; set; }
     public string status { get; set; }
     public Metrics metrics { get; set; }

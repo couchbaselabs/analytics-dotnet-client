@@ -359,10 +359,10 @@ public sealed class JsonStreamReader : IJsonStreamReader
 
     /// <inheritdoc />
     public T? Deserialize<T>(JsonElement element) =>
-        element.Deserialize(GetTypeInfo<T>());
+        element.Deserialize<T>(Options);
 
     private T? Deserialize<T>(ref Utf8JsonReader reader) =>
-        JsonSerializer.Deserialize<T>(ref reader/*, GetTypeInfo<T>()*/);
+        JsonSerializer.Deserialize<T>(ref reader, Options);
 
     public JsonTypeInfo<T> GetTypeInfo<T>()
     {
