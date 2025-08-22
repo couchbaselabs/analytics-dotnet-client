@@ -17,12 +17,13 @@
  *
  * ************************************************************/
 using System.Net;
+using Couchbase.Analytics2.Internal;
 
 namespace Couchbase.Analytics2;
 
-public interface IQueryResult<out T> : IDisposable, IAsyncEnumerable<T>
+public interface IQueryResult : IDisposable, IAsyncEnumerable<AnalyticsRow>
 {
-    IAsyncEnumerable<T> Rows { get; }
+    IAsyncEnumerable<AnalyticsRow> Rows { get; }
 
     public QueryMetaData MetaData{ get; }
 

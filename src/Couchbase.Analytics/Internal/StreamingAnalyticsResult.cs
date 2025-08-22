@@ -28,7 +28,7 @@ namespace Couchbase.Analytics2.Internal;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 /// <remarks>This is the default response type.</remarks>
-internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
+internal class StreamingAnalyticsResult : AnalyticsResultBase
 {
     private bool _hasReadToResult;
     private bool _hasReadResult;
@@ -52,7 +52,7 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
         await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
     }
 
-    public override async IAsyncEnumerator<T> GetAsyncEnumerator(
+    public override async IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
         CancellationToken cancellationToken = new())
     {
         if (_hasReadResult)
@@ -67,7 +67,7 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
         if (!_hasReadToResult)
         {
             throw new InvalidOperationException(
-                $"{nameof(StreamingAnalyticsResult<T>)} has not been initialized, call InitializeAsync first");
+                $"{nameof(StreamingAnalyticsResult)} has not been initialized, call InitializeAsync first");
         }
 
         if (_jsonReader == null)
@@ -75,9 +75,9 @@ internal class StreamingAnalyticsResult<T> : AnalyticsResultBase<T>
             throw new InvalidOperationException("_jsonReader is null");
         }
 
-        await foreach (var result in _jsonReader.ReadObjectsAsync<T>(cancellationToken).ConfigureAwait(false))
+        await foreach (var token in _jsonReader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
         {
-            yield return result;
+            yield return new AnalyticsRow(token);
         }
 
         _hasReadResult = true;

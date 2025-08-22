@@ -28,10 +28,10 @@ public interface IJsonToken
     T Value<T>();
 
     /// <summary>
-    /// Returns a dynamic object representing the current token.
+    /// Returns the raw UTF-8 JSON bytes for this token.
     /// </summary>
-    /// <returns>The dynamic object.</returns>
-    dynamic ToDynamic();
+    /// <returns>UTF-8 encoded JSON bytes.</returns>
+    byte[] ToUtf8Bytes();
 }
 
 
