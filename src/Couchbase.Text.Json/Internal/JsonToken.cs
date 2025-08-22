@@ -47,6 +47,9 @@ internal sealed class JsonToken : IJsonToken
         throw new InvalidOperationException($"Unable to convert {_element.ValueKind} to {typeof(T)}.");
     }
 
+    /// <inheritdoc />
+    public dynamic ToDynamic() => new ExpandoObject();
+
     public byte[] ToUtf8Bytes()
     {
         return System.Text.Encoding.UTF8.GetBytes(_element.GetRawText());
