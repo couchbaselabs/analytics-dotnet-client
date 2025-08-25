@@ -33,13 +33,13 @@ public record QueryOptions
 
     public List<object> PositionalParameters { get; set; } = new();
 
-    public QueryScanConsistency ScanConsistency { get; set; }
+    public QueryScanConsistency? ScanConsistency { get; set; }
 
     public TimeSpan? ScanWait { get; set; }
 
-    public ISerializer Serializer { get; init; }
+    public ISerializer Serializer { get; set; }
 
-    public bool ReadOnly { get; set; }
+    public bool? ReadOnly { get; set; }
 
     public Dictionary<string, object> Raw {get; set;} = new();
 
@@ -59,10 +59,18 @@ public record QueryOptions
         {
             { "statement", statement },
             { "timeout", $"{Timeout?.TotalMilliseconds}ms" },
-            { "client_context_id", ClientContextId },
-            { "readonly", ReadOnly ? "true" : "false" },
-            { "scan_consistency", ScanConsistency == QueryScanConsistency.NotBounded ? "not_bounded" : "request_plus" },
+            { "client_context_id", ClientContextId }
         };
+
+        if (ScanConsistency.HasValue)
+        {
+            formValues["scan_consistency"] =
+                ScanConsistency == QueryScanConsistency.NotBounded ? "not_bounded" : "request_plus";
+        }
+        if (ReadOnly.HasValue)
+        {
+            formValues["readonly"] = ReadOnly;
+        }
 
         if (QueryContext is not null)
         {
@@ -95,10 +103,10 @@ public record QueryOptions
         }
 
         statement = statement.Trim();
-        if (!statement.EndsWith(";"))
-        {
-            statement += ";";
-        }
+        // if (!statement.EndsWith(";"))
+        // {
+        //     statement += ";";
+        // }
 
         return statement;
     }
