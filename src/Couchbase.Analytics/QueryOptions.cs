@@ -103,10 +103,6 @@ public record QueryOptions
         }
 
         statement = statement.Trim();
-        // if (!statement.EndsWith(";"))
-        // {
-        //     statement += ";";
-        // }
 
         return statement;
     }
