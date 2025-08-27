@@ -56,7 +56,7 @@ internal static class AnalyticsErrorMapper
         return error.Code switch
         {
             20000 => new InvalidCredentialException(error.Message),
-            21002 => new Couchbase.Analytics2.Exceptions.TimeoutException(error.Message),
+            21002 => new Couchbase.Analytics2.Exceptions.TimeoutException($"{error.Message}. Http error code: {error.Code}"),
             _ => new QueryException(error.Message) { Code = error.Code, ServerMessage = error.Message }
         };
     }

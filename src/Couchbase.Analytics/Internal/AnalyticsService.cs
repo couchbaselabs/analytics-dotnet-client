@@ -26,90 +26,110 @@ using Couchbase.Analytics2.Internal.Retry;
 using Couchbase.Text.Json;
 using Couchbase.Text.Json.Utils;
 using Microsoft.Extensions.Logging;
+using TimeoutException = Couchbase.Analytics2.Exceptions.TimeoutException;
 
 namespace Couchbase.Analytics2.Internal;
 
 internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 {
-    private readonly ClusterOptions _options;
+    private readonly ClusterOptions _clusterOptions;
     private readonly ILogger<AnalyticsService> _logger;
     private const string ExecuteQueryPath = "api/v1/request";
     private readonly IDeserializer _serializer;
 
-    public AnalyticsService(ClusterOptions options, ICouchbaseHttpClientFactory httpClientFactory,
+    public AnalyticsService(ClusterOptions clusterOptions, ICouchbaseHttpClientFactory httpClientFactory,
         ILogger<AnalyticsService> logger, IDeserializer serializer) : base(httpClientFactory)
     {
-        _options = options;
+        _clusterOptions = clusterOptions;
         _logger = logger;
         _serializer = serializer;
         HttpClientFactory = httpClientFactory;
-        var endPoint  = options.ConnectionStringValue!.GetDnsBootStrapUri();
+        var endPoint  = clusterOptions.ConnectionStringValue!.GetDnsBootStrapUri();
         Uri = new Uri($"{endPoint}{ExecuteQueryPath}");
     }
 
     public Uri Uri { get; private set; }
 
-    public async Task<IQueryResult> SendAsync(string statement, QueryOptions options)
+    public async Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken? cancellationToken = null)
     {
-        return await ExecuteWithRetryAsync(statement, options).ConfigureAwait(false);
+        return await ExecuteWithRetryAsync(statement, options, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Core query execution logic - the golden path for sending analytics requests.
     /// </summary>
-    private async Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions options)
+    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, CancellationToken? cancellationToken = null)
     {
-        var body = options.GetFormValuesAsJson(statement);
+        cancellationToken ??= CancellationToken.None;
 
-        using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
         var request = new HttpRequestMessage(HttpMethod.Post, Uri)
         {
             Content = content
         };
 
-        var httpClient = CreateHttpClient(options.Timeout);
-
-        var response = await httpClient.SendAsync(request,
-                HttpCompletionOption.ResponseHeadersRead,
-                options.CancellationToken)
-            .ConfigureAwait(false);
-
-        var stream = await response.Content.ReadAsStreamAsync()
-            .ConfigureAwait(false);
-
-        AnalyticsResultBase result = options.AsStreaming
-            ? new StreamingAnalyticsResult(stream, _serializer, httpClient)
-            : new BlockingAnalyticsResult(stream, _serializer, httpClient);
-
-        result.StatusCode = response.StatusCode;
-
-        await result.InitializeAsync(options.CancellationToken).ConfigureAwait(false);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            throw AnalyticsErrorMapper.MapHttpErrorCode(response.StatusCode);
-        }
+            var response = await httpClient.SendAsync(request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken.Value)
+                .ConfigureAwait(false);
 
-        return result;
+            var stream = await response.Content.ReadAsStreamAsync()
+                .ConfigureAwait(false);
+
+            AnalyticsResultBase result = asStreaming
+                ? new StreamingAnalyticsResult(stream, _serializer, httpClient)
+                : new BlockingAnalyticsResult(stream, _serializer, httpClient);
+
+            result.StatusCode = response.StatusCode;
+
+            await result.InitializeAsync(cancellationToken.Value).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw AnalyticsErrorMapper.MapHttpErrorCode(response.StatusCode);
+            }
+
+            return result;
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            throw new TimeoutException("The analytics request was canceled via its cancellation token.", taskCanceledEx);
+        }
     }
 
     /// <summary>
     /// Retry wrapper around the core query execution logic.
     /// </summary>
-    private async Task<IQueryResult> ExecuteWithRetryAsync(string statement, QueryOptions options)
+    private async Task<IQueryResult> ExecuteWithRetryAsync(string statement, QueryOptions options, CancellationToken? cancellationToken = null)
     {
         var stopwatch = LightweightStopwatch.StartNew();
         Exception lastException = new AnalyticsException("Maximum retries exceeded without success.");
 
-        for (uint attempt = 0; attempt <= _options.MaxRetries; attempt++)
+        cancellationToken ??= CancellationToken.None;
+        var timeout = options.Timeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
+
+        var body = options.GetFormValuesAsJson(statement);
+        using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
+
+        // This timeout is per-attempt i.e. per http.SendAsync().
+        var httpClient = CreateHttpClient(timeout);
+
+        var maxRetries = options.MaxRetries ?? _clusterOptions.MaxRetries;
+
+        for (uint attempt = 0; attempt <= maxRetries; attempt++)
         {
+            // We observe the overall timeout across all retries.
+            if (stopwatch.Elapsed > timeout)
+            {
+                ThrowGlobalTimeout(lastException, stopwatch.Elapsed);
+            }
             try
             {
                 _logger.LogDebug(
                     "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)",
                     attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
 
-                var result = await ExecuteQueryAsync(statement, options).ConfigureAwait(false);
+                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, cancellationToken).ConfigureAwait(false);
 
                 // Always read errors from the result
                 if (result.Errors is { Count: > 0 })
@@ -119,7 +139,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     {
                         _logger.LogDebug("Received retriable server errors for ClientContextId {ClientContextId}, retrying...", options.ClientContextId);
                         lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors);
-                        await RetryUtils.BackoffAsync(attempt, options.CancellationToken).ConfigureAwait(false);
+                        await RetryUtils.BackoffAsync(attempt, cancellationToken.Value).ConfigureAwait(false);
                         continue;
                     }
 
@@ -148,26 +168,29 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     throw;
                 }
 
-                await RetryUtils.BackoffAsync(attempt, options.CancellationToken).ConfigureAwait(false);
+                await RetryUtils.BackoffAsync(attempt, cancellationToken.Value).ConfigureAwait(false);
             }
             catch (OperationCanceledException operationCanceledException)
             {
                 // Check if we exceeded the query timeout
-                if (stopwatch.Elapsed >= _options.TimeoutOptions.QueryTimeout)
+                if (stopwatch.Elapsed > timeout)
                 {
-                    var timeoutException = new Exceptions.TimeoutException($"Analytics query timed-out after {stopwatch.Elapsed.TotalSeconds:F2} seconds",
-                        operationCanceledException);
-
-                    timeoutException.LastError = lastException;
-
-                    throw timeoutException;
+                    ThrowGlobalTimeout(lastException, stopwatch.Elapsed, operationCanceledException);
                 }
 
                 lastException = operationCanceledException;
 
-                await RetryUtils.BackoffAsync(attempt, options.CancellationToken).ConfigureAwait(false);
+                await RetryUtils.BackoffAsync(attempt, cancellationToken.Value).ConfigureAwait(false);
             }
         }
         throw lastException;
+    }
+
+    private static void ThrowGlobalTimeout(Exception lastException, TimeSpan elapsed, Exception? inner = null)
+    {
+        var timeoutException = new TimeoutException(
+            $"Analytics query timed-out after {elapsed.TotalSeconds:F2} seconds.", inner);
+        timeoutException.LastError = lastException;
+        throw timeoutException;
     }
 }
