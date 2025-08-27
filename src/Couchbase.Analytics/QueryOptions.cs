@@ -25,7 +25,11 @@ public record QueryOptions
 {
     public bool AsStreaming { get; set; } = true;
 
-    public TimeSpan? Timeout { get; set; } = TimeSpan.FromSeconds(100);
+    /// <summary>
+    /// Sets the overall timeout for the query request.
+    /// If unset, the default <see cref="TimeoutOptions"/>'s QueryTimeout will be used.
+    /// </summary>
+    public TimeSpan? Timeout { get; set; }
 
     public string ClientContextId { get; set; } = Guid.NewGuid().ToString();
 
@@ -41,9 +45,9 @@ public record QueryOptions
 
     public bool? ReadOnly { get; set; }
 
-    public Dictionary<string, object> Raw {get; set;} = new();
+    public uint? MaxRetries { get; set; }
 
-    public CancellationToken CancellationToken { get; set; }
+    public Dictionary<string, object> Raw {get; set;} = new();
 
     internal QueryContext? QueryContext { get; set; }
 
@@ -58,9 +62,14 @@ public record QueryOptions
         var formValues = new Dictionary<string, object>
         {
             { "statement", statement },
-            { "timeout", $"{Timeout?.TotalMilliseconds}ms" },
             { "client_context_id", ClientContextId }
         };
+
+        if (Timeout.HasValue)
+        {
+            var formTimeout = Timeout.Value.Add(TimeSpan.FromSeconds(5));
+            formValues["timeout"] = $"{(int)formTimeout.TotalMilliseconds}ms";
+        }
 
         if (ScanConsistency.HasValue)
         {
@@ -82,7 +91,7 @@ public record QueryOptions
             formValues.Add(parameter.Key, parameter.Value);
         }
 
-        if (PositionalParameters.Any())
+        if (PositionalParameters.Count != 0)
         {
             formValues.Add("args", PositionalParameters.ToArray());
         }
@@ -95,7 +104,7 @@ public record QueryOptions
         return formValues;
     }
 
-    private string CleanStatement(string statement)
+    private static string CleanStatement(string statement)
     {
         if (string.IsNullOrWhiteSpace(statement))
         {
