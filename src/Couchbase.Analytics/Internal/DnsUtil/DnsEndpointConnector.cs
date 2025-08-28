@@ -9,6 +9,12 @@ namespace Couchbase.Analytics2.Internal.DnsUtil;
 /// </summary>
 internal sealed class DnsEndpointConnector : IDisposable
 {
+    /// <summary>
+    /// Test hook: when true, forces DNS resolution even when the host is an IP.
+    /// This allows tests to use the <see cref="IDnsEndpointResolver"/> path.
+    /// </summary>
+    internal static bool ForceDnsResolution { get; set; } = false;
+
     private readonly IDnsEndpointResolver _dnsResolver;
     private readonly EndpointConnectionManager _connectionManager;
     private readonly IEndpointSelectionStrategy _selectionStrategy;
@@ -40,7 +46,7 @@ internal sealed class DnsEndpointConnector : IDisposable
     public async Task<Socket> ConnectAsync(DnsEndPoint endPoint, CancellationToken cancellationToken)
     {
         // Avoid DNS resolution overhead if we're dealing with a single IP address
-        if (IPAddress.TryParse(endPoint.Host, out var address))
+        if (!ForceDnsResolution && IPAddress.TryParse(endPoint.Host, out var address))
         {
             return await _connectionManager.ConnectToEndpointsAsync(
                 [address],
