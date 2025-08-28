@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text;
+using System.Linq;
+using System.Text.Json;
 using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.Internal;
 using Couchbase.Analytics2.Internal.DI;
@@ -53,12 +55,7 @@ public class ClusterRetryTests
             new Error(24055, "Another retriable error!", true)
         };
 
-        var analyticsResultData = CreateAnalyticsResultData(retriableErrors);
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<AnalyticsResultData?>(analyticsResultData));
-
-        // Configure HTTP handler to return 200 OK (the errors are in the deserialized response)
+        // Configure HTTP handler to return 200 OK with retriable errors in the body
         var callCount = 0;
         _httpMessageHandlerMock
             .Protected()
@@ -71,8 +68,8 @@ public class ClusterRetryTests
                 callCount++;
                 _outputHelper.WriteLine($"HTTP request attempt: {callCount}");
 
-                // Return any valid JSON since we're mocking the deserializer
-                var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+                var responseJson = BuildErrorResponseJson(retriableErrors);
+                var responseContent = new StringContent(responseJson, Encoding.UTF8, "application/json");
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
             });
 
@@ -106,11 +103,6 @@ public class ClusterRetryTests
             new Error(24045, "Some retriable error", true)
         };
 
-        var analyticsResultData = CreateAnalyticsResultData(mixedErrors);
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<AnalyticsResultData?>(analyticsResultData));
-
         var callCount = 0;
         _httpMessageHandlerMock
             .Protected()
@@ -123,7 +115,8 @@ public class ClusterRetryTests
                 callCount++;
                 _outputHelper.WriteLine($"HTTP request attempt: {callCount}");
 
-                var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+                var responseJson = BuildErrorResponseJson(mixedErrors);
+                var responseContent = new StringContent(responseJson, Encoding.UTF8, "application/json");
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
             });
 
@@ -152,25 +145,6 @@ public class ClusterRetryTests
 
         var callCount = 0;
 
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(() =>
-            {
-                if (callCount == 1)
-                {
-                    var retriableErrors = new List<Error>
-                    {
-                        new Error(24045, "Some unknown retriable error occurred", true)
-                    };
-                    return new ValueTask<AnalyticsResultData?>(CreateAnalyticsResultData(retriableErrors));
-                }
-                else
-                {
-                    // Second attempt: return success (no errors)
-                    return new ValueTask<AnalyticsResultData?>(CreateAnalyticsResultData(new List<Error>()));
-                }
-            });
-
         _httpMessageHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -182,8 +156,22 @@ public class ClusterRetryTests
                 callCount++;
                 _outputHelper.WriteLine($"HTTP request attempt: {callCount}");
 
-                var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
+                if (callCount == 1)
+                {
+                    var retriableErrors = new List<Error>
+                    {
+                        new Error(24045, "Some unknown retriable error occurred", true)
+                    };
+                    var responseJson = BuildErrorResponseJson(retriableErrors);
+                    var responseContent = new StringContent(responseJson, Encoding.UTF8, "application/json");
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
+                }
+                else
+                {
+                    var responseJson = BuildSuccessResponseJson();
+                    var responseContent = new StringContent(responseJson, Encoding.UTF8, "application/json");
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
+                }
             });
 
         var result = await cluster.ExecuteQueryAsync("SELECT * FROM test", new QueryOptions { AsStreaming = false });
@@ -208,11 +196,6 @@ public class ClusterRetryTests
             new Error(24045, "Some unknown retriable error occurred", true)
         };
 
-        var analyticsResultData = CreateAnalyticsResultData(retriableErrors);
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<AnalyticsResultData?>(analyticsResultData));
-
         var callCount = 0;
         _httpMessageHandlerMock
             .Protected()
@@ -225,7 +208,8 @@ public class ClusterRetryTests
                 callCount++;
                 _outputHelper.WriteLine($"HTTP request attempt: {callCount}");
 
-                var responseContent = new StringContent("{}", Encoding.UTF8, "application/json");
+                var responseJson = BuildErrorResponseJson(retriableErrors);
+                var responseContent = new StringContent(responseJson, Encoding.UTF8, "application/json");
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
             });
 
@@ -250,7 +234,7 @@ public class ClusterRetryTests
                 _ => _clusterLoggerMock.Object,
                 ClusterServiceLifetime.Cluster)
             .AddService<IDeserializer, IDeserializer>(
-                _ => _deserializerMock.Object,
+                _ => new StjJsonDeserializer(),
                 ClusterServiceLifetime.Cluster);
 
                 return Cluster.Create(_credential, clusterOptions);
@@ -277,5 +261,21 @@ public class ClusterRetryTests
             },
             plans = new Plans()
         };
+    }
+
+    private static string BuildErrorResponseJson(IEnumerable<Error> errors)
+    {
+        var payload = new
+        {
+            status = "fatal",
+            errors = errors.Select(e => new { code = e.Code, msg = e.Message, retriable = e.Retriable })
+        };
+
+        return JsonSerializer.Serialize(payload);
+    }
+
+    private static string BuildSuccessResponseJson()
+    {
+        return "{\"status\":\"success\",\"results\":[]}";
     }
 }

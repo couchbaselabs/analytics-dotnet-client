@@ -73,21 +73,11 @@ public class AnalyticsServiceTests
 
         var httpClient = new HttpClient(httpClientMock.Object);
         _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
-        _jsonSerializerMock.Setup(x =>
-            x.DeserializeAsync<AnalyticsResultData>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData
-        {
-            metrics = new Metrics(),
-            plans = new Plans(),
-            errors = {  },
-            results = new List<AnalyticsRow>()
-        });
-
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
             _loggerMock.Object,
-            _jsonSerializerMock.Object);
+            new StjJsonDeserializer());
 
         var queryOptions = new QueryOptions { AsStreaming = false };
 
@@ -120,21 +110,11 @@ public class AnalyticsServiceTests
 
         var httpClient = new HttpClient(httpClientMock.Object);
         _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
-        _jsonSerializerMock.Setup(x =>
-            x.DeserializeAsync<AnalyticsResultData>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData
-        {
-            metrics = new Metrics(),
-            plans = new Plans(),
-            errors = {  },
-            results = new List<AnalyticsRow>()
-        });
-
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
             _loggerMock.Object,
-            _jsonSerializerMock.Object);
+            new StjJsonDeserializer());
 
         var queryOptions = new QueryOptions { AsStreaming = false };
 

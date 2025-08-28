@@ -37,7 +37,7 @@ public class CouchbaseHttpClientTests
     //This is a helper meant to allow tests to substitute some or all of the real resolved IPs with unreachable ones.
     private class TestDnsEndpointResolver : IDnsEndpointResolver
     {
-        private readonly IDnsRefreshStrategy _refreshStrategy;
+        private IDnsRefreshStrategy _refreshStrategy;
         private IPAddress[]? _cachedAddresses;
         private IpReplacementStrategy _ipReplacementStrategy;
 
@@ -61,8 +61,16 @@ public class CouchbaseHttpClientTests
                 IpReplacementStrategy.Single => 1,
                 IpReplacementStrategy.Multiple => Math.Floor(_cachedAddresses.Length / 2.0), // Replace half of the addresses
                 IpReplacementStrategy.All => _cachedAddresses.Length,
-                _ => throw new ArgumentOutOfRangeException(nameof(_ipReplacementStrategy), "Invalid IP replacement strategy")
+                _ => throw new ArgumentOutOfRangeException(nameof(_ipReplacementStrategy),
+                    "Invalid IP replacement strategy")
             };
+
+            if (_cachedAddresses.Length == 1 && _ipReplacementStrategy is not IpReplacementStrategy.All)
+            {
+                //If we have a single node cluster, we can only test IpReplacementStrategy.None and IpReplacementStrategy.All.
+                // Can't replace just one IP if there's only one IP, so do none.
+                numFalseIPs = 0;
+            }
 
             if (numFalseIPs > 0)
             {
@@ -93,13 +101,10 @@ public class CouchbaseHttpClientTests
         Assert.NotNull(service);
     }
 
-    private void InjectFakeDnsEndpointResolver(TestDnsEndpointResolver testResolver)
+    private void InjectFakeDnsEndpointResolver(ICouchbaseServiceProvider serviceProvider, TestDnsEndpointResolver testResolver)
     {
         // Reflection region to replace the DnsEndpointResolver in CouchbaseHttpClientFactory
-        GetAnalyticsService(out var service, out var serviceProvider);
-        Assert.NotNull(service);
         var httpClientFactory = serviceProvider.GetService<ICouchbaseHttpClientFactory>();
-
 
         //Using reflection to inject another IDnsEndpointResolver into the DnsEndpointConnector
         var sharedHandlerField = typeof(CouchbaseHttpClientFactory).GetField("_sharedHandler", BindingFlags.NonPublic | BindingFlags.Instance)!;
@@ -121,11 +126,14 @@ public class CouchbaseHttpClientTests
         Assert.NotNull(resolverField);
 
         resolverField.SetValue(dnsConnector, testResolver);
+        // Ensure the connector takes the DNS path even if host is an IP
+        var forceDnsProp = typeof(DnsEndpointConnector).GetProperty("ForceDnsResolution", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
+        forceDnsProp?.SetValue(null, true);
         _outputHelper.WriteLine("Injected TestDnsEndpointResolver into DnsEndpointConnector.");
     }
 
     // Injects a "fake" IDnsEndpointResolver into the DnsEndpointConnector which can be configured to
-    // replace some al or all of the resolved IPs with unreachable ones.
+    // replace some or all of the resolved IPs with unreachable ones.
     [Fact]
     public async Task Test_Requests_Should_Succeed_If_Some_IPs_Are_Unreachable()
     {
@@ -138,11 +146,11 @@ public class CouchbaseHttpClientTests
         GetAnalyticsService(out var service, out var serviceProvider);
         // First, do not replace any IPs, so we can test the normal case
         var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.None);
-        InjectFakeDnsEndpointResolver(testResolver);
+        InjectFakeDnsEndpointResolver(serviceProvider, testResolver);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
         {
-            _outputHelper.WriteLine(result.ContentAs<string>());
+            _outputHelper.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
         }
         Assert.NotNull(response);
     }
@@ -153,11 +161,11 @@ public class CouchbaseHttpClientTests
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
         var testResolverMissingOneIP = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.Single);
-        InjectFakeDnsEndpointResolver(testResolverMissingOneIP);
+        InjectFakeDnsEndpointResolver(serviceProvider, testResolverMissingOneIP);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
         {
-            _outputHelper.WriteLine(result.ContentAs<string>());
+            _outputHelper.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
         }
         Assert.NotNull(response);
     }
@@ -168,7 +176,7 @@ public class CouchbaseHttpClientTests
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
         var testResolverMissingMultipleIPs = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.Multiple);
-        InjectFakeDnsEndpointResolver(testResolverMissingMultipleIPs);
+        InjectFakeDnsEndpointResolver(serviceProvider, testResolverMissingMultipleIPs);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         Assert.NotNull(response);
 
@@ -184,7 +192,7 @@ public class CouchbaseHttpClientTests
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
         var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.All);
-        InjectFakeDnsEndpointResolver(testResolver);
+        InjectFakeDnsEndpointResolver(serviceProvider, testResolver);
         await Assert.ThrowsAsync<AnalyticsException>(() => service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions()));
     }
 }
