@@ -82,8 +82,9 @@ public class ClusterRetryTests
         Assert.Equal(24045, exception.Code);
         Assert.Equal("Some unknown retriable error occurred", exception.ServerMessage);
 
-        // We can verify the number of times an HTTP client was created
-        _httpClientFactoryMock.Verify(f => f.Create(), Times.Exactly(maxRetries + 1));
+        // We're verifying the number of times an HTTP client was created is exactly 1,
+        // since we now reuse the same HttpClient instance across retries.
+        _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
     }
 
     /// <summary>
@@ -178,7 +179,10 @@ public class ClusterRetryTests
 
         Assert.NotNull(result);
         Assert.Equal(2, callCount);
-        _httpClientFactoryMock.Verify(f => f.Create(), Times.Exactly(2));
+
+        // We're verifying the number of times an HTTP client was created is exactly 1,
+        // since we now reuse the same HttpClient instance across retries.
+        _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
     }
 
     /// <summary>
