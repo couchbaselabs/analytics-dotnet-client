@@ -88,7 +88,7 @@ public record QueryOptions
 
         foreach (var parameter in NamedParameters)
         {
-            formValues.Add(parameter.Key, parameter.Value);
+            formValues.Add(parameter.Key.StartsWith('$') ? parameter.Key : $"${parameter.Key}", parameter.Value);
         }
 
         if (PositionalParameters.Count != 0)
