@@ -22,7 +22,7 @@ public class ClusterTests
     {
         var cluster = _fixture.Cluster;
 
-        using var response = await cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", options =>
+        using var response = await cluster.ExecuteQueryAsync("SELECT 1;", options =>
         {
             options.AsStreaming = true;
         });

@@ -74,13 +74,13 @@ public class AnalyticsServiceTests
         var httpClient = new HttpClient(httpClientMock.Object);
         _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
         _jsonSerializerMock.Setup(x =>
-            x.DeserializeAsync<AnalyticsResultData<object>>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData<object>
+            x.DeserializeAsync<AnalyticsResultData>(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData
         {
             metrics = new Metrics(),
             plans = new Plans(),
             errors = {  },
-            results = new List<object>()
+            results = new List<AnalyticsRow>()
         });
 
         var service = new AnalyticsService(
@@ -92,10 +92,10 @@ public class AnalyticsServiceTests
         var queryOptions = new QueryOptions { AsStreaming = false };
 
         // Act
-        var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);
+        var result = await service.SendAsync("SELECT * FROM `bucket`", queryOptions);
 
         // Assert
-        Assert.IsType<BlockingAnalyticsResult<object>>(result);
+        Assert.IsType<BlockingAnalyticsResult>(result);
         _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
     }
 
@@ -121,13 +121,13 @@ public class AnalyticsServiceTests
         var httpClient = new HttpClient(httpClientMock.Object);
         _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
         _jsonSerializerMock.Setup(x =>
-            x.DeserializeAsync<AnalyticsResultData<object>>(
-                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData<object>
+            x.DeserializeAsync<AnalyticsResultData>(
+                It.IsAny<Stream>(), It.IsAny<CancellationToken>())).ReturnsAsync(new AnalyticsResultData
         {
             metrics = new Metrics(),
             plans = new Plans(),
             errors = {  },
-            results = new List<object>()
+            results = new List<AnalyticsRow>()
         });
 
         var service = new AnalyticsService(
@@ -139,10 +139,10 @@ public class AnalyticsServiceTests
         var queryOptions = new QueryOptions { AsStreaming = false };
 
         // Act
-        var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);
+        var result = await service.SendAsync("SELECT * FROM `bucket`", queryOptions);
 
         // Assert
-        Assert.IsType<BlockingAnalyticsResult<object>>(result);
+        Assert.IsType<BlockingAnalyticsResult>(result);
     }
 
     [Fact]
@@ -172,10 +172,10 @@ public class AnalyticsServiceTests
         var queryOptions = new QueryOptions { AsStreaming = true };
 
         // Act
-        var result = await service.SendAsync<object>("SELECT * FROM `bucket`", queryOptions);
+        var result = await service.SendAsync("SELECT * FROM `bucket`", queryOptions);
 
         // Assert
-        Assert.IsType<StreamingAnalyticsResult<object>>(result);
+        Assert.IsType<StreamingAnalyticsResult>(result);
         _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
     }
 }
