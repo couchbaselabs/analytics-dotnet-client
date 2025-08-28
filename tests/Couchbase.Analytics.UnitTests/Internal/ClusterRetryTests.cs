@@ -54,9 +54,9 @@ public class ClusterRetryTests
         };
 
         var analyticsResultData = CreateAnalyticsResultData(retriableErrors);
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData<object>>(
+        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
                 It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<AnalyticsResultData<object>?>(analyticsResultData));
+            .Returns(new ValueTask<AnalyticsResultData?>(analyticsResultData));
 
         // Configure HTTP handler to return 200 OK (the errors are in the deserialized response)
         var callCount = 0;
@@ -77,7 +77,7 @@ public class ClusterRetryTests
             });
 
         var exception = await Assert.ThrowsAsync<QueryException>(
-            () => cluster.ExecuteQueryAsync<object>("SELECT * FROM test", new QueryOptions { AsStreaming = false }));
+            () => cluster.ExecuteQueryAsync("SELECT * FROM test", new QueryOptions { AsStreaming = false }));
 
         // Verify correct number of attempts (maxRetries + 1 attempts total, since we don't count the initial call as a "retry")
         Assert.Equal(maxRetries + 1, callCount);
@@ -107,9 +107,9 @@ public class ClusterRetryTests
         };
 
         var analyticsResultData = CreateAnalyticsResultData(mixedErrors);
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData<object>>(
+        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
                 It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<AnalyticsResultData<object>?>(analyticsResultData));
+            .Returns(new ValueTask<AnalyticsResultData?>(analyticsResultData));
 
         var callCount = 0;
         _httpMessageHandlerMock
@@ -128,7 +128,7 @@ public class ClusterRetryTests
             });
 
         var exception = await Assert.ThrowsAsync<QueryException>(
-            () => cluster.ExecuteQueryAsync<object>("SELECT * FROM test", new QueryOptions { AsStreaming = false }));
+            () => cluster.ExecuteQueryAsync("SELECT * FROM test", new QueryOptions { AsStreaming = false }));
 
         // Should not retry with mixed errors, only 1 attempt
         Assert.Equal(1, callCount);
@@ -152,7 +152,7 @@ public class ClusterRetryTests
 
         var callCount = 0;
 
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData<object>>(
+        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
                 It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
             .Returns(() =>
             {
@@ -162,12 +162,12 @@ public class ClusterRetryTests
                     {
                         new Error(24045, "Some unknown retriable error occurred", true)
                     };
-                    return new ValueTask<AnalyticsResultData<object>?>(CreateAnalyticsResultData(retriableErrors));
+                    return new ValueTask<AnalyticsResultData?>(CreateAnalyticsResultData(retriableErrors));
                 }
                 else
                 {
                     // Second attempt: return success (no errors)
-                    return new ValueTask<AnalyticsResultData<object>?>(CreateAnalyticsResultData(new List<Error>()));
+                    return new ValueTask<AnalyticsResultData?>(CreateAnalyticsResultData(new List<Error>()));
                 }
             });
 
@@ -186,7 +186,7 @@ public class ClusterRetryTests
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = responseContent });
             });
 
-        var result = await cluster.ExecuteQueryAsync<object>("SELECT * FROM test", new QueryOptions { AsStreaming = false });
+        var result = await cluster.ExecuteQueryAsync("SELECT * FROM test", new QueryOptions { AsStreaming = false });
 
         Assert.NotNull(result);
         Assert.Equal(2, callCount);
@@ -209,9 +209,9 @@ public class ClusterRetryTests
         };
 
         var analyticsResultData = CreateAnalyticsResultData(retriableErrors);
-        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData<object>>(
+        _deserializerMock.Setup(x => x.DeserializeAsync<AnalyticsResultData>(
                 It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-            .Returns(new ValueTask<AnalyticsResultData<object>?>(analyticsResultData));
+            .Returns(new ValueTask<AnalyticsResultData?>(analyticsResultData));
 
         var callCount = 0;
         _httpMessageHandlerMock
@@ -230,7 +230,7 @@ public class ClusterRetryTests
             });
 
         var exception = await Assert.ThrowsAsync<QueryException>(
-            () => cluster.ExecuteQueryAsync<object>("SELECT * FROM test", new QueryOptions { AsStreaming = false }));
+            () => cluster.ExecuteQueryAsync("SELECT * FROM test", new QueryOptions { AsStreaming = false }));
 
         Assert.Equal(1, callCount);
         Assert.Equal(24045, exception.Code);
@@ -256,13 +256,13 @@ public class ClusterRetryTests
                 return Cluster.Create(_credential, clusterOptions);
     }
 
-    private static AnalyticsResultData<object> CreateAnalyticsResultData(IReadOnlyList<Error> errors)
+    private static AnalyticsResultData CreateAnalyticsResultData(IReadOnlyList<Error> errors)
     {
-        return new AnalyticsResultData<object>
+        return new AnalyticsResultData
         {
             requestID = "test-request-id",
             status = errors.Count > 0 ? "fatal" : "success",
-            results = new List<object>(),
+            results = new List<AnalyticsRow>(),
             errors = errors,
             metrics = new Metrics
             {
@@ -278,6 +278,4 @@ public class ClusterRetryTests
             plans = new Plans()
         };
     }
-
-
 }

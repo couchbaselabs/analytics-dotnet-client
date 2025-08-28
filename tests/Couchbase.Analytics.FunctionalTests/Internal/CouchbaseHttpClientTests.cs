@@ -139,10 +139,10 @@ public class CouchbaseHttpClientTests
         // First, do not replace any IPs, so we can test the normal case
         var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.None);
         InjectFakeDnsEndpointResolver(testResolver);
-        var response = await service.SendAsync<GreetingResponse>("SELECT \"hello\" as greeting", new QueryOptions());
+        var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
         {
-            _outputHelper.WriteLine(result.Greeting);
+            _outputHelper.WriteLine(result.ContentAs<string>());
         }
         Assert.NotNull(response);
     }
@@ -154,10 +154,10 @@ public class CouchbaseHttpClientTests
         GetAnalyticsService(out var service, out var serviceProvider);
         var testResolverMissingOneIP = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.Single);
         InjectFakeDnsEndpointResolver(testResolverMissingOneIP);
-        var response = await service.SendAsync<GreetingResponse>("SELECT \"hello\" as greeting", new QueryOptions());
+        var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
         {
-            _outputHelper.WriteLine(result.Greeting);
+            _outputHelper.WriteLine(result.ContentAs<string>());
         }
         Assert.NotNull(response);
     }
@@ -169,12 +169,12 @@ public class CouchbaseHttpClientTests
         GetAnalyticsService(out var service, out var serviceProvider);
         var testResolverMissingMultipleIPs = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.Multiple);
         InjectFakeDnsEndpointResolver(testResolverMissingMultipleIPs);
-        var response = await service.SendAsync<GreetingResponse>("SELECT \"hello\" as greeting", new QueryOptions());
+        var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         Assert.NotNull(response);
 
         await foreach (var result in response.ConfigureAwait(false))
         {
-            Assert.Equal("hello", result.Greeting);
+            Assert.Equal("hello", result.ContentAs<GreetingResponse>().Greeting);
         }
     }
 
@@ -185,6 +185,6 @@ public class CouchbaseHttpClientTests
         GetAnalyticsService(out var service, out var serviceProvider);
         var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.All);
         InjectFakeDnsEndpointResolver(testResolver);
-        await Assert.ThrowsAsync<AnalyticsException>(() => service.SendAsync<GreetingResponse>("SELECT \"hello\" as greeting", new QueryOptions()));
+        await Assert.ThrowsAsync<AnalyticsException>(() => service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions()));
     }
 }

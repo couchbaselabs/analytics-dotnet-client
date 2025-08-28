@@ -20,7 +20,7 @@ public class AnalyticsServiceTests
     [Fact]
     public async Task TestGetAnalyticsAsync()
     {
-        var response = _analytics2Fixture.Cluster.ExecuteQueryAsync<dynamic>("SELECT 1;", new QueryOptions());
+        var response = _analytics2Fixture.Cluster.ExecuteQueryAsync("SELECT 1;", new QueryOptions());
 
         Assert.NotNull(response);
     }
