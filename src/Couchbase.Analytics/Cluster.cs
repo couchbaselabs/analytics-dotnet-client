@@ -120,14 +120,14 @@ public class Cluster : IDisposable
         return new Cluster(credential, clusterOptions);
     }
 
-    public Task<IQueryResult> ExecuteQueryAsync(string statement, Action<QueryOptions> options, CancellationToken? cancellationToken = null)
+    public Task<IQueryResult> ExecuteQueryAsync(string statement, Action<QueryOptions> options, CancellationToken cancellationToken = default)
     {
         var queryOptions = new QueryOptions();
         options.Invoke(queryOptions);
         return ExecuteQueryAsync(statement, queryOptions, cancellationToken);
     }
 
-    public async Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null, CancellationToken? cancellationToken = null)
+    public async Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null, CancellationToken cancellationToken = default)
     {
        var service = _analyticsService.GetValueOrThrow();
        return await service.SendAsync(statement, options ?? new QueryOptions(), cancellationToken).ConfigureAwait(false);

@@ -23,5 +23,5 @@ internal interface IAnalyticsService
 {
     Uri Uri { get; }
 
-    Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken? cancellationToken = null);
+    Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default);
 }

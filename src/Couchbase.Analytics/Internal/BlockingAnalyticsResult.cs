@@ -19,7 +19,10 @@
  * ************************************************************/
 #endregion
 
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using System.Threading;
 using Couchbase.Analytics2.Internal.Utils;
 using Couchbase.Text.Json;
 
@@ -28,8 +31,7 @@ namespace Couchbase.Analytics2.Internal;
 /// <summary>
 /// A "blocking" result class for Analytics queries.
 /// </summary>
-/// <typeparam name="T">The Type of the object in each row.</typeparam>
-/// <remarks>For large result sets use the <see cref="StreamingAnalyticsResult{T}"/> class by setting <see cref="QueryOptions.AsStreaming"/> to true, which is the default.</remarks>
+/// <remarks>For large result sets use the <see cref="StreamingAnalyticsResult"/> class by setting <see cref="QueryOptions.AsStreaming"/> to true, which is the default.</remarks>
 internal class BlockingAnalyticsResult : AnalyticsResultBase
 {
     private IEnumerable<AnalyticsRow> _rows;
@@ -41,7 +43,11 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
     }
 
     public override IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
-        CancellationToken cancellationToken = new())
+        CancellationToken cancellationToken = default)
+        => EnumerateRows(cancellationToken).GetAsyncEnumerator(cancellationToken);
+
+    private async IAsyncEnumerable<AnalyticsRow> EnumerateRows(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (_rows == null)
         {
@@ -55,7 +61,12 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
         }
 
         _enumerated = true;
-        return _rows.ToAsyncEnumerable().GetAsyncEnumerator(cancellationToken);
+
+        foreach (var row in _rows)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return row;
+        }
     }
 
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -105,6 +116,7 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
         }
 
         _rows = rows;
+        Rows = EnumerateRows(cancellationToken);
     }
 }
 
