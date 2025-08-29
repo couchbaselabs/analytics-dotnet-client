@@ -19,6 +19,9 @@
  * ************************************************************/
 #endregion
 
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;
@@ -50,10 +53,16 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
         }
 
         await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
+
+        Rows = EnumerateRows(cancellationToken);
     }
 
-    public override async IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
-        CancellationToken cancellationToken = new())
+    public override IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
+        CancellationToken cancellationToken = default)
+        => EnumerateRows(cancellationToken).GetAsyncEnumerator(cancellationToken);
+
+    private async IAsyncEnumerable<AnalyticsRow> EnumerateRows(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (_hasReadResult)
         {
@@ -85,7 +94,7 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
         await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task ReadResponseAttributes(CancellationToken cancellationToken)
+    private async Task ReadResponseAttributes(CancellationToken cancellationToken = default)
     {
         if (_jsonReader == null)
         {

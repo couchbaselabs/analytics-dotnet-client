@@ -1,7 +1,10 @@
+using System.Data;
+using System.Text.Json;
 using Couchbase.Analytics2.FunctionalTests.Fixtures;
 using Xunit;
 using DnsClient;
 using Xunit.Abstractions;
+using TimeoutException = Couchbase.Analytics2.Exceptions.TimeoutException;
 
 namespace Couchbase.Analytics2.FunctionalTests.Internal;
 
@@ -32,5 +35,67 @@ public class AnalyticsServiceTests
         var hostname = _analytics2Fixture.FixtureSettings.ConnectionString!.Split(':')[0];
         var results = await lookupClient.QueryAsync(hostname, QueryType.A);
         Assert.NotNull(results);
+    }
+
+    [Fact]
+    public async Task Test_Streaming_Query()
+    {
+        var statement = "select i from array_range(1, 100) as i;";
+
+        var result = await _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true});
+
+        await foreach (var row in result)
+        {
+            var value = row.ContentAs<JsonElement>();
+            _outputHelper.WriteLine(value.ToString());
+        }
+
+        Assert.Equal(99, result.MetaData.Metrics.ResultCount);
+    }
+
+    [Fact]
+    public async Task Test_Blocking_Query()
+    {
+        var statement = "select i from array_range(1, 100) as i;";
+
+        var result = await _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false});
+
+        await foreach (var row in result)
+        {
+            var value = row.ContentAs<JsonElement>();
+            _outputHelper.WriteLine(value.ToString());
+        }
+
+        Assert.Equal(99, result.MetaData.Metrics.ResultCount);
+    }
+
+    [Fact]
+    public async Task Test_Cancellation_Works_Streaming()
+    {
+        var cts = new CancellationTokenSource();
+        var statement = "select i from array_range(1, 100) as i;";
+        await cts.CancelAsync();
+
+        var task = _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true},
+            cts.Token);
+
+        await Assert.ThrowsAsync<TimeoutException>(async () => await task.ConfigureAwait(false));
+    }
+
+    [Fact]
+    public async Task Test_Cancellation_Works_Blocking()
+    {
+        var cts = new CancellationTokenSource();
+        var statement = "select i from array_range(1, 100) as i;";
+        await cts.CancelAsync();
+
+        var task = _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false},
+            cts.Token);
+
+        await Assert.ThrowsAsync<TimeoutException>(async () => await task.ConfigureAwait(false));
     }
 }

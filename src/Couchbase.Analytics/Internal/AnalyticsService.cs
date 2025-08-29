@@ -50,7 +50,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
     public Uri Uri { get; private set; }
 
-    public async Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken? cancellationToken = null)
+    public async Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default)
     {
         return await ExecuteWithRetryAsync(statement, options, cancellationToken).ConfigureAwait(false);
     }
@@ -58,10 +58,8 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     /// <summary>
     /// Core query execution logic - the golden path for sending analytics requests.
     /// </summary>
-    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, CancellationToken? cancellationToken = null)
+    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, CancellationToken cancellationToken = default)
     {
-        cancellationToken ??= CancellationToken.None;
-
         var request = new HttpRequestMessage(HttpMethod.Post, Uri)
         {
             Content = content
@@ -71,7 +69,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         {
             var response = await httpClient.SendAsync(request,
                     HttpCompletionOption.ResponseHeadersRead,
-                    cancellationToken.Value)
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             var stream = await response.Content.ReadAsStreamAsync()
@@ -83,7 +81,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
             result.StatusCode = response.StatusCode;
 
-            await result.InitializeAsync(cancellationToken.Value).ConfigureAwait(false);
+            await result.InitializeAsync(cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 throw AnalyticsErrorMapper.MapHttpErrorCode(response.StatusCode);
@@ -100,12 +98,11 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     /// <summary>
     /// Retry wrapper around the core query execution logic.
     /// </summary>
-    private async Task<IQueryResult> ExecuteWithRetryAsync(string statement, QueryOptions options, CancellationToken? cancellationToken = null)
+    private async Task<IQueryResult> ExecuteWithRetryAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default)
     {
         var stopwatch = LightweightStopwatch.StartNew();
         Exception lastException = new AnalyticsException("Maximum retries exceeded without success.");
 
-        cancellationToken ??= CancellationToken.None;
         var timeout = options.Timeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
 
         var body = options.GetFormValuesAsJson(statement);
@@ -139,7 +136,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     {
                         _logger.LogDebug("Received retriable server errors for ClientContextId {ClientContextId}, retrying...", options.ClientContextId);
                         lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors);
-                        await RetryUtils.BackoffAsync(attempt, cancellationToken.Value).ConfigureAwait(false);
+                        await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
@@ -168,7 +165,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     throw;
                 }
 
-                await RetryUtils.BackoffAsync(attempt, cancellationToken.Value).ConfigureAwait(false);
+                await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException operationCanceledException)
             {
@@ -180,7 +177,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
                 lastException = operationCanceledException;
 
-                await RetryUtils.BackoffAsync(attempt, cancellationToken.Value).ConfigureAwait(false);
+                await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
             }
         }
         throw lastException;

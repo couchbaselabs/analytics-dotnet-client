@@ -36,7 +36,7 @@ public sealed class Scope
 
     public string Name { get; }
 
-    public Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null, CancellationToken? cancellationToken = null)
+    public Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new QueryOptions();
         options.QueryContext = new QueryContext(_database.Name, Name);
