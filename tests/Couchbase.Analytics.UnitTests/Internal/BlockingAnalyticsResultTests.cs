@@ -22,7 +22,7 @@ public class BlockingAnalyticsResultTest
         // Assert
         // No exception should be thrown, and the method should complete successfully.
     }
-    
+
     [Fact]
     public async Task Error_23000_ShouldHaveErrorMessageAndCode()
     {
@@ -43,14 +43,14 @@ public class BlockingAnalyticsResultTest
     }
 
     [Fact]
-    public void GetAsyncEnumerator_ShouldThrowNotImplementedException()
+    public async Task GetAsyncEnumerator_ShouldThrowNotImplementedException()
     {
         // Arrange
         var stream = new MemoryStream();
         var result = new BlockingAnalyticsResult(stream, new StjJsonDeserializer());
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => result.GetAsyncEnumerator());
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await result.GetAsyncEnumerator().MoveNextAsync().ConfigureAwait(false));
     }
 
     [Fact]

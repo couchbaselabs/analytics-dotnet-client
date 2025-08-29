@@ -71,7 +71,7 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
 
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var reader = Serializer.CreateJsonStreamReader(ResponseStream);
+        var reader = Serializer.CreateJsonStreamReader(ResponseStream, cancellationToken);
 
         if (!await reader.InitializeAsync(cancellationToken).ConfigureAwait(false))
         {
