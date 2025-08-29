@@ -43,7 +43,7 @@ internal abstract class AnalyticsResultBase : IQueryResult
     }
 
     public abstract IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(
-        CancellationToken cancellationToken = new CancellationToken());
+        CancellationToken cancellationToken = default);
 
     public abstract Task InitializeAsync(CancellationToken cancellationToken = default);
 
