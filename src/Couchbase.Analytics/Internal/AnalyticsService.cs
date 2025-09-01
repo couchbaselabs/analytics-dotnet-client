@@ -103,7 +103,9 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         var stopwatch = LightweightStopwatch.StartNew();
         Exception lastException = new AnalyticsException("Maximum retries exceeded without success.");
 
+        // The Timeout of QueryOptions is nullable. If it wasn't set by the user, we must set it to the default from ClusterOptions.
         var timeout = options.Timeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
+        options.Timeout = timeout;
 
         var body = options.GetFormValuesAsJson(statement);
         using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
