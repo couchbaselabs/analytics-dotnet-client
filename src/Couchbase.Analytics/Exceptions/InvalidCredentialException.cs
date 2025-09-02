@@ -17,6 +17,8 @@
  *
  * ************************************************************/
 using System.Runtime.Serialization;
+using System.Text.Json;
+using Couchbase.Analytics2.Internal.Retry;
 
 namespace Couchbase.Analytics2.Exceptions;
 
@@ -38,6 +40,10 @@ public class InvalidCredentialException : AnalyticsException
     }
 
     public InvalidCredentialException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+
+    internal InvalidCredentialException(string? message, ErrorContext errorContext) : base(message, errorContext)
     {
     }
 }

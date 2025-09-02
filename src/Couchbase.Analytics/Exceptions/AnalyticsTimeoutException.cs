@@ -17,6 +17,7 @@
  *
  * ************************************************************/
 using System.Runtime.Serialization;
+using Couchbase.Analytics2.Internal.Retry;
 
 namespace Couchbase.Analytics2.Exceptions;
 
@@ -24,26 +25,33 @@ namespace Couchbase.Analytics2.Exceptions;
 /// Thrown if the SDK detects a client-side timeout, or the server returns analytics error code 21002 (server-side timeout).
 /// <remarks>This is the user's only indication that a request is potentially retriable, since the SDK automatically retries retriable operations until the timeout duration elapses.</remarks>
 /// </summary>
-public class TimeoutException : AnalyticsException
+public class AnalyticsTimeoutException : AnalyticsException
 {
     /// <summary>
     /// The last error that occurred before the timeout.
     /// </summary>
     public Exception? LastError { get; set; }
 
-    public TimeoutException()
+    public AnalyticsTimeoutException()
     {
     }
 
-    protected TimeoutException(SerializationInfo info, StreamingContext context) : base(info, context)
+    protected AnalyticsTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
     }
 
-    public TimeoutException(string? message) : base(message)
+    public AnalyticsTimeoutException(string? message) : base(message)
     {
     }
 
-    public TimeoutException(string? message, Exception? innerException) : base(message, innerException)
+    public AnalyticsTimeoutException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+    internal AnalyticsTimeoutException(string? message, Exception? innerException, ErrorContext? errorContext) : base(message, innerException, errorContext)
+    {
+    }
+
+    internal AnalyticsTimeoutException(string? message, ErrorContext? errorContext) : base(message, errorContext)
     {
     }
 }

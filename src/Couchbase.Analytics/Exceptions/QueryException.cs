@@ -17,6 +17,7 @@
  *
  * ************************************************************/
 using System.Runtime.Serialization;
+using Couchbase.Analytics2.Internal.Retry;
 
 namespace Couchbase.Analytics2.Exceptions;
 
@@ -38,6 +39,10 @@ public class QueryException : AnalyticsException
     }
 
     public QueryException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+
+    internal QueryException(string? message, ErrorContext errorContext) : base(message, errorContext)
     {
     }
 

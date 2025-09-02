@@ -19,13 +19,21 @@
  * ************************************************************/
 #endregion
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Couchbase.Analytics2;
 
 public record Error(
-    [property: JsonPropertyName("code")] int Code,
-    [property: JsonPropertyName("msg")] string Message,
+    [property: JsonPropertyName("code")]
+    int Code,
+
+    [property: JsonPropertyName("msg")]
+    string Message,
+
     [property: JsonPropertyName("retriable")]
     bool Retriable
-);
+)
+{
+    public override string ToString() => JsonSerializer.Serialize(this);
+}

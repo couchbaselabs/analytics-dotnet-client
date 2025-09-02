@@ -36,7 +36,7 @@ internal static class RetryUtils
     /// </summary>
     /// <param name="attemptNumber">The current attempt number (0-based).</param>
     /// <returns>The calculated delay as a TimeSpan.</returns>
-    public static TimeSpan CalculateBackoffDelay(uint attemptNumber)
+    public static TimeSpan CalculateBackoffDelay(int attemptNumber)
     {
         // baseDelay * (factor ^ attemptNumber)
         var exponentialDelay = BaseDelayMs * Math.Pow(ExponentialFactor, attemptNumber);
@@ -54,7 +54,7 @@ internal static class RetryUtils
         return TimeSpan.FromMilliseconds(finalDelay);
     }
 
-    public static async Task BackoffAsync(uint attempt, CancellationToken token)
+    public static async Task BackoffAsync(int attempt, CancellationToken token)
     {
         await Task.Delay(CalculateBackoffDelay(attempt), token).ConfigureAwait(false);
     }
