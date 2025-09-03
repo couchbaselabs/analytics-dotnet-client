@@ -117,7 +117,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
         var attempt = -1;
 
-        while (attempt <= maxRetries)
+        while (attempt < maxRetries)
         {
             attempt++;
             errorContext.RetryAttempts = attempt;
