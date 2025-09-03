@@ -34,14 +34,19 @@ internal static class AnalyticsErrorMapper
     /// <summary>
     /// Maps an HTTP status code to the appropriate Analytics exception type.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="analyticsResult">The Http request result</param>
+    /// /// <param name="errorContext">The request's error context</param>
     /// <returns>An AnalyticsException or one of its subclasses.</returns>
-    internal static AnalyticsException MapHttpErrorCode(HttpStatusCode statusCode, ErrorContext errorContext)
+    internal static AnalyticsException MapHttpErrorCode(AnalyticsResultBase analyticsResult, ErrorContext errorContext)
     {
+        errorContext.Errors.AddRange(analyticsResult.Errors);
+
+        var statusCode = errorContext.StatusCode;
         return statusCode switch
         {
             HttpStatusCode.Unauthorized => new InvalidCredentialException($"Authentication failed - invalid credentials. Code: {(int)statusCode} - {statusCode}", errorContext),
             HttpStatusCode.ServiceUnavailable => new AnalyticsException($"Service temporarily unavailable. Code: {(int)statusCode} - {statusCode}", errorContext),
+            HttpStatusCode.BadRequest => MapServerErrorCode(errorContext.Errors[0], errorContext),
             _ => new AnalyticsException($"HTTP {(int)statusCode} {statusCode}", errorContext)
         };
     }

@@ -81,16 +81,17 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             errorContext.StatusCode = response.StatusCode;
 
             await result.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
-                throw AnalyticsErrorMapper.MapHttpErrorCode(response.StatusCode, errorContext);
+                throw AnalyticsErrorMapper.MapHttpErrorCode(result, errorContext);
             }
 
             return result;
         }
         catch (TaskCanceledException taskCanceledEx)
         {
-            throw new AnalyticsTimeoutException("The analytics request was canceled via its cancellation token.", taskCanceledEx);
+            throw new AnalyticsTimeoutException("The analytics request was canceled via its cancellation token.", taskCanceledEx, errorContext);
         }
     }
 
