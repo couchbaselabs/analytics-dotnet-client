@@ -27,10 +27,7 @@ namespace Couchbase.Analytics2.Exceptions;
 /// </summary>
 public class AnalyticsTimeoutException : AnalyticsException
 {
-    /// <summary>
-    /// The last error that occurred before the timeout.
-    /// </summary>
-    public Exception? LastError { get; set; }
+    public AggregateException? AggregateException { get; }
 
     public AnalyticsTimeoutException()
     {
@@ -53,5 +50,9 @@ public class AnalyticsTimeoutException : AnalyticsException
 
     internal AnalyticsTimeoutException(string? message, ErrorContext? errorContext) : base(message, errorContext)
     {
+    }
+    internal AnalyticsTimeoutException(string? message, AggregateException aggregateException, ErrorContext? errorContext) : base(message, errorContext)
+    {
+        AggregateException = aggregateException;
     }
 }

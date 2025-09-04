@@ -39,7 +39,7 @@ internal static class AnalyticsErrorMapper
     /// <returns>An AnalyticsException or one of its subclasses.</returns>
     internal static AnalyticsException MapHttpErrorCode(AnalyticsResultBase analyticsResult, ErrorContext errorContext)
     {
-        errorContext.Errors.AddRange(analyticsResult.Errors);
+        errorContext.Errors = analyticsResult.Errors.ToList();
 
         var statusCode = errorContext.StatusCode;
         return statusCode switch

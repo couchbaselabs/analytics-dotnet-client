@@ -28,7 +28,7 @@ internal class ErrorContext
 
     [JsonInclude]
     [JsonPropertyName("errors")]
-    internal List<Error> Errors { get; } = new();
+    internal List<Error> Errors { get; set; } = new();
 
     [JsonInclude]
     [JsonPropertyName("retry_attempts")]

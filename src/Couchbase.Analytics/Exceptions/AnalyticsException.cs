@@ -30,10 +30,7 @@ public class AnalyticsException : Exception
 {
     internal ErrorContext? ErrorContext { get; set; }
 
-    /// <summary>
-    /// The number of attempts made before throwing this exception.
-    /// </summary>
-    public int Attempts { get; set; }
+    public AggregateException? AggregateException { get; }
 
     public AnalyticsException()
     {
@@ -51,13 +48,19 @@ public class AnalyticsException : Exception
     {
     }
 
-    internal AnalyticsException(string? message, ErrorContext errorContext) : base(message)
+    internal AnalyticsException(string? message, ErrorContext? errorContext) : base(message)
     {
         ErrorContext = errorContext;
     }
 
     internal AnalyticsException(string? message, Exception? innerException, ErrorContext? errorContext) : base(message, innerException)
     {
+        ErrorContext = errorContext;
+    }
+
+    internal AnalyticsException(string? message, AggregateException? aggregateException, ErrorContext? errorContext) : base(message)
+    {
+        AggregateException = aggregateException;
         ErrorContext = errorContext;
     }
 
