@@ -81,7 +81,7 @@ internal static class AnalyticsErrorMapper
             return new AnalyticsException("Unknown server error");
         }
 
-        errorContext.Errors.AddRange(errors);
+        errorContext.Errors = errors.ToList();
 
         // Find first non-retriable error
         var firstNonRetriable = errors.FirstOrDefault(e => !e.Retriable);

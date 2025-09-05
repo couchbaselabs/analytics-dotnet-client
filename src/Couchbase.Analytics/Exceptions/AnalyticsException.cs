@@ -30,8 +30,6 @@ public class AnalyticsException : Exception
 {
     internal ErrorContext? ErrorContext { get; set; }
 
-    public AggregateException? AggregateException { get; }
-
     public AnalyticsException()
     {
     }
@@ -58,9 +56,8 @@ public class AnalyticsException : Exception
         ErrorContext = errorContext;
     }
 
-    internal AnalyticsException(string? message, AggregateException? aggregateException, ErrorContext? errorContext) : base(message)
+    internal AnalyticsException(string? message, AggregateException? aggregateException, ErrorContext? errorContext) : base(message, aggregateException)
     {
-        AggregateException = aggregateException;
         ErrorContext = errorContext;
     }
 

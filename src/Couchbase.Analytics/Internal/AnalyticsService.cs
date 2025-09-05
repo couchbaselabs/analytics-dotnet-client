@@ -106,7 +106,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         options.Timeout = timeout;
 
         var errorContext = new ErrorContext(options.ClientContextId, stopwatch, timeout);
-        var retryExceptions = new List<Exception>();
+        Exception lastException = new AnalyticsException("Exceeded maximum number of retries.", errorContext: errorContext);
 
         var body = options.GetFormValuesAsJson(statement);
         using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
@@ -126,7 +126,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             // We observe the overall timeout across all retries.
             if (stopwatch.Elapsed > timeout)
             {
-                ThrowGlobalTimeout(retryExceptions, stopwatch.Elapsed, errorContext);
+                ThrowGlobalTimeout(lastException, stopwatch.Elapsed, errorContext);
             }
             try
             {
@@ -144,7 +144,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     {
                         _logger.LogDebug("Received retriable server errors for ClientContextId {ClientContextId}, retrying...", options.ClientContextId);
 
-                        retryExceptions.Add(AnalyticsErrorMapper.MapServiceErrors(result.Errors, errorContext));
+                        lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors, errorContext);
 
                         await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
                         continue;
@@ -166,7 +166,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                 // "No successful connection" is retryable
                 if (httpRequestException.InnerException is AggregateException aggregateEx)
                 {
-                    retryExceptions.Add(new AnalyticsException("No connections could be established to any of the endpoints.", aggregateEx, errorContext));
+                    lastException = new AnalyticsException("No connections could be established to any of the endpoints.", aggregateEx, errorContext);
                 }
 
                 if (!AnalyticsErrorMapper.IsRetriableHttpException(httpRequestException))
@@ -179,24 +179,25 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             }
             catch (OperationCanceledException operationCanceledException)
             {
-                retryExceptions.Add(operationCanceledException);
+                lastException = operationCanceledException;
 
                 // Check if we exceeded the query timeout
                 if (stopwatch.Elapsed > timeout)
                 {
-                    ThrowGlobalTimeout(retryExceptions, stopwatch.Elapsed, errorContext);
+                    ThrowGlobalTimeout(lastException, stopwatch.Elapsed, errorContext);
                 }
 
                 await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
             }
         }
-        throw new AnalyticsException("Maximum number of retries reached.", new AggregateException(retryExceptions), errorContext);
+
+        throw lastException;
     }
 
-    private static void ThrowGlobalTimeout(List<Exception> retryExceptions, TimeSpan elapsed, ErrorContext? errorContext = null)
+    private static void ThrowGlobalTimeout(Exception lastException, TimeSpan elapsed, ErrorContext? errorContext = null)
     {
         var timeoutException = new AnalyticsTimeoutException(
-            $"Analytics query timed-out after {elapsed.TotalSeconds:F2} seconds.", new AggregateException(retryExceptions), errorContext);
+            $"Analytics query timed-out after {elapsed.TotalSeconds:F2} seconds.", lastException, errorContext);
         throw timeoutException;
     }
 }
