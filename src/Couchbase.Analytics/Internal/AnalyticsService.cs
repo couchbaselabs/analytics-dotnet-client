@@ -106,7 +106,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         options.Timeout = timeout;
 
         var errorContext = new ErrorContext(options.ClientContextId, stopwatch, timeout);
-        Exception lastException = new AnalyticsException("Exceeded maximum number of retries.", errorContext: errorContext);
+        Exception? lastException = null;
 
         var body = options.GetFormValuesAsJson(statement);
         using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
@@ -191,13 +191,18 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             }
         }
 
-        throw lastException;
+        throw lastException ?? ThrowTooManyRetries(errorContext);
     }
 
-    private static void ThrowGlobalTimeout(Exception lastException, TimeSpan elapsed, ErrorContext? errorContext = null)
+    private static void ThrowGlobalTimeout(Exception? lastException, TimeSpan elapsed, ErrorContext? errorContext = null)
     {
         var timeoutException = new AnalyticsTimeoutException(
             $"Analytics query timed-out after {elapsed.TotalSeconds:F2} seconds.", lastException, errorContext);
         throw timeoutException;
+    }
+
+    private static Exception ThrowTooManyRetries(ErrorContext errorContext)
+    {
+        throw new AnalyticsException("Exceeded maximum number of retries.", errorContext: errorContext);
     }
 }
