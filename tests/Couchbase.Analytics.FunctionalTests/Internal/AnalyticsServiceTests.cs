@@ -1,10 +1,9 @@
-using System.Data;
 using System.Text.Json;
+using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.FunctionalTests.Fixtures;
 using Xunit;
 using DnsClient;
 using Xunit.Abstractions;
-using TimeoutException = Couchbase.Analytics2.Exceptions.TimeoutException;
 
 namespace Couchbase.Analytics2.FunctionalTests.Internal;
 
@@ -82,7 +81,7 @@ public class AnalyticsServiceTests
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true},
             cts.Token);
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await task.ConfigureAwait(false));
+        await Assert.ThrowsAsync<AnalyticsTimeoutException>(async () => await task.ConfigureAwait(false));
     }
 
     [Fact]
@@ -96,6 +95,6 @@ public class AnalyticsServiceTests
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false},
             cts.Token);
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await task.ConfigureAwait(false));
+        await Assert.ThrowsAsync<AnalyticsTimeoutException>(async () => await task.ConfigureAwait(false));
     }
 }

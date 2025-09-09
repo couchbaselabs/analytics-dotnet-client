@@ -17,6 +17,9 @@
  *
  * ************************************************************/
 using System.Runtime.Serialization;
+using System.Text;
+using System.Text.Json;
+using Couchbase.Analytics2.Internal.Retry;
 
 namespace Couchbase.Analytics2.Exceptions;
 
@@ -25,10 +28,7 @@ namespace Couchbase.Analytics2.Exceptions;
 /// </summary>
 public class AnalyticsException : Exception
 {
-    /// <summary>
-    /// The number of attempts made before throwing this exception.
-    /// </summary>
-    public int Attempts { get; set; }
+    internal ErrorContext? ErrorContext { get; set; }
 
     public AnalyticsException()
     {
@@ -44,5 +44,29 @@ public class AnalyticsException : Exception
 
     public AnalyticsException(string? message, Exception? innerException) : base(message, innerException)
     {
+    }
+
+    internal AnalyticsException(string? message, ErrorContext? errorContext) : base(message)
+    {
+        ErrorContext = errorContext;
+    }
+
+    internal AnalyticsException(string? message, Exception? innerException, ErrorContext? errorContext) : base(message, innerException)
+    {
+        ErrorContext = errorContext;
+    }
+
+    internal AnalyticsException(string? message, AggregateException? aggregateException, ErrorContext? errorContext) : base(message, aggregateException)
+    {
+        ErrorContext = errorContext;
+    }
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        sb.Append(Message);
+        sb.Append(InnerException?.Message);
+        sb.Append($" Context Info: {ErrorContext?.ToString()}");
+        return sb.ToString();
     }
 }

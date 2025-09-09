@@ -26,7 +26,6 @@ using Couchbase.Analytics2.Internal.Retry;
 using Couchbase.Text.Json;
 using Couchbase.Text.Json.Utils;
 using Microsoft.Extensions.Logging;
-using TimeoutException = Couchbase.Analytics2.Exceptions.TimeoutException;
 
 namespace Couchbase.Analytics2.Internal;
 
@@ -58,7 +57,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     /// <summary>
     /// Core query execution logic - the golden path for sending analytics requests.
     /// </summary>
-    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, CancellationToken cancellationToken = default)
+    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, ErrorContext errorContext, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, Uri)
         {
@@ -72,26 +71,27 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            var stream = await response.Content.ReadAsStreamAsync()
-                .ConfigureAwait(false);
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 
             AnalyticsResultBase result = asStreaming
                 ? new StreamingAnalyticsResult(stream, _serializer, httpClient)
                 : new BlockingAnalyticsResult(stream, _serializer, httpClient);
 
             result.StatusCode = response.StatusCode;
+            errorContext.StatusCode = response.StatusCode;
 
             await result.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
-                throw AnalyticsErrorMapper.MapHttpErrorCode(response.StatusCode);
+                throw AnalyticsErrorMapper.MapHttpErrorCode(result, errorContext);
             }
 
             return result;
         }
         catch (TaskCanceledException taskCanceledEx)
         {
-            throw new TimeoutException("The analytics request was canceled via its cancellation token.", taskCanceledEx);
+            throw new AnalyticsTimeoutException("The analytics request was canceled via its cancellation token.", taskCanceledEx, errorContext);
         }
     }
 
@@ -101,11 +101,12 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     private async Task<IQueryResult> ExecuteWithRetryAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default)
     {
         var stopwatch = LightweightStopwatch.StartNew();
-        Exception lastException = new AnalyticsException("Maximum retries exceeded without success.");
-
         // The Timeout of QueryOptions is nullable. If it wasn't set by the user, we must set it to the default from ClusterOptions.
         var timeout = options.Timeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
         options.Timeout = timeout;
+
+        var errorContext = new ErrorContext(options.ClientContextId, stopwatch, timeout);
+        Exception? lastException = null;
 
         var body = options.GetFormValuesAsJson(statement);
         using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
@@ -115,12 +116,17 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 
         var maxRetries = options.MaxRetries ?? _clusterOptions.MaxRetries;
 
-        for (uint attempt = 0; attempt <= maxRetries; attempt++)
+        var attempt = -1;
+
+        while (attempt < maxRetries)
         {
+            attempt++;
+            errorContext.RetryAttempts = attempt;
+
             // We observe the overall timeout across all retries.
             if (stopwatch.Elapsed > timeout)
             {
-                ThrowGlobalTimeout(lastException, stopwatch.Elapsed);
+                ThrowGlobalTimeout(lastException, stopwatch.Elapsed, errorContext);
             }
             try
             {
@@ -128,7 +134,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)",
                     attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
 
-                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, cancellationToken).ConfigureAwait(false);
+                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, errorContext, cancellationToken).ConfigureAwait(false);
 
                 // Always read errors from the result
                 if (result.Errors is { Count: > 0 })
@@ -137,13 +143,15 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     if (AnalyticsErrorMapper.AreErrorsRetriable(result.Errors))
                     {
                         _logger.LogDebug("Received retriable server errors for ClientContextId {ClientContextId}, retrying...", options.ClientContextId);
-                        lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors);
+
+                        lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors, errorContext);
+
                         await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
                     // Non-retriable server errors - throw
-                    throw AnalyticsErrorMapper.MapServiceErrors(result.Errors);
+                    throw AnalyticsErrorMapper.MapServiceErrors(result.Errors, errorContext);
                 }
 
                 return result;
@@ -158,7 +166,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                 // "No successful connection" is retryable
                 if (httpRequestException.InnerException is AggregateException aggregateEx)
                 {
-                    lastException = new AnalyticsException("No connections could be established to any of the endpoints.", aggregateEx);
+                    lastException = new AnalyticsException("No connections could be established to any of the endpoints.", aggregateEx, errorContext);
                 }
 
                 if (!AnalyticsErrorMapper.IsRetriableHttpException(httpRequestException))
@@ -171,25 +179,30 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             }
             catch (OperationCanceledException operationCanceledException)
             {
+                lastException = operationCanceledException;
+
                 // Check if we exceeded the query timeout
                 if (stopwatch.Elapsed > timeout)
                 {
-                    ThrowGlobalTimeout(lastException, stopwatch.Elapsed, operationCanceledException);
+                    ThrowGlobalTimeout(lastException, stopwatch.Elapsed, errorContext);
                 }
-
-                lastException = operationCanceledException;
 
                 await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
             }
         }
-        throw lastException;
+
+        throw lastException ?? ThrowTooManyRetries(errorContext);
     }
 
-    private static void ThrowGlobalTimeout(Exception lastException, TimeSpan elapsed, Exception? inner = null)
+    private static void ThrowGlobalTimeout(Exception? lastException, TimeSpan elapsed, ErrorContext? errorContext = null)
     {
-        var timeoutException = new TimeoutException(
-            $"Analytics query timed-out after {elapsed.TotalSeconds:F2} seconds.", inner);
-        timeoutException.LastError = lastException;
+        var timeoutException = new AnalyticsTimeoutException(
+            $"Analytics query timed-out after {elapsed.TotalSeconds:F2} seconds.", lastException, errorContext);
         throw timeoutException;
+    }
+
+    private static Exception ThrowTooManyRetries(ErrorContext errorContext)
+    {
+        throw new AnalyticsException("Exceeded maximum number of retries.", errorContext: errorContext);
     }
 }

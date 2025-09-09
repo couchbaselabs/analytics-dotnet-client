@@ -14,18 +14,18 @@ public class RetryUtilsTests
     }
 
     [Theory]
-    [InlineData(0u, 75, 125)]     // Attempt 0: 100ms base ±25% = 75-125ms
-    [InlineData(1u, 150, 250)]    // Attempt 1: 200ms ±25% = 150-250ms
-    [InlineData(2u, 300, 500)]    // Attempt 2: 400ms ±25% = 300-500ms
-    [InlineData(3u, 600, 1000)]   // Attempt 3: 800ms ±25% = 600-1000ms
-    [InlineData(4u, 1200, 2000)]  // Attempt 4: 1600ms ±25% = 1200-2000ms
-    [InlineData(5u, 2400, 4000)]  // Attempt 5: 3200ms ±25% = 2400-4000ms
-    [InlineData(6u, 4800, 8000)]  // Attempt 6: 6400ms ±25% = 4800-8000ms
-    [InlineData(7u, 9600, 16000)] // Attempt 7: 12800ms ±25% = 9600-16000ms
-    [InlineData(8u, 19200, 32000)] // Attempt 8: 25600ms ±25% = 19200-32000ms
-    [InlineData(9u, 38400, 75000)] // Attempt 9: 51200ms capped at 60000ms ±25% = 38400-75000ms
-    [InlineData(10u, 45000, 75000)] // Attempt 10: 102400ms capped at 60000ms ±25% = 45000-75000ms
-    public void CalculateBackoffDelay_ReturnsExpectedRange(uint attemptNumber, double expectedMinMs, double expectedMaxMs)
+    [InlineData(0, 75, 125)]     // Attempt 0: 100ms base ±25% = 75-125ms
+    [InlineData(1, 150, 250)]    // Attempt 1: 200ms ±25% = 150-250ms
+    [InlineData(2, 300, 500)]    // Attempt 2: 400ms ±25% = 300-500ms
+    [InlineData(3, 600, 1000)]   // Attempt 3: 800ms ±25% = 600-1000ms
+    [InlineData(4, 1200, 2000)]  // Attempt 4: 1600ms ±25% = 1200-2000ms
+    [InlineData(5, 2400, 4000)]  // Attempt 5: 3200ms ±25% = 2400-4000ms
+    [InlineData(6, 4800, 8000)]  // Attempt 6: 6400ms ±25% = 4800-8000ms
+    [InlineData(7, 9600, 16000)] // Attempt 7: 12800ms ±25% = 9600-16000ms
+    [InlineData(8, 19200, 32000)] // Attempt 8: 25600ms ±25% = 19200-32000ms
+    [InlineData(9, 38400, 75000)] // Attempt 9: 51200ms capped at 60000ms ±25% = 38400-75000ms
+    [InlineData(10, 45000, 75000)] // Attempt 10: 102400ms capped at 60000ms ±25% = 45000-75000ms
+    public void CalculateBackoffDelay_ReturnsExpectedRange(int attemptNumber, double expectedMinMs, double expectedMaxMs)
     {
         var delays = new List<double>();
         for (int i = 0; i < 100; i++)
@@ -65,7 +65,7 @@ public class RetryUtilsTests
         _outputHelper.WriteLine("Attempt | Base Delay | Expected Range (±25% jitter) | Actual Sample");
         _outputHelper.WriteLine("--------|------------|-------------------------------|---------------");
 
-        for (uint attempt = 0; attempt <= 10; attempt++)
+        for (int attempt = 0; attempt <= 10; attempt++)
         {
             // Calculate the theoretical base delay (before jitter)
             const uint baseDelayMs = 100;
@@ -93,7 +93,7 @@ public class RetryUtilsTests
     public void CalculateBackoffDelay_MaxDelayIsCapped()
     {
         // Test that very high attempt numbers are capped at 60 seconds
-        var delay = RetryUtils.CalculateBackoffDelay(20u);
+        var delay = RetryUtils.CalculateBackoffDelay(20);
 
         _outputHelper.WriteLine($"Delay for attempt 20: {delay.TotalMilliseconds:F0}ms");
 
@@ -106,7 +106,7 @@ public class RetryUtilsTests
     public void CalculateBackoffDelay_MinDelayIsNonNegative()
     {
         // Test that delays are never negative (even with jitter)
-        for (uint attempt = 0; attempt <= 5; attempt++)
+        for (int attempt = 0; attempt <= 5; attempt++)
         {
             var delay = RetryUtils.CalculateBackoffDelay(attempt);
 

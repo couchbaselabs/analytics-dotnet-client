@@ -34,15 +34,20 @@ internal static class AnalyticsErrorMapper
     /// <summary>
     /// Maps an HTTP status code to the appropriate Analytics exception type.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code.</param>
+    /// <param name="analyticsResult">The Http request result</param>
+    /// /// <param name="errorContext">The request's error context</param>
     /// <returns>An AnalyticsException or one of its subclasses.</returns>
-    internal static AnalyticsException MapHttpErrorCode(HttpStatusCode statusCode)
+    internal static AnalyticsException MapHttpErrorCode(AnalyticsResultBase analyticsResult, ErrorContext errorContext)
     {
+        errorContext.Errors = analyticsResult.Errors.ToList();
+
+        var statusCode = errorContext.StatusCode;
         return statusCode switch
         {
-            HttpStatusCode.Unauthorized => new InvalidCredentialException("Authentication failed - invalid credentials"),
-            HttpStatusCode.ServiceUnavailable => new AnalyticsException("Service temporarily unavailable"),
-            _ => new AnalyticsException($"HTTP {(int)statusCode} {statusCode}")
+            HttpStatusCode.Unauthorized => new InvalidCredentialException($"Authentication failed - invalid credentials. Code: {(int)statusCode} - {statusCode}", errorContext),
+            HttpStatusCode.ServiceUnavailable => new AnalyticsException($"Service temporarily unavailable. Code: {(int)statusCode} - {statusCode}", errorContext),
+            HttpStatusCode.BadRequest => MapServerErrorCode(errorContext.Errors[0], errorContext),
+            _ => new AnalyticsException($"HTTP {(int)statusCode} {statusCode}", errorContext)
         };
     }
 
@@ -51,13 +56,13 @@ internal static class AnalyticsErrorMapper
     /// </summary>
     /// <param name="error">The error from the server response.</param>
     /// <returns>An AnalyticsException or one of its subclasses.</returns>
-    private static AnalyticsException MapServerErrorCode(Error error)
+    private static AnalyticsException MapServerErrorCode(Error error, ErrorContext errorContext)
     {
         return error.Code switch
         {
-            20000 => new InvalidCredentialException(error.Message),
-            21002 => new Couchbase.Analytics2.Exceptions.TimeoutException($"{error.Message}. Http error code: {error.Code}"),
-            _ => new QueryException(error.Message) { Code = error.Code, ServerMessage = error.Message }
+            20000 => new InvalidCredentialException(error.Message, errorContext),
+            21002 => new AnalyticsTimeoutException($"{error.Message}. Error code: {error.Code}", errorContext),
+            _ => new QueryException(error.Message, errorContext) { Code = error.Code, ServerMessage = error.Message }
         };
     }
 
@@ -67,23 +72,26 @@ internal static class AnalyticsErrorMapper
     /// Otherwise, the first retriable error is selected.
     /// </summary>
     /// <param name="errors">The errors array from the server response.</param>
+    /// <param name="errorContext">The internal error context to be propagated</param>
     /// <returns>An AnalyticsException or one of its subclasses.</returns>
-    internal static AnalyticsException MapServiceErrors(IReadOnlyList<Error> errors)
+    internal static AnalyticsException MapServiceErrors(IReadOnlyList<Error> errors, ErrorContext errorContext)
     {
         if (errors == null || errors.Count == 0)
         {
             return new AnalyticsException("Unknown server error");
         }
 
+        errorContext.Errors = errors.ToList();
+
         // Find first non-retriable error
         var firstNonRetriable = errors.FirstOrDefault(e => !e.Retriable);
         if (firstNonRetriable != null)
         {
-            return MapServerErrorCode(firstNonRetriable);
+            return MapServerErrorCode(firstNonRetriable, errorContext);
         }
 
         // All errors are retriable, return the first one
-        return MapServerErrorCode(errors[0]);
+        return MapServerErrorCode(errors[0], errorContext);
     }
 
     /// <summary>
