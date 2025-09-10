@@ -20,7 +20,7 @@ public class QueryContextTests
 
         var options = new QueryOptions { AsStreaming = false, ReadOnly = true };
 
-        options.QueryContext = new QueryContext(database.Name, scope.Name);
+        options = options with { QueryContext = new QueryContext(database.Name, scope.Name) };
 
         Assert.NotNull(options.QueryContext);
         Assert.Equal("testDatabase", options.QueryContext.Database);
