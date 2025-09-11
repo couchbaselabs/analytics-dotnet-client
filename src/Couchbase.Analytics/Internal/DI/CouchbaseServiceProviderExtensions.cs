@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 using Couchbase.Analytics2.Internal.Utils;
 
 namespace Couchbase.Analytics2.Internal.DI;

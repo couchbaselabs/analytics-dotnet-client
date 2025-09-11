@@ -19,9 +19,7 @@
  * ************************************************************/
 #endregion
 
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2.Internal;

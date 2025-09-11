@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 namespace Couchbase.Analytics2.Internal.Utils;
 
 public static class StringExtensions
@@ -115,6 +118,7 @@ public static class StringExtensions
     public static string ToStringInvariant(this double num) => num.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -133,3 +137,4 @@ public static class StringExtensions
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion

@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
 using Couchbase.Analytics2.Internal.Utils;
 
 namespace Couchbase.Analytics2.Internal.HTTP;
@@ -84,6 +87,7 @@ internal abstract class HttpServiceBase
 
 #region [ License information          ]
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -102,5 +106,7 @@ internal abstract class HttpServiceBase
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+
 
 #endregion

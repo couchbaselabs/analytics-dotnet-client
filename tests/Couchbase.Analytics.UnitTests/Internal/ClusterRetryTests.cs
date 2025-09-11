@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text;
-using System.Linq;
 using System.Text.Json;
 using Couchbase.Analytics2.Exceptions;
 using Couchbase.Analytics2.Internal;

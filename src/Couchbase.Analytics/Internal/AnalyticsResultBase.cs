@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,7 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
 
 using System.Net;
 using Couchbase.Text.Json;
