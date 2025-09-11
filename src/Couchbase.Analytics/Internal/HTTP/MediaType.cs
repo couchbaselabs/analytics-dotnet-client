@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 namespace Couchbase.Analytics2.Internal.HTTP;
 
 public static class MediaType
@@ -24,6 +27,7 @@ public static class MediaType
     public const string Json = "application/json";
 }
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -42,3 +46,4 @@ public static class MediaType
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion

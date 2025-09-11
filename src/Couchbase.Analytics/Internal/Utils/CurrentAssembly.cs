@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 using System.Reflection;
 
 namespace Couchbase.Analytics2.Internal.Utils;
@@ -26,6 +29,7 @@ internal static class CurrentAssembly
     public static readonly Version?  Version = Current.GetName().Version;
 }
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -44,3 +48,4 @@ internal static class CurrentAssembly
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion

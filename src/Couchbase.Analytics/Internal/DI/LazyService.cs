@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 using System.Diagnostics.CodeAnalysis;
 using Couchbase.Analytics2.Exceptions;
 

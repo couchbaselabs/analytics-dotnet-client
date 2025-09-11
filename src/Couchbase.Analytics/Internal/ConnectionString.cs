@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 using System.Text;
 using System.Text.RegularExpressions;
 using Couchbase.Analytics2.Internal.Utils;
@@ -299,6 +302,7 @@ internal enum Scheme
     Https
 }
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -317,3 +321,4 @@ internal enum Scheme
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
