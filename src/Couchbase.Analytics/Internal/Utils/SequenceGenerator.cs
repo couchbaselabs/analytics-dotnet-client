@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 namespace Couchbase.Analytics2.Internal.Utils;
 
 internal static class SequenceGenerator
@@ -58,6 +61,7 @@ internal static class SequenceGenerator
 
 #region [ License information          ]
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -76,5 +80,7 @@ internal static class SequenceGenerator
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 
 #endregion

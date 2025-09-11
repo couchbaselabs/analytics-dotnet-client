@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
@@ -290,6 +293,7 @@ namespace Couchbase.Analytics2.Internal.Utils
 
 
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -308,3 +312,4 @@ namespace Couchbase.Analytics2.Internal.Utils
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion

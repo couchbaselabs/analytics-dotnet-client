@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 using Couchbase.Analytics2.Internal.Utils;
 
 namespace Couchbase.Analytics2.Internal;
@@ -186,6 +189,7 @@ internal readonly struct HostEndpointWithPort : IEquatable<HostEndpointWithPort>
         new(hostEndpointWithPort.Host, hostEndpointWithPort.Port);
 }
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -204,3 +208,4 @@ internal readonly struct HostEndpointWithPort : IEquatable<HostEndpointWithPort>
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion

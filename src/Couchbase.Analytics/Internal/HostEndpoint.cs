@@ -1,3 +1,4 @@
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -16,6 +17,8 @@
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
+ 
 namespace Couchbase.Analytics2.Internal;
 
 /// <summary>
@@ -162,6 +165,7 @@ public readonly struct HostEndpoint : IEquatable<HostEndpoint>
     #endregion
 }
 
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -180,3 +184,4 @@ public readonly struct HostEndpoint : IEquatable<HostEndpoint>
  *    limitations under the License.
  *
  * ************************************************************/
+#endregion
