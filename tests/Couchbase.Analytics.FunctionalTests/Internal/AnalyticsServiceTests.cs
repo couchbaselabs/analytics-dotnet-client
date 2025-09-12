@@ -71,6 +71,36 @@ public class AnalyticsServiceTests
     }
 
     [Fact]
+    public async Task Test_Query_Metadata_And_Metrics()
+    {
+        var statement = "select i from array_range(1, 100) as i;";
+
+        var result = await _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false});
+
+        Assert.NotNull(result.MetaData);
+        Assert.NotNull(result.MetaData.Metrics);
+
+        _outputHelper.WriteLine($"RequestId: {result.MetaData.RequestId}");
+        _outputHelper.WriteLine($"ResultCount: {result.MetaData.Metrics.ResultCount}");
+        _outputHelper.WriteLine($"ElapsedTime: {result.MetaData.Metrics.ElapsedTime}");
+        _outputHelper.WriteLine($"ExecutionTime: {result.MetaData.Metrics.ExecutionTime}");
+        _outputHelper.WriteLine($"ProcessedObjects: {result.MetaData.Metrics.ProcessedObjects}");
+        _outputHelper.WriteLine($"ResultSize: {result.MetaData.Metrics.ResultSize}");
+        _outputHelper.WriteLine($"CompileTime: {result.MetaData.Metrics.CompileTime}");
+        _outputHelper.WriteLine($"QueueWaitTime: {result.MetaData.Metrics.QueueWaitTime}");
+        _outputHelper.WriteLine($"BufferCacheHitRatio: {result.MetaData.Metrics.BufferCacheHitRatio}");
+
+        Assert.Equal(99, result.MetaData.Metrics.ResultCount);
+        Assert.Equal(783, result.MetaData.Metrics.ResultSize);
+        Assert.NotNull(result.MetaData.Metrics.ElapsedTime);
+        Assert.NotNull(result.MetaData.Metrics.ExecutionTime);
+        Assert.NotNull(result.MetaData.Metrics.CompileTime);
+
+
+    }
+
+    [Fact]
     public async Task Test_Cancellation_Works_Streaming()
     {
         var cts = new CancellationTokenSource();

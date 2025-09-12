@@ -32,7 +32,7 @@ namespace Couchbase.Analytics2.Internal;
 /// <remarks>For large result sets use the <see cref="StreamingAnalyticsResult"/> class by setting <see cref="QueryOptions.AsStreaming"/> to true, which is the default.</remarks>
 internal class BlockingAnalyticsResult : AnalyticsResultBase
 {
-    private IEnumerable<AnalyticsRow> _rows;
+    private IEnumerable<AnalyticsRow>? _rows;
     private bool _enumerated;
 
     public BlockingAnalyticsResult(Stream responseStream, IDeserializer serializer, IDisposable? ownedForCleanup = null)
@@ -94,8 +94,7 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
                     MetaData.RequestId = reader.Value?.ToString();
                     break;
                 case "metrics":
-                    var metrics = await reader.ReadObjectAsync<Metrics>(cancellationToken).ConfigureAwait(false);
-                    MetaData.Metrics = new QueryMetrics(metrics);
+                    MetaData.Metrics = await reader.ReadObjectAsync<QueryMetrics>(cancellationToken).ConfigureAwait(false);
                     break;
                 case "results":
                 {
@@ -103,7 +102,6 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
                     {
                         rows.Add(new AnalyticsRow(token));
                     }
-
                     break;
                 }
                 case "errors":
@@ -117,49 +115,3 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
         Rows = EnumerateRows(cancellationToken);
     }
 }
-
-#region POCOs
-internal record Metrics
-{
-    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
-    public TimeSpan? elapsedTime { get; set; }
-
-    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
-    public TimeSpan? executionTime { get; set; }
-
-    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
-    public TimeSpan? compileTime { get; set; }
-
-    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
-    public TimeSpan? queueWaitTime { get; set; }
-
-    public int resultCount { get; set; }
-
-    public int resultSize { get; set; }
-
-    public int processedObjects { get; set; }
-
-    public string bufferCacheHitRatio { get; set; }
-}
-
-internal record Plans
-{
-}
-
-internal record AnalyticsResultData
-{
-    public string requestID { get; set; }
-    public Signature signature { get; set; }
-    public IEnumerable<AnalyticsRow> results { get; set; }
-    public Plans plans { get; set; }
-    public string status { get; set; }
-    public Metrics metrics { get; set; }
-    public IReadOnlyList<Error> errors { get; set; }
-}
-
-internal record Signature
-{
-    [JsonPropertyName("*")]
-    public string signature { get; set; }
-}
-#endregion

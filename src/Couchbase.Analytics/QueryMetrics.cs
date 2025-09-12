@@ -18,52 +18,39 @@
  *
  * ************************************************************/
 #endregion
- 
-using Couchbase.Analytics2.Internal;
+
+using System.Text.Json.Serialization;
+using Couchbase.Text.Json;
 
 namespace Couchbase.Analytics2;
 
 public sealed class QueryMetrics
 {
-    internal QueryMetrics(
-        TimeSpan? elapsedTime,
-        TimeSpan? executionTime,
-        TimeSpan? compileTime,
-        TimeSpan? queueWaitTime,
-        int resultCount,
-        int resultSize,
-        int processedObjects,
-        string bufferCacheHitRatio
-    )
-    {
-        ElapsedTime = elapsedTime;
-        ExecutionTime = executionTime;
-        CompileTime = compileTime;
-        QueueWaitTime = queueWaitTime;
-        ResultCount = resultCount;
-        ResultSize = resultSize;
-        ProcessedObjects = processedObjects;
-        BufferCacheHitRatio = bufferCacheHitRatio;
-    }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("elapsedTime")]
+    public TimeSpan? ElapsedTime { get; init; }
 
-    internal QueryMetrics(Metrics metrics)
-        : this(metrics.elapsedTime, metrics.executionTime, metrics.compileTime, metrics.queueWaitTime, metrics.resultCount, metrics.resultSize, metrics.processedObjects, metrics.bufferCacheHitRatio)
-    {
-    }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("executionTime")]
+    public TimeSpan? ExecutionTime { get; init; }
 
-    public TimeSpan? ElapsedTime { get; }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("compileTime")]
+    public TimeSpan? CompileTime { get; init; }
 
-    public TimeSpan? ExecutionTime { get; }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("queueWaitTime")]
+    public TimeSpan? QueueWaitTime { get; init; }
 
-    public TimeSpan? CompileTime { get; }
+    [JsonPropertyName("resultCount")]
+    public int ResultCount { get; init; }
 
-    public TimeSpan? QueueWaitTime { get; }
+    [JsonPropertyName("resultSize")]
+    public int ResultSize { get; init; }
 
-    public int ResultCount { get; }
+    [JsonPropertyName("processedObjects")]
+    public int ProcessedObjects { get; init; }
 
-    public int ResultSize { get; }
-
-    public int ProcessedObjects { get; }
-
-    public string BufferCacheHitRatio { get; }
+    [JsonPropertyName("bufferCacheHitRatio")]
+    public string BufferCacheHitRatio { get; init; }
 }
