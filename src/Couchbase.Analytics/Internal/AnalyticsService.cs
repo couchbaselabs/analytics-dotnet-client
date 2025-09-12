@@ -33,21 +33,17 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
 {
     private readonly ClusterOptions _clusterOptions;
     private readonly ILogger<AnalyticsService> _logger;
-    private const string ExecuteQueryPath = "api/v1/request";
-    private readonly IDeserializer _serializer;
 
     public AnalyticsService(ClusterOptions clusterOptions, ICouchbaseHttpClientFactory httpClientFactory,
-        ILogger<AnalyticsService> logger, IDeserializer serializer) : base(httpClientFactory)
+        ILogger<AnalyticsService> logger) : base(httpClientFactory)
     {
         _clusterOptions = clusterOptions;
         _logger = logger;
-        _serializer = serializer;
         HttpClientFactory = httpClientFactory;
-        var endPoint  = clusterOptions.ConnectionStringValue!.GetDnsBootStrapUri();
-        Uri = new Uri($"{endPoint}{ExecuteQueryPath}");
+        Uri = clusterOptions.ConnectionStringValue!.GetAnalyticsServiceUri();
     }
 
-    public Uri Uri { get; private set; }
+    public Uri Uri { get; }
 
     public async Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default)
     {
@@ -163,7 +159,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     attempt + 1, options.ClientContextId, httpRequestException.Message,
                     stopwatch.Elapsed.TotalMilliseconds);
 
-                // "No successful connection" is retryable
+                // "No successful connection(s)" is retryable
                 if (httpRequestException.InnerException is AggregateException aggregateEx)
                 {
                     lastException = new AnalyticsException("No connections could be established to any of the endpoints.", aggregateEx, errorContext);
