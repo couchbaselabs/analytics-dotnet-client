@@ -119,8 +119,7 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
                     MetaData.RequestId = _jsonReader.Value?.ToString();
                     break;
                 case "metrics":
-                    var metrics = await _jsonReader.ReadObjectAsync<Metrics>(cancellationToken).ConfigureAwait(false);
-                    MetaData.Metrics = new QueryMetrics(metrics);
+                    MetaData.Metrics = await _jsonReader.ReadObjectAsync<QueryMetrics>(cancellationToken).ConfigureAwait(false);
                     break;
                 case "results":
                     _hasReadToResult = true;
