@@ -43,8 +43,7 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object,
-            _jsonSerializerMock.Object);
+            _loggerMock.Object);
 
         const string ExecuteQueryPath = "/api/v1/request";
         var expected = new UriBuilder(_endPoint);
@@ -76,8 +75,7 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object,
-            new StjJsonDeserializer());
+            _loggerMock.Object);
 
         var queryOptions = new QueryOptions { AsStreaming = false };
 
@@ -113,8 +111,7 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object,
-            new StjJsonDeserializer());
+            _loggerMock.Object);
 
         var queryOptions = new QueryOptions { AsStreaming = false };
 
@@ -146,8 +143,7 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object,
-            _jsonSerializerMock.Object);
+            _loggerMock.Object);
 
         var queryOptions = new QueryOptions { AsStreaming = true };
 
