@@ -18,7 +18,7 @@
  *
  * ************************************************************/
 #endregion
- 
+
 using System.Text;
 using System.Text.RegularExpressions;
 using Couchbase.Analytics2.Internal.Utils;
@@ -29,6 +29,7 @@ internal class ConnectionString
 {
     private const int HttpsPort = 443;
     private const int HttpPort = 80;
+    private const string ExecuteQueryPath = "api/v1/request";
 
     private static readonly Regex ConnectionStringRegex = new Regex(
         "^((?<scheme>[^://]+)://)?((?<username>[^\n@]+)@)?(?<hosts>[^\n?]+)?(\\?(?<params>(.+)))?",
@@ -134,6 +135,17 @@ internal class ConnectionString
             Scheme = Scheme.ToString(),
             Host = Hosts.First().Host,
             Port = Hosts.First().Port ?? (Scheme == Scheme.Https ? HttpsPort : HttpPort)
+        }.Uri;
+    }
+
+    internal Uri GetAnalyticsServiceUri()
+    {
+        return new UriBuilder
+        {
+            Scheme = Scheme.ToString(),
+            Host = Hosts.First().Host,
+            Port = Hosts.First().Port ?? (Scheme == Scheme.Https ? HttpsPort : HttpPort),
+            Path = ExecuteQueryPath
         }.Uri;
     }
 
@@ -301,24 +313,3 @@ internal enum Scheme
     /// </summary>
     Https
 }
-
-#region License
-/* ************************************************************
- *
- *    @author Couchbase <info@couchbase.com>
- *    @copyright 2025 Couchbase, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- *
- * ************************************************************/
-#endregion
