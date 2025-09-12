@@ -243,29 +243,6 @@ public class ClusterRetryTests
                 return Cluster.Create(_credential, clusterOptions);
     }
 
-    private static AnalyticsResultData CreateAnalyticsResultData(IReadOnlyList<Error> errors)
-    {
-        return new AnalyticsResultData
-        {
-            requestID = "test-request-id",
-            status = errors.Count > 0 ? "fatal" : "success",
-            results = new List<AnalyticsRow>(),
-            errors = errors,
-            metrics = new Metrics
-            {
-                elapsedTime = TimeSpan.FromMilliseconds(3.03758),
-                executionTime = TimeSpan.FromMilliseconds(2.353572),
-                compileTime = TimeSpan.FromMicroseconds(0.002),
-                queueWaitTime = TimeSpan.Zero,
-                resultCount = 0,
-                resultSize = 0,
-                processedObjects = 0,
-                bufferCacheHitRatio = "0.00%"
-            },
-            plans = new Plans()
-        };
-    }
-
     private static string BuildErrorResponseJson(IEnumerable<Error> errors)
     {
         var payload = new
