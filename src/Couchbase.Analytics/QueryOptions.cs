@@ -18,38 +18,75 @@
  * ************************************************************/
 using System.Text.Json;
 using Couchbase.Text.Json;
+using Couchbase.Text.Json.Utils;
 
 namespace Couchbase.Analytics2;
 
 public record QueryOptions
 {
-    public bool AsStreaming { get; set; } = true;
+    /// <summary>
+    /// If true, the <see cref="IQueryResult"/> will be returned as a streaming result.
+    /// </summary>
+    public bool AsStreaming { get; init; } = true;
 
     /// <summary>
     /// Sets the overall timeout for the query request.
     /// If unset, the default <see cref="TimeoutOptions"/>'s QueryTimeout will be used.
+    /// Note that if a <see cref="CancellationToken"/> is used on the query call, it may trigger before this timeout.
     /// </summary>
-    public TimeSpan? Timeout { get; set; }
+    public TimeSpan? Timeout { get; init; }
 
-    public string ClientContextId { get; set; } = Guid.NewGuid().ToString();
+    /// <summary>
+    /// The ClientContextId to be used for the query request. Used to identify the query in logs and profiles.
+    /// If none is provided, a new GUID will be generated.
+    /// </summary>
+    public string ClientContextId { get; init; } = Guid.NewGuid().ToString();
 
-    public Dictionary<string, object> NamedParameters { get; set; } = new();
+    /// <summary>
+    /// Named parameters for the query request.
+    /// Use <see cref="WithNamedParameters(Dictionary{string, object})"/> or <see cref="WithNamedParameter(string, object)"/> to create updated copies.
+    /// </summary>
+    public Dictionary<string, object> NamedParameters { get; init; } = new ();
 
-    public List<object> PositionalParameters { get; set; } = new();
+    /// <summary>
+    /// Positional parameters for the query request.
+    /// Use <see cref="WithPositionalParameters(IEnumerable{object})"/> or <see cref="WithPositionalParameter(object)"/> to create updated copies.
+    /// </summary>
+    public List<object> PositionalParameters { get; init; } = new ();
 
-    public QueryScanConsistency? ScanConsistency { get; set; }
+    /// <summary>
+    /// The scan consistency for the query request.
+    /// </summary>
+    public QueryScanConsistency? ScanConsistency { get; init; }
 
-    public TimeSpan? ScanWait { get; set; }
+    /// <summary>
+    /// Used to deserialize query rows.
+    /// Default to <see cref="StjJsonDeserializer"/>
+    /// </summary>
+    public IDeserializer Deserializer { get; init; } = new StjJsonDeserializer();
 
-    public ISerializer Serializer { get; set; }
+    /// <summary>
+    /// Whether the query is read-only.
+    /// </summary>
+    public bool? ReadOnly { get; init; }
 
-    public bool? ReadOnly { get; set; }
+    /// <summary>
+    /// Maximum number of times to retry a query (when the error is retryable).
+    /// Overrides <see cref="ClusterOptions.MaxRetries"/> when provided.
+    /// </summary>
+    [InterfaceStability(StabilityLevel.Volatile)]
+    public uint? MaxRetries { get; init; }
 
-    public uint? MaxRetries { get; set; }
+    /// <summary>
+    /// Raw parameters passed directly to the analytics service for advanced options.
+    /// Use <see cref="WithRawParameters(Dictionary{string, object})"/> or <see cref="WithRaw(string, object)"/> to create updated copies.
+    /// </summary>
+    public Dictionary<string, object> Raw { get; init; } = new ();
 
-    public Dictionary<string, object> Raw {get; set;} = new();
-
-    internal QueryContext? QueryContext { get; set; }
+    /// <summary>
+    /// The query context (database and scope) applied to the query. Internal use.
+    /// </summary>
+    internal QueryContext? QueryContext { get; init; }
 
     internal string GetFormValuesAsJson(string statement)
     {
@@ -115,4 +152,135 @@ public record QueryOptions
 
         return statement;
     }
+
+    /// <summary>
+    /// Sets if the QueryResult should be returned as a streaming result.
+    /// </summary>
+    /// <param name="asStreaming"></param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithAsStreaming(bool asStreaming) => this with { AsStreaming = asStreaming };
+
+    /// <summary>
+    /// Sets the overall timeout for the query request.
+    /// Note that if a CancellationToken is used on the query call, it may trigger before this timeout.
+    /// </summary>
+    /// <param name="timeout">A TimeSpan representing the timeout</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithTimeout(TimeSpan? timeout) => this with { Timeout = timeout };
+
+    /// <summary>
+    /// Sets the ClientContextId to be used for the query request.
+    /// This is used to identify the query in logs and profiles.
+    /// If none is provided, a new GUID will be generated.
+    /// </summary>
+    /// <param name="clientContextId">A string representing the identifier</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithClientContextId(string clientContextId) => this with { ClientContextId = clientContextId };
+
+    /// <summary>
+    /// Sets the scan consistency for the query request.
+    /// </summary>
+    /// <param name="scanConsistency">The <see cref="QueryScanConsistency"/></param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithScanConsistency(QueryScanConsistency? scanConsistency) => this with { ScanConsistency = scanConsistency };
+
+    /// <summary>
+    /// Sets whether the query is read-only.
+    /// </summary>
+    /// <param name="readOnly">True or false</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithReadOnly(bool? readOnly) => this with { ReadOnly = readOnly };
+
+    /// <summary>
+    /// Sets the maximum number of times to retry a query (when the error is retryable).
+    /// This overrides the <see cref="ClusterOptions.MaxRetries"/> setting.
+    /// </summary>
+    /// <param name="maxRetries">A positive integer</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithMaxRetries(uint? maxRetries) => this with { MaxRetries = maxRetries };
+
+
+    /// <summary>
+    /// Replaces all existing named parameters with the new set.
+    /// </summary>
+    /// <param name="namedParameters">The new set of named parameters</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithNamedParameters(Dictionary<string, object> namedParameters)
+    {
+        return this with { NamedParameters = namedParameters };
+    }
+
+    /// <summary>
+    /// Adds or updates a named parameter to the existing ones.
+    /// </summary>
+    /// <param name="name">The key of the parameter, as a string</param>
+    /// <param name="value">The value of the paremter, as an object</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithNamedParameter(string name, object value)
+    {
+        var copy = new Dictionary<string, object>(NamedParameters);
+        copy[name] = value;
+        return this with { NamedParameters = copy };
+    }
+
+    /// <summary>
+    /// Replaces all existing positional parameters with the new set.
+    /// </summary>
+    /// <param name="positionalParameters">An IEnumerable of positional parameters</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithPositionalParameters(IEnumerable<object> positionalParameters)
+    {
+        var copy = new List<object>(positionalParameters);
+        return this with { PositionalParameters = new List<object>(copy) };
+    }
+
+    /// <summary>
+    /// Adds a new positional parameter to the existing ones.
+    /// </summary>
+    /// <param name="parameter">The positional parameter</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithPositionalParameter(object parameter)
+    {
+        var copy = new List<object>(PositionalParameters);
+        copy.Add(parameter);
+        return this with { PositionalParameters = copy };
+    }
+
+    /// <summary>
+    /// Replaces all existing raw parameters with the new set.
+    /// </summary>
+    /// <param name="rawParameters">A Dictionary of key : string, values : object</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithRawParameters(Dictionary<string, object> rawParameters)
+    {
+        return this with { Raw = rawParameters };
+    }
+
+    /// <summary>
+    /// Adds or updates a raw parameter to the existing ones.
+    /// </summary>
+    /// <param name="name">The key of the raw parameter as a string</param>
+    /// <param name="value">The value of the parameter as an object</param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithRaw(string name, object value)
+    {
+        var copy = new Dictionary<string, object>(Raw);
+        copy[name] = value;
+        return this with { Raw = copy };
+    }
+
+    /// <summary>
+    /// Used to deserialize query rows.
+    /// Defaults to <see cref="StjJsonDeserializer"/>
+    /// </summary>
+    /// <param name="deserializer">A deserializer inheriting from <see cref="IDeserializer"/></param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    public QueryOptions WithDeserializer(IDeserializer deserializer) => this with { Deserializer = deserializer };
+
+    /// <summary>
+    /// Adds a QueryContext to the query, which sets the default database and scope for the query.
+    /// </summary>
+    /// <param name="queryContext">The <see cref="QueryContext"/></param>
+    /// <returns>A copy of the <see cref="QueryOptions"/></returns>
+    internal QueryOptions WithQueryContext(QueryContext queryContext) => this with { QueryContext = queryContext };
 }

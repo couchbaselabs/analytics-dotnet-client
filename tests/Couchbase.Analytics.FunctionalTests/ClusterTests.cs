@@ -22,10 +22,7 @@ public class ClusterTests
     {
         var cluster = _fixture.Cluster;
 
-        using var response = await cluster.ExecuteQueryAsync("SELECT 1;", options =>
-        {
-            options.AsStreaming = true;
-        });
+        using var response = await cluster.ExecuteQueryAsync("SELECT 1;", options => options.WithAsStreaming(true));
 
         Assert.NotNull(response);
     }

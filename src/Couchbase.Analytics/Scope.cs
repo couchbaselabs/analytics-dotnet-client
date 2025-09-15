@@ -39,7 +39,14 @@ public sealed class Scope
     public Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null, CancellationToken cancellationToken = default)
     {
         options ??= new QueryOptions();
-        options.QueryContext = new QueryContext(_database.Name, Name);
+        options = options with { QueryContext = new QueryContext(_database.Name, Name) };
         return _cluster.ExecuteQueryAsync(statement, options, cancellationToken);
+    }
+
+    public Task<IQueryResult> ExecuteQueryAsync(string statement, Func<QueryOptions, QueryOptions> options, CancellationToken cancellationToken = default)
+    {
+        var queryOptions = new QueryOptions().WithQueryContext(new QueryContext(_database.Name, Name));
+        queryOptions = options.Invoke(queryOptions);
+        return _cluster.ExecuteQueryAsync(statement, queryOptions, cancellationToken);
     }
 }

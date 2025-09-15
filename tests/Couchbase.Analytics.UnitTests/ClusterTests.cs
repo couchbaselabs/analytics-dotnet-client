@@ -17,10 +17,8 @@ namespace Couchbase.Analytics2.UnitTests
             var credential = Credential.Create("Administrator", "password");
 
             // Act
-            var cluster = Cluster.Create(httpEndpoint, credential, options=>
-            {
-                options.SecurityOptions.WithSslProtocols(SslProtocols.Tls13);
-            });
+            var cluster = Cluster.Create(httpEndpoint, credential, options =>
+                options.WithSecurityOptions(options.SecurityOptions.WithSslProtocols(SslProtocols.Tls13)));
 
             // Assert
             Assert.NotNull(cluster);

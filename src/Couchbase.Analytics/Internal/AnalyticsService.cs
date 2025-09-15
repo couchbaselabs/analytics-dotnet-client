@@ -57,7 +57,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
     /// <summary>
     /// Core query execution logic - the golden path for sending analytics requests.
     /// </summary>
-    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, ErrorContext errorContext, CancellationToken cancellationToken = default)
+    private async Task<IQueryResult> ExecuteQueryAsync(StringContent content, HttpClient httpClient, bool asStreaming, IDeserializer deserializer, ErrorContext errorContext, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, Uri)
         {
@@ -74,8 +74,8 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 
             AnalyticsResultBase result = asStreaming
-                ? new StreamingAnalyticsResult(stream, _serializer, httpClient)
-                : new BlockingAnalyticsResult(stream, _serializer, httpClient);
+                ? new StreamingAnalyticsResult(stream, deserializer, httpClient)
+                : new BlockingAnalyticsResult(stream, deserializer, httpClient);
 
             result.StatusCode = response.StatusCode;
             errorContext.StatusCode = response.StatusCode;
@@ -103,7 +103,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
         var stopwatch = LightweightStopwatch.StartNew();
         // The Timeout of QueryOptions is nullable. If it wasn't set by the user, we must set it to the default from ClusterOptions.
         var timeout = options.Timeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
-        options.Timeout = timeout;
+        options = options with { Timeout = timeout };
 
         var errorContext = new ErrorContext(options.ClientContextId, stopwatch, timeout);
         Exception? lastException = null;
@@ -134,7 +134,7 @@ internal class AnalyticsService : HttpServiceBase, IAnalyticsService
                     "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)",
                     attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
 
-                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, errorContext, cancellationToken).ConfigureAwait(false);
+                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, options.Deserializer, errorContext, cancellationToken).ConfigureAwait(false);
 
                 // Always read errors from the result
                 if (result.Errors is { Count: > 0 })

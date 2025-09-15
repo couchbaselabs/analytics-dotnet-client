@@ -59,7 +59,7 @@ public class Cluster : IDisposable
     /// <param name="configureOptions">Action to configure cluster options</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
-    public static Cluster Create(string connectionString, Credential credential, Action<ClusterOptions> configureOptions)
+    public static Cluster Create(string connectionString, Credential credential, Func<ClusterOptions, ClusterOptions> configureOptions)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
@@ -71,7 +71,7 @@ public class Cluster : IDisposable
             ConnectionString = connectionString
         };
 
-        configureOptions.Invoke(options);
+        options = configureOptions.Invoke(options);
         return new Cluster(credential, options);
     }
 
@@ -120,10 +120,10 @@ public class Cluster : IDisposable
         return new Cluster(credential, clusterOptions);
     }
 
-    public Task<IQueryResult> ExecuteQueryAsync(string statement, Action<QueryOptions> options, CancellationToken cancellationToken = default)
+    public Task<IQueryResult> ExecuteQueryAsync(string statement, Func<QueryOptions, QueryOptions> options, CancellationToken cancellationToken = default)
     {
         var queryOptions = new QueryOptions();
-        options.Invoke(queryOptions);
+        queryOptions = options.Invoke(queryOptions);
         return ExecuteQueryAsync(statement, queryOptions, cancellationToken);
     }
 
