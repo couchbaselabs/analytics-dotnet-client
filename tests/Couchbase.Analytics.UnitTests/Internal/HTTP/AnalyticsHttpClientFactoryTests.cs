@@ -1,10 +1,11 @@
 using System.Security.Authentication;
-using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
-namespace Couchbase.Analytics2.UnitTests.Internal.HTTP;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal.HTTP;
 
 public class CouchbaseHttpClientFactoryTest
 {

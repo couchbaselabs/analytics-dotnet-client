@@ -1,14 +1,16 @@
 using Moq;
 using Xunit;
-using Couchbase.Analytics2.Internal.DI;
-using Couchbase.Analytics2.Internal.HTTP;
 using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
+using Couchbase.AnalyticsClient.DI;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
 using Moq.Protected;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class QueryContextTests
 {

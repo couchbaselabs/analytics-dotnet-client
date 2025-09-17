@@ -2,8 +2,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
-using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Results;
 using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,7 +13,7 @@ using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class AnalyticsServiceTests
 {

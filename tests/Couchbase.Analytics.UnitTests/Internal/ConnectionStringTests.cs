@@ -1,10 +1,9 @@
-using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.Utils;
 using System.Security.Authentication;
-using Couchbase.Analytics2.Internal.Certificates;
+using Couchbase.AnalyticsClient.Certificates;
+using Couchbase.AnalyticsClient.Options;
 using Xunit;
 
-namespace Couchbase.Analytics2.UnitTests.Internal
+namespace Couchbase.AnalyticsClient.UnitTests.Internal
 {
     public class ConnectionStringTest
     {

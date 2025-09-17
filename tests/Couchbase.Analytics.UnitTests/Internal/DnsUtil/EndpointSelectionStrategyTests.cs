@@ -1,11 +1,11 @@
 using System.Net;
-using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
 using Xunit;
 using System.Linq;
 using System.Reflection;
+using Couchbase.AnalyticsClient.DnsUtil.Strategies;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal.DnsUtil;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal.DnsUtil;
 
 public class EndpointSelectionStrategyTests
 {

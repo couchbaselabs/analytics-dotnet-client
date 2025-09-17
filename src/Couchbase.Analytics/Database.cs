@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Analytics2;
+namespace Couchbase.AnalyticsClient;
 
 public sealed class Database
 {

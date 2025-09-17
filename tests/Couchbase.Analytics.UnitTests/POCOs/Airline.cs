@@ -1,4 +1,4 @@
-namespace Couchbase.Analytics2.UnitTests.POCOs;
+namespace Couchbase.AnalyticsClient.UnitTests.POCOs;
 
 public class Airline
 {

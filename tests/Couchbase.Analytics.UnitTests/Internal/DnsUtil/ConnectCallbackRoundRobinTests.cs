@@ -1,15 +1,16 @@
 using System.Net;
 using System.Reflection;
-using Couchbase.Analytics2.Internal.HTTP;
-using Couchbase.Analytics2.Internal.DnsUtil;
-using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.DnsUtil;
+using Couchbase.AnalyticsClient.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Couchbase.Analytics2.UnitTests.Internal.HTTP;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal.HTTP;
 
 public class ConnectCallbackRoundRobinTests
 {

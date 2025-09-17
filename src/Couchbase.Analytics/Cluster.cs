@@ -20,11 +20,13 @@
 #endregion
 
 using System.Collections.Concurrent;
-using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.DI;
+using Couchbase.AnalyticsClient.DI;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Results;
 using Microsoft.Extensions.Logging;
 
-namespace Couchbase.Analytics2;
+namespace Couchbase.AnalyticsClient;
 
 public class Cluster : IDisposable
 {

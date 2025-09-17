@@ -1,16 +1,16 @@
 using System.Reflection;
-using Couchbase.Analytics2.FunctionalTests.Fixtures;
-using Couchbase.Analytics2.Internal.DnsUtil;
-using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Xunit;
 using Xunit.Abstractions;
 using System.Net;
-using Couchbase.Analytics2.Exceptions;
-using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.DI;
-using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.DI;
+using Couchbase.AnalyticsClient.DnsUtil;
+using Couchbase.AnalyticsClient.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.Exceptions;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
 
-namespace Couchbase.Analytics2.FunctionalTests.Internal;
+namespace Couchbase.AnalyticsClient.FunctionalTests.Internal;
 
 [Collection(TestCollection.Name)]
 public class CouchbaseHttpClientTests
@@ -24,8 +24,8 @@ public class CouchbaseHttpClientTests
     }
 
     private readonly Analytics2Fixture _fixture;
-    private static ITestOutputHelper _outputHelper;
-    public CouchbaseHttpClientTests(Analytics2Fixture fixture, ITestOutputHelper outputHelper)
+    private static ITestOutputHelper? _outputHelper;
+    public CouchbaseHttpClientTests(Analytics2Fixture fixture, ITestOutputHelper? outputHelper)
     {
         _fixture = fixture;
         _outputHelper = outputHelper;

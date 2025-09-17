@@ -18,8 +18,8 @@
  *
  * ************************************************************/
 #endregion
- 
-namespace Couchbase.Analytics2;
+
+namespace Couchbase.AnalyticsClient.Options;
 
 public record TimeoutOptions
 {

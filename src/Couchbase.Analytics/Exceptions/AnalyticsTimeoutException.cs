@@ -20,9 +20,9 @@
 #endregion
 
 using System.Runtime.Serialization;
-using Couchbase.Analytics2.Internal.Retry;
+using Couchbase.AnalyticsClient.Retry;
 
-namespace Couchbase.Analytics2.Exceptions;
+namespace Couchbase.AnalyticsClient.Exceptions;
 
 /// <summary>
 /// Thrown if the SDK detects a client-side timeout, or the server returns analytics error code 21002 (server-side timeout).

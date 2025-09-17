@@ -1,10 +1,10 @@
 using System.Text.Json;
-using Couchbase.Analytics2.Internal;
+using Couchbase.AnalyticsClient.Results;
 using Couchbase.Text.Json;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class BlockingAnalyticsResultTest
 {

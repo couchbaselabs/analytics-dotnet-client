@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Couchbase.Analytics2.FunctionalTests.Fixtures;
+namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 
 [CollectionDefinition(Name)]
 public class TestCollection : ICollectionFixture<Analytics2Fixture>
