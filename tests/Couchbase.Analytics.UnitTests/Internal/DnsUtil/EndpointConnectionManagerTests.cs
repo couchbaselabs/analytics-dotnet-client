@@ -1,10 +1,10 @@
 using System.Net;
-using Couchbase.Analytics2.Internal.DnsUtil;
-using Couchbase.Analytics2.Internal.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.DnsUtil;
+using Couchbase.AnalyticsClient.DnsUtil.Strategies;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal.DnsUtil;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal.DnsUtil;
 
 public class EndpointConnectionManagerTests
 {

@@ -18,12 +18,12 @@
  *
  * ************************************************************/
 #endregion
- 
+
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using Couchbase.Analytics2.Internal.Certificates;
+using Couchbase.AnalyticsClient.Certificates;
 
-namespace Couchbase.Analytics2;
+namespace Couchbase.AnalyticsClient.Options;
 
 public record SecurityOptions
 {

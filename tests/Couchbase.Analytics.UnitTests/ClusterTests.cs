@@ -1,11 +1,12 @@
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using Couchbase.Analytics2.Internal.Utils;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
 using Xunit;
 using Moq;
 #nullable enable
 
-namespace Couchbase.Analytics2.UnitTests
+namespace Couchbase.AnalyticsClient.UnitTests
 {
     public class ClusterTest
     {

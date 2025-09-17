@@ -1,10 +1,10 @@
 using System.Security.Cryptography.X509Certificates;
-using Couchbase.Analytics2.Internal.Certificates;
-using Couchbase.Analytics2.Internal.Utils;
+using Couchbase.AnalyticsClient.Certificates;
+using Couchbase.AnalyticsClient.Options;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class ClusterOptionTests
 {

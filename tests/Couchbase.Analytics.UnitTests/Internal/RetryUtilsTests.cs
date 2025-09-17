@@ -1,8 +1,8 @@
-using Couchbase.Analytics2.Internal.Retry;
+using Couchbase.AnalyticsClient.Retry;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class RetryUtilsTests
 {

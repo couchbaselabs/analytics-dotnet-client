@@ -18,12 +18,13 @@
  *
  * ************************************************************/
 #endregion
- 
+
 using System.Text.Json;
+using Couchbase.AnalyticsClient.Query;
 using Couchbase.Text.Json;
 using Couchbase.Text.Json.Utils;
 
-namespace Couchbase.Analytics2;
+namespace Couchbase.AnalyticsClient.Options;
 
 public record QueryOptions
 {

@@ -19,7 +19,11 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Analytics2;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Results;
+
+namespace Couchbase.AnalyticsClient;
 
 public sealed class Scope
 {

@@ -22,9 +22,9 @@
 using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
-using Couchbase.Analytics2.Internal.Retry;
+using Couchbase.AnalyticsClient.Retry;
 
-namespace Couchbase.Analytics2.Exceptions;
+namespace Couchbase.AnalyticsClient.Exceptions;
 
 /// <summary>
 /// Base exception type for Analytics.

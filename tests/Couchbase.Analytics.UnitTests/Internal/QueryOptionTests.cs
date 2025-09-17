@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Couchbase.Analytics2;
+using Couchbase.AnalyticsClient;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
 using Couchbase.Text.Json;
 using Xunit;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class QueryOptionTests
 {

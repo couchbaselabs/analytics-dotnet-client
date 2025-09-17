@@ -1,9 +1,10 @@
 using System.Net;
-using Couchbase.Analytics2.Internal;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
-namespace Couchbase.Analytics2.FunctionalTests.Fixtures;
+namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 
 public class Analytics2Fixture : IDisposable
 {

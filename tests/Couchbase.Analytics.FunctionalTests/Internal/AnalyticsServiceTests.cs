@@ -1,11 +1,12 @@
 using System.Text.Json;
-using Couchbase.Analytics2.Exceptions;
-using Couchbase.Analytics2.FunctionalTests.Fixtures;
+using Couchbase.AnalyticsClient.Exceptions;
+using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
+using Couchbase.AnalyticsClient.Options;
 using Xunit;
 using DnsClient;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.FunctionalTests.Internal;
+namespace Couchbase.AnalyticsClient.FunctionalTests.Internal;
 
 [Collection(TestCollection.Name)]
 public class AnalyticsServiceTests

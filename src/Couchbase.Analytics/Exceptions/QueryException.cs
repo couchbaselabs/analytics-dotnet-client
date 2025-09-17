@@ -18,11 +18,11 @@
  *
  * ************************************************************/
 #endregion
- 
-using System.Runtime.Serialization;
-using Couchbase.Analytics2.Internal.Retry;
 
-namespace Couchbase.Analytics2.Exceptions;
+using System.Runtime.Serialization;
+using Couchbase.AnalyticsClient.Retry;
+
+namespace Couchbase.AnalyticsClient.Exceptions;
 
 /// <summary>
 /// Thrown if the analytics service returns a response with an error code other than 20000 or 21002.

@@ -3,5 +3,5 @@
     public class GreetingResponse
     {
         [JsonPropertyName("greeting")]
-        public string Greeting { get; set; }
+        public string? Greeting { get; set; }
     }

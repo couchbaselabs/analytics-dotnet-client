@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Couchbase.Analytics2.FunctionalTests.Fixtures;
+namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 
 public class FixtureSettings
 {

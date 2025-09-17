@@ -1,10 +1,11 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Couchbase.Analytics2.Exceptions;
-using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.DI;
-using Couchbase.Analytics2.Internal.HTTP;
+using Couchbase.AnalyticsClient.DI;
+using Couchbase.AnalyticsClient.Exceptions;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Options;
 using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,7 +13,7 @@ using Moq.Protected;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class ClusterRetryTests
 {
@@ -48,10 +49,10 @@ public class ClusterRetryTests
         const int maxRetries = 3;
         var cluster = CreateClusterWithRetryConfiguration(maxRetries);
 
-        var retriableErrors = new List<Error>
+        var retriableErrors = new List<QueryError>
         {
-            new Error(24045, "Some unknown retriable error occurred", true),
-            new Error(24055, "Another retriable error!", true)
+            new QueryError(24045, "Some unknown retriable error occurred", true),
+            new QueryError(24055, "Another retriable error!", true)
         };
 
         // Configure HTTP handler to return 200 OK with retriable errors in the body
@@ -97,10 +98,10 @@ public class ClusterRetryTests
         var cluster = CreateClusterWithRetryConfiguration(maxRetries);
 
         // one non-retriable, one retriable
-        var mixedErrors = new List<Error>
+        var mixedErrors = new List<QueryError>
         {
-            new Error(24001, "A non-retriable error occurred", false),
-            new Error(24045, "Some retriable error", true)
+            new QueryError(24001, "A non-retriable error occurred", false),
+            new QueryError(24045, "Some retriable error", true)
         };
 
         var callCount = 0;
@@ -158,9 +159,9 @@ public class ClusterRetryTests
 
                 if (callCount == 1)
                 {
-                    var retriableErrors = new List<Error>
+                    var retriableErrors = new List<QueryError>
                     {
-                        new Error(24045, "Some unknown retriable error occurred", true)
+                        new QueryError(24045, "Some unknown retriable error occurred", true)
                     };
                     var responseJson = BuildErrorResponseJson(retriableErrors);
                     var responseContent = new StringContent(responseJson, Encoding.UTF8, "application/json");
@@ -194,9 +195,9 @@ public class ClusterRetryTests
         const int maxRetries = 0;
         var cluster = CreateClusterWithRetryConfiguration(maxRetries);
 
-        var retriableErrors = new List<Error>
+        var retriableErrors = new List<QueryError>
         {
-            new Error(24045, "Some unknown retriable error occurred", true)
+            new QueryError(24045, "Some unknown retriable error occurred", true)
         };
 
         var callCount = 0;
@@ -243,7 +244,7 @@ public class ClusterRetryTests
                 return Cluster.Create(_credential, clusterOptions);
     }
 
-    private static string BuildErrorResponseJson(IEnumerable<Error> errors)
+    private static string BuildErrorResponseJson(IEnumerable<QueryError> errors)
     {
         var payload = new
         {

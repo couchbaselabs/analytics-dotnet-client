@@ -21,9 +21,9 @@
 
 using System.Runtime.Serialization;
 using System.Text.Json;
-using Couchbase.Analytics2.Internal.Retry;
+using Couchbase.AnalyticsClient.Retry;
 
-namespace Couchbase.Analytics2.Exceptions;
+namespace Couchbase.AnalyticsClient.Exceptions;
 
 /// <summary>
 /// Thrown if the analytics service returns HTTP status code 401 or analytics error code 20000

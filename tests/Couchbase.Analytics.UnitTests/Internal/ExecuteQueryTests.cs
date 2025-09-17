@@ -1,9 +1,12 @@
-using Couchbase.Analytics2.Internal;
-using Couchbase.Analytics2.Internal.DI;
+using Couchbase.AnalyticsClient.DI;
+using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Results;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class ExecuteQueryTests
 {
@@ -21,7 +24,7 @@ public class ExecuteQueryTests
 
         public QueryMetaData MetaData { get; } = new ();
 
-        public IReadOnlyList<Error> Errors { get; } = [];
+        public IReadOnlyList<QueryError> Errors { get; } = [];
 
         public System.Net.HttpStatusCode? StatusCode { get; } = null;
 

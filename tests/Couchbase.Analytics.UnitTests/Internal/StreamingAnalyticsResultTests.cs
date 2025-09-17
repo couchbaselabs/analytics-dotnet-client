@@ -1,11 +1,11 @@
 using System.Text.Json;
-using Couchbase.Analytics2.Internal;
+using Couchbase.AnalyticsClient.Results;
 using Couchbase.Text.Json;
 using Moq;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.UnitTests.Internal;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal;
 
 public class StreamingAnalyticsResultTests
 {
@@ -15,13 +15,13 @@ public class StreamingAnalyticsResultTests
     {
         _output = output;
     }
-    
+
     [Fact]
     public async Task StreamingAnalyticsResult_DeserializesCorrectly()
     {
         var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
         var stream = new MemoryStream(json);
-        
+
        var analyticsResult = new StreamingAnalyticsResult(stream,new StjJsonDeserializer(), new Mock<IDisposable?>().Object);
        await analyticsResult.InitializeAsync(CancellationToken.None);
 
@@ -29,12 +29,12 @@ public class StreamingAnalyticsResultTests
        Assert.NotNull(airlines);
        Assert.NotEmpty(airlines);
     }
-    
+
     public class Root
     {
         public Airline airline { get; set; }
     }
-    
+
     public class Airline
     {
         public int id { get; set; }
@@ -71,7 +71,7 @@ public class StreamingAnalyticsResultTests
         // Arrange
         var mockStream = new MemoryStream();
         var mockSerializer = new Mock<IDeserializer>();
-        mockSerializer.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(), 
+        mockSerializer.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(),
             It.IsAny<CancellationToken>()))
             .Returns(new Mock<IJsonStreamReader>().Object);
         var result = new StreamingAnalyticsResult(mockStream, mockSerializer.Object);

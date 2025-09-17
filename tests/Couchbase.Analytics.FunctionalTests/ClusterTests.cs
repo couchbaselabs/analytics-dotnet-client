@@ -1,9 +1,9 @@
 using System.Net;
-using Couchbase.Analytics2.FunctionalTests.Fixtures;
+using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Couchbase.Analytics2.FunctionalTests;
+namespace Couchbase.AnalyticsClient.FunctionalTests;
 
 [Collection(TestCollection.Name)]
 public class ClusterTests
