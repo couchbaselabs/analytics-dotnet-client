@@ -3,6 +3,21 @@
     <!-- Enable central package management, https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
+  <!-- Performer -->
+  <ItemGroup>
+    <PackageVersion Include="Contrib.Grpc.Core.M1" Version="2.46.7" />
+    <PackageVersion Include="Grpc.Core" Version="2.46.6" />
+    <PackageVersion Include="Google.Protobuf" Version="3.31.1" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.71.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.72.0" />
+
+    <PackageVersion Include="Serilog" Version="3.1.1" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="8.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="5.0.1" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="5.0.0" />
+  </ItemGroup>
+  <!-- Performer -->
   <ItemGroup>
     <PackageVersion Include="DnsClient" Version="1.8.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
@@ -12,7 +27,6 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.1" />
     <PackageVersion Include="System.Net.Http.Json" Version="9.0.6" />
-    <PackageVersion Include="xunit.abstractions" Version="2.0.3" />
   </ItemGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
