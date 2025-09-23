@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 
-#if DEBUG
+#if !SIGNING
     [assembly: InternalsVisibleTo("Couchbase.Analytics.UnitTests")]
     [assembly: InternalsVisibleTo("Couchbase.AnalyticsClient.FunctionalTests")]
     [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+    [assembly: InternalsVisibleTo("Couchbase.Analytics.Performer")]
 #endif
-[assembly: InternalsVisibleTo("Couchbase.Analytics.Performer")]
