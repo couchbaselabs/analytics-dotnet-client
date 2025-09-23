@@ -16,7 +16,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D7E5390F-CFF1-42D7-A36C-D8E4FBE38918}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Packages.props = Directory.Packages.props
-		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.Performer", "fit\Couchbase.Analytics.Performer\Couchbase.Analytics.Performer.csproj", "{04159D2F-74A8-4200-818F-B279DBCBBC5A}"
