@@ -2,7 +2,6 @@ name: CI
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   build-and-test:
@@ -25,20 +24,10 @@ jobs:
           dotnet-version: 8.0.x
           cache: false
 
-      - name: Restore (Windows)
-        if: runner.os == 'Windows'
+      - name: Restore 
         run: dotnet restore Couchbase.Analytics.sln
 
-      - name: Build (Windows, Release)
-        if: runner.os == 'Windows'
-        run: dotnet build Couchbase.Analytics.sln --configuration Release --no-restore
-
-      - name: Restore (Linux)
-        if: runner.os == 'Linux'
-        run: dotnet restore Couchbase.Analytics.sln
-
-      - name: Build (Linux, Release)
-        if: runner.os == 'Linux'
+      - name: Build (Release)
         run: dotnet build Couchbase.Analytics.sln --configuration Release --no-restore
 
       - name: Test - Couchbase.Analytics.UnitTests
