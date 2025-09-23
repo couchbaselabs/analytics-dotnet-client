@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  push:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
@@ -24,7 +23,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-          cache: true
+          cache: false
 
       - name: Restore (Windows)
         if: runner.os == 'Windows'
