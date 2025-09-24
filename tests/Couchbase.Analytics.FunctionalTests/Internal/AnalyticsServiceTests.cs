@@ -45,7 +45,7 @@ public class AnalyticsServiceTests
         var result = await _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true});
 
-        await foreach (var row in result)
+        await foreach (var row in result.ConfigureAwait(false))
         {
             var value = row.ContentAs<JsonElement>();
             _outputHelper.WriteLine(value.ToString());
@@ -62,7 +62,7 @@ public class AnalyticsServiceTests
         var result = await _analytics2Fixture.Cluster.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false});
 
-        await foreach (var row in result)
+        await foreach (var row in result.ConfigureAwait(false))
         {
             var value = row.ContentAs<JsonElement>();
             _outputHelper.WriteLine(value.ToString());
