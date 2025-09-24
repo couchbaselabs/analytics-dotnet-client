@@ -1,0 +1,115 @@
+name: API Docs
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Git tag to build docs for (e.g., 3.8.0 or v3.8.0-rc1)'
+        required: true
+      smoke_test:
+        description: 'Run as smoke test (build & artifact only, without pushing to S3)'
+        type: boolean
+        required: false
+        default: false
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.compute.outputs.tag }}
+      version: ${{ steps.compute.outputs.version }}
+      publish: ${{ steps.compute.outputs.publish }}
+      smoke: ${{ steps.compute.outputs.smoke }}
+    steps:
+      - id: compute
+        name: Compute tag, version, smoke flag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_INPUT="${{ github.event.inputs.version_tag }}"
+            SMOKE_INPUT="${{ github.event.inputs.smoke_test }}"
+          else
+            TAG_INPUT="${{ github.ref_name }}"
+            SMOKE_INPUT="false"
+          fi
+          if [ -z "$TAG_INPUT" ]; then
+            echo "Tag input is required." >&2
+            exit 1
+          fi
+          if ! echo "$TAG_INPUT" | grep -Eq '^(v)?[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+            echo "Tag must be a semantic version (e.g., 3.8.0 or v3.8.0-rc1)." >&2
+            exit 1
+          fi
+          VER="${TAG_INPUT#v}"
+          echo "tag=$TAG_INPUT" >> $GITHUB_OUTPUT
+          echo "version=$VER" >> $GITHUB_OUTPUT
+          echo "smoke=$SMOKE_INPUT" >> $GITHUB_OUTPUT
+          if [ "$SMOKE_INPUT" = "true" ]; then echo "publish=false" >> $GITHUB_OUTPUT; else echo "publish=true" >> $GITHUB_OUTPUT; fi
+
+  build-docs:
+    name: Build API Docs
+    runs-on: ubuntu-latest
+    needs: validate-inputs
+    env:
+      PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
+      API_NAME: analytics-dotnet-client
+      AWS_REGION: us-west-1
+      S3_BUCKET: docs.couchbase.com
+    steps:
+      - name: Checkout repo at tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate-inputs.outputs.tag }}
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: false
+
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
+
+      - name: Build docs
+        run: |
+          cd docs
+          ~/.dotnet/tools/docfx metadata
+          ~/.dotnet/tools/docfx build
+
+      - name: Validate site generated
+        run: |
+          test -d docs/_site/api || (echo "No API output found" && exit 1)
+          test $(ls -1 docs/_site/api/*.html | wc -l) -ge 2 || (echo "Insufficient API HTML files" && exit 1)
+
+      - name: Archive docs
+        run: |
+          zip -rq "${{ env.API_NAME }}-${{ env.PACKAGE_VERSION }}.zip" docs/_site/*
+
+      - name: Upload API Docs Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apidocs-zip
+          path: ${{ env.API_NAME }}-${{ env.PACKAGE_VERSION }}.zip
+
+      - name: Configure AWS Credentials
+        if: needs.validate-inputs.outputs.publish == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Publish to S3
+        if: needs.validate-inputs.outputs.publish == 'true'
+        run: |
+          aws s3 sync "./docs/_site/" "s3://$S3_BUCKET/sdk-api/$API_NAME-$PACKAGE_VERSION/" --acl public-read --delete
+
+
+
