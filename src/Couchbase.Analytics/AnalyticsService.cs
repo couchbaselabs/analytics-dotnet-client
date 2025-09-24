@@ -64,8 +64,8 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
 
         try
         {
-            var response = await httpClient.SendAsync(request,
-                    HttpCompletionOption.ResponseHeadersRead,
+            var response = await httpClient.SendAsync(request, 
+                    asStreaming ? HttpCompletionOption.ResponseHeadersRead : HttpCompletionOption.ResponseContentRead,
                     cancellationToken)
                 .ConfigureAwait(false);
 
