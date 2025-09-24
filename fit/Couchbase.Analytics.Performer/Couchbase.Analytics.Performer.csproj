@@ -8,4 +8,28 @@
         <RootNamespace>Couchbase.Analytics.Performer</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+        <Protobuf Include="gRPC/**/*.proto" GrpcServices="Server" AdditionalImportDirs="gRPC;gRPC/columnar" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Couchbase.Analytics\Couchbase.Analytics.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Contrib.Grpc.Core.M1" />
+        <PackageReference Include="Grpc.Core" />
+        <PackageReference Include="Google.Protobuf" />
+        <PackageReference Include="Grpc.AspNetCore" />
+        <PackageReference Include="Grpc.Net.Client" />
+        <PackageReference Include="Grpc.Tools" >
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Serilog" />
+        <PackageReference Include="Serilog.Extensions.Logging" />
+        <PackageReference Include="Serilog.Sinks.Console" />
+        <PackageReference Include="Serilog.Sinks.File" />
+    </ItemGroup>
+
 </Project>
