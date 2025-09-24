@@ -7,16 +7,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{50354FD0-1B8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{98962587-231C-4D1F-AC3D-4C21302C331B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics", "Src\Couchbase.Analytics\Couchbase.Analytics.csproj", "{700EC51C-9F32-4C1A-826E-9252522E953F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics", "src\Couchbase.Analytics\Couchbase.Analytics.csproj", "{700EC51C-9F32-4C1A-826E-9252522E953F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.FunctionalTests", "Tests\Couchbase.Analytics.FunctionalTests\Couchbase.Analytics.FunctionalTests.csproj", "{3E0EE6AE-0579-4AFE-B4A1-14C6C72DF5F5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.FunctionalTests", "tests\Couchbase.Analytics.FunctionalTests\Couchbase.Analytics.FunctionalTests.csproj", "{3E0EE6AE-0579-4AFE-B4A1-14C6C72DF5F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.UnitTests", "Tests\Couchbase.Analytics.UnitTests\Couchbase.Analytics.UnitTests.csproj", "{890378AD-7F74-4C86-923B-24DB7539574F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.UnitTests", "tests\Couchbase.Analytics.UnitTests\Couchbase.Analytics.UnitTests.csproj", "{890378AD-7F74-4C86-923B-24DB7539574F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D7E5390F-CFF1-42D7-A36C-D8E4FBE38918}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Packages.props = Directory.Packages.props
-		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.Performer", "fit\Couchbase.Analytics.Performer\Couchbase.Analytics.Performer.csproj", "{04159D2F-74A8-4200-818F-B279DBCBBC5A}"
