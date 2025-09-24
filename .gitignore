@@ -407,3 +407,7 @@ FodyWeavers.xsd
 
 # test config
 tests/Couchbase.Analytics.FunctionalTests/settings.json
+
+#genreated api docs
+docs/_site/
+docs/api/

@@ -1,0 +1,343 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Git tag to release (e.g., 3.8.0 or 3.8.0-rc1; optional leading v)'
+        required: true
+      smoke_test:
+        description: 'Run as smoke test (build, test, pack only; no NuGet publish)'
+        type: boolean
+        required: false
+        default: false
+      api_repo_name:
+        description: 'API repo folder name in couchbase-apidocs-docfx'
+        required: false
+        default: 'analytics-dotnet-client'
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.compute.outputs.tag }}
+      version: ${{ steps.compute.outputs.version }}
+      smoke: ${{ steps.compute.outputs.smoke }}
+      api: ${{ steps.compute.outputs.api }}
+    steps:
+      - id: compute
+        name: Compute tag, version, and smoke flag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_INPUT="${{ github.event.inputs.version_tag }}"
+            SMOKE_INPUT="${{ github.event.inputs.smoke_test }}"
+            API_INPUT="${{ github.event.inputs.api_repo_name }}"
+          else
+            TAG_INPUT="${{ github.ref_name }}"
+            SMOKE_INPUT="false"
+            API_INPUT="analytics-dotnet-client"
+          fi
+          if [ -z "$TAG_INPUT" ]; then
+            echo "Tag input is required." >&2
+            exit 1
+          fi
+          if ! echo "$TAG_INPUT" | grep -Eq '^(v)?[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$'; then
+            echo "Tag must be a semantic version (e.g., 3.8.0 or v3.8.0-rc1)." >&2
+            exit 1
+          fi
+          VER="${TAG_INPUT#v}"
+          echo "tag=$TAG_INPUT" >> $GITHUB_OUTPUT
+          echo "version=$VER" >> $GITHUB_OUTPUT
+          if [ "$SMOKE_INPUT" = "true" ]; then echo "smoke=true" >> $GITHUB_OUTPUT; else echo "smoke=false" >> $GITHUB_OUTPUT; fi
+          echo "api=$API_INPUT" >> $GITHUB_OUTPUT
+
+  build-and-test:
+    name: Build & Test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    needs: validate-inputs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu
+            os: ubuntu-latest
+          - name: windows
+            os: windows-latest
+          - name: macos
+            os: macos-latest
+          - name: centos
+            os: ubuntu-latest
+            container: quay.io/centos/centos:stream9
+    container: ${{ matrix.container }}
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate-inputs.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: false
+
+      - name: Install prerequisites (CentOS)
+        if: matrix.name == 'centos'
+        run: |
+          yum -y update
+          yum -y install tar gzip curl ca-certificates krb5-libs libicu zlib openssl
+
+      - name: Restore
+        run: dotnet restore src/Couchbase.Analytics/Couchbase.Analytics.csproj
+
+      - name: Build (Release)
+        run: dotnet build src/Couchbase.Analytics/Couchbase.Analytics.csproj --configuration Release --no-restore
+
+      - name: Test - Couchbase.Analytics.UnitTests (Release)
+        run: dotnet test tests/Couchbase.Analytics.UnitTests/Couchbase.Analytics.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=unit-tests.trx" --results-directory "TestResults"
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-${{ matrix.name }}
+          path: TestResults
+
+  pack:
+    name: Pack (Windows)
+    runs-on: windows-latest
+    needs: [validate-inputs, build-and-test]
+    env:
+      PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
+      NETSDK_SIGNKEY: ${{ secrets.NETSDK_SIGNKEY }}
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate-inputs.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: false
+
+      - name: Restore
+        run: dotnet restore src/Couchbase.Analytics/Couchbase.Analytics.csproj
+
+      - name: Prepare strong-name key (SNK) (optional)
+        if: env.NETSDK_SIGNKEY != ''
+        shell: pwsh
+        run: |
+          $bytes = [System.Convert]::FromBase64String("${{ env.NETSDK_SIGNKEY }}")
+          [IO.File]::WriteAllBytes("signkey.snk", $bytes)
+
+      - name: Build (Release, signed)
+        shell: pwsh
+        run: |
+          $signProps = ''
+          if ("${{ env.NETSDK_SIGNKEY }}" -ne '') { $signProps = "/p:SignAssembly=true /p:AssemblyOriginatorKeyFile=signkey.snk" }
+          dotnet build src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release --no-restore /p:ContinuousIntegrationBuild=true /p:Version="${{ env.PACKAGE_VERSION }}" /p:IncludeSymbols=true /p:IncludeSource=true /p:SourceLinkCreate=true $signProps
+
+      - name: Pack (Release, signed)
+        shell: pwsh
+        run: |
+          $signProps = ''
+          if ("${{ env.NETSDK_SIGNKEY }}" -ne '') { $signProps = "/p:SignAssembly=true /p:AssemblyOriginatorKeyFile=signkey.snk" }
+          dotnet pack src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release --no-build /p:ContinuousIntegrationBuild=true /p:Version="${{ env.PACKAGE_VERSION }}" /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:IncludeSource=true /p:SourceLinkCreate=true $signProps
+
+      - name: Upload Packages Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            **/*.nupkg
+            **/*.snupkg
+
+  build-docs:
+    name: Build API Docs (Windows)
+    runs-on: windows-latest
+    needs: [validate-inputs, pack]
+    env:
+      PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
+      API_REPO_NAME: ${{ needs.validate-inputs.outputs.api }}
+    steps:
+      - name: Checkout couchbase-apidocs-docfx
+        uses: actions/checkout@v4
+        with:
+          repository: couchbaselabs/couchbase-apidocs-docfx
+          path: couchbase-apidocs-docfx
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: false
+
+      - name: Prepare overrides and NuGet.Config
+        shell: pwsh
+        working-directory: couchbase-apidocs-docfx
+        run: |
+          $year = (Get-Date).Year
+          $copyright = "© $year Couchbase, Inc."
+          $overrides = @{ _appTitle = "$Env:PACKAGE_VERSION"; _appFooter = $copyright } | ConvertTo-Json
+          Set-Content -Path "$Env:API_REPO_NAME/overrides.json" -Value $overrides -Encoding UTF8
+          $nugetConfig = @(
+            '<?xml version="1.0" encoding="utf-8"?>',
+            '<configuration>',
+            '  <packageSources>',
+            '    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />',
+            '  </packageSources>',
+            '  <packageSourceMapping>',
+            '    <packageSource key="nuget.org">',
+            '      <package pattern="*" />',
+            '    </packageSource>',
+            '  </packageSourceMapping>',
+            '</configuration>'
+          )
+          Set-Content -Path "DocFxRun/NuGet.Config" -Value ($nugetConfig -join "`n") -Encoding UTF8
+
+      - name: Generate docs with DocFX
+        shell: pwsh
+        working-directory: couchbase-apidocs-docfx
+        run: |
+          dotnet run --project DocFxRun/DocFxRun.csproj "$Env:API_REPO_NAME/docfx.json"
+
+      - name: Validate site generated
+        shell: pwsh
+        working-directory: couchbase-apidocs-docfx
+        run: |
+          $html = Get-ChildItem -Path "$Env:API_REPO_NAME/_site/api" -Filter *.html -ErrorAction SilentlyContinue
+          if (-not $html -or $html.Count -lt 2) { throw "Doc site not generated correctly (no API HTML files)" }
+
+      - name: Archive docs
+        shell: pwsh
+        working-directory: couchbase-apidocs-docfx
+        run: |
+          Compress-Archive -Path "$Env:API_REPO_NAME/_site/*" -DestinationPath "$Env:API_REPO_NAME-$Env:PACKAGE_VERSION.zip"
+
+      - name: Upload API Docs Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apidocs-zip
+          path: couchbase-apidocs-docfx/${{ env.API_REPO_NAME }}-${{ env.PACKAGE_VERSION }}.zip
+
+  publish:
+    name: Publish to NuGet
+    runs-on: windows-latest
+    needs: [validate-inputs, pack]
+    environment: nuget-publish
+    # Only publish when not a smoke test
+    if: needs.validate-inputs.outputs.smoke != 'true'
+    env:
+      PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+    steps:
+      - name: Download Packages Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./artifacts
+
+      - name: Publish to NuGet (nupkg)
+        if: env.NUGET_API_KEY != ''
+        shell: pwsh
+        run: |
+          $ver = "$Env:PACKAGE_VERSION"
+          Get-ChildItem -Path ./artifacts -Recurse -Filter *.nupkg | Where-Object { $_.Name -like "*.$ver.nupkg" } | ForEach-Object {
+            dotnet nuget push $_.FullName --source "https://api.nuget.org/v3/index.json" --api-key "${{ env.NUGET_API_KEY }}" --skip-duplicate
+          }
+
+      - name: Publish symbols to NuGet (snupkg)
+        if: env.NUGET_API_KEY != ''
+        shell: pwsh
+        run: |
+          $ver = "$Env:PACKAGE_VERSION"
+          Get-ChildItem -Path ./artifacts -Recurse -Filter *.snupkg | Where-Object { $_.Name -like "*.$ver.snupkg" } | ForEach-Object {
+            dotnet nuget push $_.FullName --source "https://api.nuget.org/v3/index.json" --api-key "${{ env.NUGET_API_KEY }}" --skip-duplicate
+          }
+
+  smoke-summary:
+    name: Smoke Summary
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, build-and-test, pack, build-docs]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.smoke_test == 'true'
+    env:
+      PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
+      API_REPO_NAME: ${{ needs.validate-inputs.outputs.api }}
+    steps:
+      - name: Download Packages Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./artifacts
+
+      - name: Download Test Results Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: unit-test-results-*
+          merge-multiple: true
+          path: ./test-results
+
+      - name: Download API Docs Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: apidocs-zip
+          path: ./
+
+      - name: Print tag, package names, test result files
+        shell: bash
+        run: |
+          echo "Tag: ${{ needs.validate-inputs.outputs.tag }}"
+          echo "Package version: $PACKAGE_VERSION"
+          echo "Packages:"
+          find ./artifacts -type f -name "*.$PACKAGE_VERSION.nupkg" -print | sed 's/^/  /' || true
+          find ./artifacts -type f -name "*.$PACKAGE_VERSION.snupkg" -print | sed 's/^/  /' || true
+          echo "Test result files:"
+          find ./test-results -type f -name "*.trx" -print | sed 's/^/  /' || true
+          echo "API Docs Archive:"
+          ls -1 "$API_REPO_NAME-$PACKAGE_VERSION.zip" 2>/dev/null | sed 's/^/  /' || true
+
+  publish-docs:
+    name: Publish API Docs to S3
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, build-docs, publish]
+    if: needs.validate-inputs.outputs.smoke != 'true'
+    env:
+      PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
+      API_REPO_NAME: ${{ needs.validate-inputs.outputs.api }}
+      AWS_REGION: us-west-1
+      S3_BUCKET: docs.couchbase.com
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download API Docs Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: apidocs-zip
+          path: ./apidocs
+
+      - name: Unzip Docs
+        run: |
+          unzip -q "./apidocs/$API_REPO_NAME-$PACKAGE_VERSION.zip" -d "./$API_REPO_NAME-$PACKAGE_VERSION"
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync "./$API_REPO_NAME-$PACKAGE_VERSION/" "s3://$S3_BUCKET/sdk-api/$API_REPO_NAME-$PACKAGE_VERSION/" --acl public-read --delete
+
+

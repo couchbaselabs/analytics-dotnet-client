@@ -19,6 +19,8 @@
  * ************************************************************/
 #endregion
 
+using System.ComponentModel;
+
 namespace Couchbase.AnalyticsClient.Query;
 
 /// <summary>
@@ -27,12 +29,20 @@ namespace Couchbase.AnalyticsClient.Query;
 public enum QueryScanConsistency
 {
     /// <summary>
-    /// The index scan does not use a timestamp vector. This is the fastest mode, because it avoids the costs of obtaining the vector and waiting for the index to catch up to the vector.
+    /// The default which means that the query can return data that is currently indexed
+    /// and accessible by the index or the view. The query output can be arbitrarily
+    /// out-of-date if there are many pending mutations that have not been indexed by
+    /// the index or the view. This consistency level is useful for queries that favor
+    /// low latency and do not need precise and most up-to-date information.
     /// </summary>
+    [Description("not_bounded")]
     NotBounded,
 
     /// <summary>
-    /// This option implements bounded consistency. You can use this setting to implement read-your-own-writes (RYOW).
+    /// This level provides the strictest consistency level and thus executes with higher
+    /// latencies than the other levels. This consistency level requires all mutations, up
+    /// to the moment of the query request, to be processed before the query execution can start.
     /// </summary>
+    [Description("request_plus")]
     RequestPlus
 }
