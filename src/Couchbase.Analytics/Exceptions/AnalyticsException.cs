@@ -21,8 +21,7 @@
 
 using System.Runtime.Serialization;
 using System.Text;
-using System.Text.Json;
-using Couchbase.AnalyticsClient.Retry;
+using Couchbase.AnalyticsClient.Internal.Retry;
 
 namespace Couchbase.AnalyticsClient.Exceptions;
 

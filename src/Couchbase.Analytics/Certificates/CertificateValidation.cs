@@ -19,9 +19,9 @@
  * ************************************************************/
 #endregion
 
+using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Net.Security;
 using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Logging;
 

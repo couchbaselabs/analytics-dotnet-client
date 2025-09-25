@@ -1,5 +1,6 @@
 using System.Security.Authentication;
 using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Logging;
 using Moq;

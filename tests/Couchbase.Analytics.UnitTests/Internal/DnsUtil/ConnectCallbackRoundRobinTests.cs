@@ -1,8 +1,9 @@
 using System.Net;
 using System.Reflection;
-using Couchbase.AnalyticsClient.DnsUtil;
-using Couchbase.AnalyticsClient.DnsUtil.Strategies;
 using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Internal.DnsUtil;
+using Couchbase.AnalyticsClient.Internal.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Logging;
 using Moq;
