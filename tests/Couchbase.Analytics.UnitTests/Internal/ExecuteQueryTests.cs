@@ -1,8 +1,10 @@
-using Couchbase.AnalyticsClient.DI;
-using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Query;
-using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.Internal;
+using Couchbase.AnalyticsClient.Public;
+using Couchbase.AnalyticsClient.Public.DI;
+using Couchbase.AnalyticsClient.Public.HTTP;
+using Couchbase.AnalyticsClient.Public.Options;
+using Couchbase.AnalyticsClient.Public.Query;
+using Couchbase.AnalyticsClient.Public.Results;
 using Xunit;
 using Xunit.Abstractions;
 

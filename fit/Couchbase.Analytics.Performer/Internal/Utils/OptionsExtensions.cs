@@ -1,5 +1,5 @@
-using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Public.Options;
+using Couchbase.AnalyticsClient.Public.Query;
 using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Text.Json;
 using Google.Protobuf.Collections;

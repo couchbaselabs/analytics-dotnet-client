@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.Text.Json;
 using Newtonsoft.Json;
 using Xunit;

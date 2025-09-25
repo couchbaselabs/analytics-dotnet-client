@@ -1,7 +1,8 @@
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Public;
+using Couchbase.AnalyticsClient.Public.HTTP;
+using Couchbase.AnalyticsClient.Public.Options;
 using Xunit;
 using Moq;
 #nullable enable

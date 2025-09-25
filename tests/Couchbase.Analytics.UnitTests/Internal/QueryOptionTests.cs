@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Couchbase.AnalyticsClient;
-using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Public.Options;
+using Couchbase.AnalyticsClient.Public.Query;
 using Couchbase.Text.Json;
 using Xunit;
 

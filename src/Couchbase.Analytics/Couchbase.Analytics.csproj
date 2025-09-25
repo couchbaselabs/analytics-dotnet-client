@@ -22,6 +22,14 @@
     <ItemGroup>
       <ProjectReference Include="..\Couchbase.Text.Json\Couchbase.Text.Json.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Internal\Certificates\" />
+      <Folder Include="Internal\Exceptions\" />
+      <Folder Include="Internal\Options\" />
+      <Folder Include="Internal\Query\" />
+      <Folder Include="Public\Retry\" />
+    </ItemGroup>
     
 
 </Project>

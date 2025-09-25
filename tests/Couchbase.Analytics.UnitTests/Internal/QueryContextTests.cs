@@ -4,10 +4,12 @@ using Couchbase.Text.Json;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
-using Couchbase.AnalyticsClient.DI;
-using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Internal.HTTP;
+using Couchbase.AnalyticsClient.Public;
+using Couchbase.AnalyticsClient.Public.DI;
+using Couchbase.AnalyticsClient.Public.HTTP;
+using Couchbase.AnalyticsClient.Public.Options;
+using Couchbase.AnalyticsClient.Public.Query;
 using Moq.Protected;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;

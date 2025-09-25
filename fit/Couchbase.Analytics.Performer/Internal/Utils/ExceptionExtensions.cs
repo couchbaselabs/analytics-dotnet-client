@@ -1,8 +1,8 @@
-using Couchbase.AnalyticsClient.Exceptions;
+using Couchbase.AnalyticsClient.Public.Exceptions;
 using Couchbase.Grpc.Protocol.Columnar;
 using Columnar_InvalidCredentialException = Couchbase.Grpc.Protocol.Columnar.InvalidCredentialException;
-using InvalidCredentialException = Couchbase.AnalyticsClient.Exceptions.InvalidCredentialException;
-using QueryException = Couchbase.AnalyticsClient.Exceptions.QueryException;
+using InvalidCredentialException = Couchbase.AnalyticsClient.Public.Exceptions.InvalidCredentialException;
+using QueryException = Couchbase.AnalyticsClient.Public.Exceptions.QueryException;
 
 namespace Couchbase.Analytics.Performer.Internal.Utils;
 

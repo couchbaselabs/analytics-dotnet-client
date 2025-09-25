@@ -1,4 +1,4 @@
-using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.Public.Results;
 using Couchbase.Grpc.Protocol.Columnar;
 using Google.Protobuf;
 using Google.Protobuf.Collections;

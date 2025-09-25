@@ -3,12 +3,14 @@ using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Xunit;
 using Xunit.Abstractions;
 using System.Net;
-using Couchbase.AnalyticsClient.DI;
-using Couchbase.AnalyticsClient.DnsUtil;
-using Couchbase.AnalyticsClient.DnsUtil.Strategies;
-using Couchbase.AnalyticsClient.Exceptions;
-using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Internal;
+using Couchbase.AnalyticsClient.Internal.DI;
+using Couchbase.AnalyticsClient.Internal.DnsUtil;
+using Couchbase.AnalyticsClient.Internal.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.Internal.HTTP;
+using Couchbase.AnalyticsClient.Public.DnsUtil;
+using Couchbase.AnalyticsClient.Public.Exceptions;
+using Couchbase.AnalyticsClient.Public.Options;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests.Internal;
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
-using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Public.Exceptions;
+using Couchbase.AnalyticsClient.Public.Options;
 using Xunit;
 using DnsClient;
 using Xunit.Abstractions;

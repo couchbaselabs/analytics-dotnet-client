@@ -1,6 +1,7 @@
 using System.Security.Authentication;
-using Couchbase.AnalyticsClient.Certificates;
-using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Internal;
+using Couchbase.AnalyticsClient.Public.Certificates;
+using Couchbase.AnalyticsClient.Public.Options;
 using Xunit;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal

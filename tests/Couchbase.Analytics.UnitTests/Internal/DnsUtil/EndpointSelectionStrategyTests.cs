@@ -2,7 +2,7 @@ using System.Net;
 using Xunit;
 using System.Linq;
 using System.Reflection;
-using Couchbase.AnalyticsClient.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.Internal.DnsUtil.Strategies;
 using Xunit.Abstractions;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal.DnsUtil;

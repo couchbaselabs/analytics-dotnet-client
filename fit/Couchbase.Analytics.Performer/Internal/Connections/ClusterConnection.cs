@@ -1,6 +1,7 @@
 using Couchbase.AnalyticsClient;
-using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.Public;
+using Couchbase.AnalyticsClient.Public.Options;
+using Couchbase.AnalyticsClient.Public.Results;
 using Couchbase.Grpc.Protocol.Columnar;
 
 namespace Couchbase.Analytics.Performer.Internal.Connections;

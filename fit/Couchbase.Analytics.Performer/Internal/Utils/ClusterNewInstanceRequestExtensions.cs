@@ -1,6 +1,6 @@
 using System.Security.Authentication;
-using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Public.HTTP;
+using Couchbase.AnalyticsClient.Public.Options;
 using Couchbase.Grpc.Protocol.Columnar;
 
 namespace Couchbase.Analytics.Performer.Internal.Utils;

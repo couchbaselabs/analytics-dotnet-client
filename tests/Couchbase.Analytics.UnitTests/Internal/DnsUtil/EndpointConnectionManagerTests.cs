@@ -1,6 +1,6 @@
 using System.Net;
-using Couchbase.AnalyticsClient.DnsUtil;
-using Couchbase.AnalyticsClient.DnsUtil.Strategies;
+using Couchbase.AnalyticsClient.Internal.DnsUtil;
+using Couchbase.AnalyticsClient.Internal.DnsUtil.Strategies;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -4,6 +4,7 @@ using Couchbase.Analytics.Performer.Internal.Exceptions;
 using Couchbase.Analytics.Performer.Internal.Modes;
 using Couchbase.Analytics.Performer.Internal.Utils;
 using Couchbase.AnalyticsClient;
+using Couchbase.AnalyticsClient.Public;
 using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Grpc.Protocol.Shared;
 using Couchbase.Text.Json.Utils;

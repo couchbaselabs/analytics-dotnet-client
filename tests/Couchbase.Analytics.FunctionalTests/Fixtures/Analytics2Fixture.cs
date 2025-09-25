@@ -1,6 +1,7 @@
 using System.Net;
-using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Public;
+using Couchbase.AnalyticsClient.Public.HTTP;
+using Couchbase.AnalyticsClient.Public.Options;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 

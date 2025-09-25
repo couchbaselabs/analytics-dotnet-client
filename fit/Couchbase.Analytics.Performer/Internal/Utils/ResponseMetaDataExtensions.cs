@@ -1,4 +1,4 @@
-using Couchbase.AnalyticsClient.Query;
+using Couchbase.AnalyticsClient.Public.Query;
 using Couchbase.Grpc.Protocol.Columnar;
 using Google.Protobuf.WellKnownTypes;
 
