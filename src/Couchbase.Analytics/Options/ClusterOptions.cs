@@ -23,7 +23,9 @@ using System.ComponentModel;
 using System.Security.Authentication;
 using Couchbase.AnalyticsClient.DI;
 using Couchbase.AnalyticsClient.HTTP;
-using Couchbase.AnalyticsClient.Utils;
+using Couchbase.AnalyticsClient.Internal;
+using Couchbase.AnalyticsClient.Internal.DI;
+using Couchbase.AnalyticsClient.Internal.Utils;
 using Couchbase.Text.Json.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -125,7 +127,7 @@ public record ClusterOptions
         get => ConnectionStringValue?.ToString();
         set
         {
-            ConnectionStringValue = value != null ? AnalyticsClient.ConnectionString.Parse(value) : null;
+            ConnectionStringValue = value != null ? Internal.ConnectionString.Parse(value) : null;
 
             if (ConnectionStringValue == null) return;
 

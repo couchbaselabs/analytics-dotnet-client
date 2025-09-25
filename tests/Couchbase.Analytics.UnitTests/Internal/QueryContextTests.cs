@@ -6,6 +6,7 @@ using System.Net;
 using System.Text;
 using Couchbase.AnalyticsClient.DI;
 using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Moq.Protected;

@@ -1,5 +1,6 @@
 using System.Security.Authentication;
 using Couchbase.AnalyticsClient.Certificates;
+using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
 using Xunit;
 

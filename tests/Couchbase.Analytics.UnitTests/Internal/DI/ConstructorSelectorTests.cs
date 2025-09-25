@@ -1,5 +1,5 @@
 using System;
-using Couchbase.AnalyticsClient.DI;
+using Couchbase.AnalyticsClient.Internal.DI;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 

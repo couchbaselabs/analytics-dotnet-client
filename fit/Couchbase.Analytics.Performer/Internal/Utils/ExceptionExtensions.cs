@@ -3,6 +3,7 @@ using Couchbase.Grpc.Protocol.Columnar;
 using InvalidCredentialException = Couchbase.AnalyticsClient.Exceptions.InvalidCredentialException;
 using QueryException = Couchbase.AnalyticsClient.Exceptions.QueryException;
 
+
 namespace Couchbase.Analytics.Performer.Internal.Utils;
 
 internal static class ExceptionExtensions

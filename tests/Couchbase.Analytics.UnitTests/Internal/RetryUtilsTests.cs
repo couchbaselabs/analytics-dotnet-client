@@ -1,4 +1,4 @@
-using Couchbase.AnalyticsClient.Retry;
+using Couchbase.AnalyticsClient.Internal.Retry;
 using Xunit;
 using Xunit.Abstractions;
 

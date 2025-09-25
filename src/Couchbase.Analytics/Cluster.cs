@@ -20,8 +20,9 @@
 #endregion
 
 using System.Collections.Concurrent;
-using Couchbase.AnalyticsClient.DI;
 using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Internal;
+using Couchbase.AnalyticsClient.Internal.DI;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Results;
 using Microsoft.Extensions.Logging;

@@ -1,5 +1,6 @@
 using Couchbase.AnalyticsClient.DI;
 using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
