@@ -35,7 +35,7 @@ var cluster = Cluster.Create(
 ```
 
 Notes:
-- Use `http://host:8095` for non-TLS clusters, `https://host:18095` for TLS (or your own custom ports for a load balancer orproxy)
+- Use `http://host:8095` for non-TLS clusters, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
 - If multiple IP addresses are resolved for a host, a connection will be attempted for a random IP address. If a connection attempt fails, another IP will be picked to attempt a connection, until all are exhausted.
 - Connection string parameters include:
   - `timeout.connect_timeout`, `timeout.dispatch_timeout`, `timeout.query_timeout` (in milliseconds)
