@@ -94,7 +94,7 @@ jobs:
         if: matrix.name == 'centos'
         run: |
           yum -y update
-          yum -y install tar gzip curl ca-certificates krb5-libs libicu zlib openssl
+          yum -y install tar gzip ca-certificates krb5-libs libicu zlib openssl
 
       - name: Restore
         run: dotnet restore src/Couchbase.Analytics/Couchbase.Analytics.csproj
@@ -103,7 +103,7 @@ jobs:
         run: dotnet build src/Couchbase.Analytics/Couchbase.Analytics.csproj --configuration Release --no-restore
 
       - name: Test - Couchbase.Analytics.UnitTests (Release)
-        run: dotnet test tests/Couchbase.Analytics.UnitTests/Couchbase.Analytics.UnitTests.csproj --configuration Release --no-build --logger "trx;LogFileName=unit-tests.trx" --results-directory "TestResults"
+        run: dotnet test tests/Couchbase.Analytics.UnitTests/Couchbase.Analytics.UnitTests.csproj --configuration Release --logger trx --results-directory "TestResults"
 
       - name: Upload Test Results
         if: always()
@@ -238,6 +238,3 @@ jobs:
           find ./artifacts -type f -name "*.$PACKAGE_VERSION.snupkg" -print | sed 's/^/  /' || true
           echo "Test result files:"
           find ./test-results -type f -name "*.trx" -print | sed 's/^/  /' || true
-
-
-
