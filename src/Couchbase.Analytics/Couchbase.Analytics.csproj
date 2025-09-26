@@ -5,6 +5,17 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Couchbase.AnalyticsClient</RootNamespace>
+        
+        <AssemblyName>Couchbase.AnalyticsClient</AssemblyName>
+        <PackageId>Couchbase Analytics Client</PackageId>
+        <Product>Couchbase Analytics Client</Product>
+        <Description>The Official Couchbase Analytics .NET SDK</Description>
+        
+        <!--   TODO: find out release notes URL  -->
+        <PackageReleaseNotes>https://docs.couchbase.com/analytics-dotnet-sdk/current/project-docs/sdk-release-notes.html</PackageReleaseNotes>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        
+        <VersionPrefix>1.0.0</VersionPrefix>
     </PropertyGroup>
 
     <ItemGroup>
