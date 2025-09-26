@@ -70,7 +70,15 @@ jobs:
             container: quay.io/centos/centos:stream9
     container: ${{ matrix.container }}
     steps:
+      - name: Checkout master (smoke)
+        if: needs.validate-inputs.outputs.publish != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
       - name: Checkout tag
+        if: needs.validate-inputs.outputs.publish == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.validate-inputs.outputs.tag }}
@@ -112,7 +120,15 @@ jobs:
       PACKAGE_VERSION: ${{ needs.validate-inputs.outputs.version }}
       NETSDK_SIGNKEY: ${{ secrets.NETSDK_SIGNKEY }}
     steps:
+      - name: Checkout master (smoke)
+        if: needs.validate-inputs.outputs.publish != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
       - name: Checkout tag
+        if: needs.validate-inputs.outputs.publish == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.validate-inputs.outputs.tag }}
@@ -222,3 +238,6 @@ jobs:
           find ./artifacts -type f -name "*.$PACKAGE_VERSION.snupkg" -print | sed 's/^/  /' || true
           echo "Test result files:"
           find ./test-results -type f -name "*.trx" -print | sed 's/^/  /' || true
+
+
+
