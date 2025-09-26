@@ -1,15 +1,13 @@
 name: API Docs
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Git tag to build docs for (e.g., 3.8.0 or v3.8.0-rc1)'
+        description: 'Git tag to build docs for (e.g., 1.0.0, 1.0.0-rc1). This is ignored if publish is false.'
         required: true
-      smoke_test:
-        description: 'Run as smoke test (build & artifact only, without pushing to S3)'
+      publish:
+        description: 'Publish to S3 (set false for smoke run)'
         type: boolean
         required: false
         default: false
@@ -26,19 +24,13 @@ jobs:
       tag: ${{ steps.compute.outputs.tag }}
       version: ${{ steps.compute.outputs.version }}
       publish: ${{ steps.compute.outputs.publish }}
-      smoke: ${{ steps.compute.outputs.smoke }}
     steps:
       - id: compute
-        name: Compute tag, version, smoke flag
+        name: Compute tag, version, publish flag
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_INPUT="${{ github.event.inputs.version_tag }}"
-            SMOKE_INPUT="${{ github.event.inputs.smoke_test }}"
-          else
-            TAG_INPUT="${{ github.ref_name }}"
-            SMOKE_INPUT="false"
-          fi
+          TAG_INPUT="${{ github.event.inputs.version_tag }}"
+          PUBLISH_INPUT="${{ github.event.inputs.publish }}"
           if [ -z "$TAG_INPUT" ]; then
             echo "Tag input is required." >&2
             exit 1
@@ -50,8 +42,7 @@ jobs:
           VER="${TAG_INPUT#v}"
           echo "tag=$TAG_INPUT" >> $GITHUB_OUTPUT
           echo "version=$VER" >> $GITHUB_OUTPUT
-          echo "smoke=$SMOKE_INPUT" >> $GITHUB_OUTPUT
-          if [ "$SMOKE_INPUT" = "true" ]; then echo "publish=false" >> $GITHUB_OUTPUT; else echo "publish=true" >> $GITHUB_OUTPUT; fi
+          echo "publish=$PUBLISH_INPUT" >> $GITHUB_OUTPUT
 
   build-docs:
     name: Build API Docs
@@ -63,7 +54,12 @@ jobs:
       AWS_REGION: us-west-1
       S3_BUCKET: docs.couchbase.com
     steps:
+      - name: Checkout repo (smoke)
+        if: needs.validate-inputs.outputs.publish != 'true'
+        uses: actions/checkout@v4
+
       - name: Checkout repo at tag
+        if: needs.validate-inputs.outputs.publish == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.validate-inputs.outputs.tag }}
@@ -110,6 +106,3 @@ jobs:
         if: needs.validate-inputs.outputs.publish == 'true'
         run: |
           aws s3 sync "./docs/_site/" "s3://$S3_BUCKET/sdk-api/$API_NAME-$PACKAGE_VERSION/" --acl public-read --delete
-
-
-
