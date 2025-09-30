@@ -8,7 +8,7 @@
         <VersionPrefix>1.0.0-rc1</VersionPrefix>
         
         <AssemblyName>Couchbase.AnalyticsClient</AssemblyName>
-        <PackageId>Couchbase Analytics Client</PackageId>
+        <PackageId>Couchbase.AnalyticsClient</PackageId>
         <Product>Couchbase Analytics Client</Product>
         <Description>The Official Couchbase Analytics .NET SDK</Description>
         
