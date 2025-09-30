@@ -1,6 +1,5 @@
 using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.Grpc.Protocol.Columnar;
-using Columnar_InvalidCredentialException = Couchbase.Grpc.Protocol.Columnar.InvalidCredentialException;
 using InvalidCredentialException = Couchbase.AnalyticsClient.Exceptions.InvalidCredentialException;
 using QueryException = Couchbase.AnalyticsClient.Exceptions.QueryException;
 
@@ -33,7 +32,7 @@ internal static class ExceptionExtensions
                 };
             }
 
-            if (exception is Columnar_InvalidCredentialException)
+            if (exception is InvalidCredentialException)
             {
                 columnarError.SubException = new SubColumnarError
                 {
