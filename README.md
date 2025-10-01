@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/couchbase-filled.png" alt="Couchbase" width="120" />
+  <img src="assets/couchbase-filled.png" alt="Couchbase" width="80" />
 </p>
 
 <h2 align="center">Couchbase Analytics .NET SDK</h2>
@@ -44,8 +44,10 @@ var cluster = Cluster.Create(
 ```
 
 > [!NOTE]
-> Use `http://host:8095` for non-TLS clusters, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
-> If multiple IP addresses are resolved for a host, a connection will be attempted for a random IP address. If a connection attempt fails, another IP will be picked to attempt a connection, until all are exhausted.
+> Use `http://host:8095` for non-TLS connections, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
+>
+> If multiple IP addresses are resolved for a host, a connection will be attempted for a random one. If that connection attempt fails, another IP will be picked to attempt a connection, until all are exhausted.
+>
 > Connection string parameters include:
 > - `timeout.connect_timeout`, `timeout.dispatch_timeout`, `timeout.query_timeout` (in milliseconds)
 > - `security.trust_only_pem_file`, `security.disable_server_certificate_verification`, `security.cipher_suites`
