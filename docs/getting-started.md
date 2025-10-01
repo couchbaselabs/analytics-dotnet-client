@@ -7,7 +7,7 @@ This guide shows how to install the package, connect to a Couchbase cluster, and
 Add the package to your project:
 
 ```bash
-dotnet add package Couchbase.Analytics
+dotnet add package Couchbase.AnalyticsClient
 ```
 
 Requires .NET 8.0.
