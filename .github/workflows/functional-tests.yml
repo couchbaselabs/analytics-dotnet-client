@@ -1,0 +1,150 @@
+name: Functional Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: "Optional release tag (e.g. 1.0.0 or 1.0.0-rc1)"
+        required: false
+        type: string
+      cbdc_version:
+        description: "Optional cbdinocluster version (e.g. v0.0.88)"
+        required: false
+        type: string
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  functional-tests:
+    name: Functional Tests (ubuntu-22.04)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout (tag)
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version_tag != '' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ github.event.inputs.version_tag }}
+
+      - name: Checkout (PR head)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout (default)
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.version_tag == '' || github.event.inputs.version_tag == null) }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: false
+
+      - name: Install cbdinocluster
+        id: install-cbdc
+        run: |
+          mkdir -p "$HOME/bin"
+          CBDC_VER=${{ github.event.inputs.cbdc_version }}
+          if [ -z "$CBDC_VER" ]; then
+            CBDC_VER=v0.0.88
+          fi
+          echo "Installing cbdinocluster $CBDC_VER"
+          wget -nv -O $HOME/bin/cbdinocluster https://github.com/couchbaselabs/cbdinocluster/releases/download/${CBDC_VER}/cbdinocluster-linux-amd64
+          chmod +x $HOME/bin/cbdinocluster
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Pull helper images
+        run: |
+          docker pull adobe/s3mock
+          docker pull nginx
+
+      - name: Initialize cbdinocluster
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cbdinocluster -v init --auto
+
+      - name: Start Couchbase Columnar cluster
+        id: start-cluster
+        env:
+          INPUT_TAG: ${{ github.event.inputs.version_tag }}
+        run: |
+          TAG=${INPUT_TAG}
+
+          EA_VERSION=2.0.1-1231
+          EA_IMAGE=ghcr.io/cb-vanilla/enterprise-analytics:2.0.1-1231
+
+          cat > cluster.yml <<'YAML'
+          columnar: true
+          nodes:
+            - count: 2
+              version: ${EA_VERSION}
+              docker:
+                image: ${EA_IMAGE}
+          docker:
+            load-balancer: true
+            use-dino-certs: true
+          YAML
+
+          # Substitute shell vars into YAML
+          eval "echo \"$(cat cluster.yml)\"" > cluster.resolved.yml
+
+          CBDINO_CLUSTER_ID=$(cbdinocluster -v alloc --def="$(cat cluster.resolved.yml)")
+          CBDINO_CONNSTR=$(cbdinocluster -v connstr --tls --analytics "$CBDINO_CLUSTER_ID")
+
+          echo "CBDINO_CLUSTER_ID=$CBDINO_CLUSTER_ID" >> "$GITHUB_ENV"
+          echo "CBDINO_CONNSTR=$CBDINO_CONNSTR" >> "$GITHUB_ENV"
+          echo "CBDINO_USER=Administrator" >> "$GITHUB_ENV"
+          echo "CBDINO_PASS=password" >> "$GITHUB_ENV"
+
+      - name: Prepare Functional Test settings.json
+        run: |
+          echo "Writing functional test settings.json with cluster connection string"
+          cat > tests/Couchbase.Analytics.FunctionalTests/settings.json <<EOF
+          {
+            "TestSettings": {
+              "ConnectionString": "${CBDINO_CONNSTR}",
+              "Username": "${CBDINO_USER}",
+              "Password": "${CBDINO_PASS}"
+            }
+          }
+          EOF
+          echo "settings.json written:" && cat tests/Couchbase.Analytics.FunctionalTests/settings.json
+
+      - name: Restore
+        run: dotnet restore Couchbase.Analytics.sln
+
+      - name: Build (Release)
+        run: dotnet build Couchbase.Analytics.sln --configuration Release --no-restore
+
+      - name: Run Functional Tests
+        run: |
+          dotnet test tests/Couchbase.Analytics.FunctionalTests/Couchbase.Analytics.FunctionalTests.csproj \
+            --configuration Release --no-build \
+            --logger "trx;LogFileName=functional-tests.trx" \
+            --results-directory "TestResults"
+
+      - name: Upload Functional Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-test-results
+          path: TestResults
+
+      - name: Teardown cbdinocluster
+        if: always()
+        run: |
+          if [ -n "${CBDINO_CLUSTER_ID}" ]; then
+            cbdinocluster -v free "$CBDINO_CLUSTER_ID" || true
+          fi
+
+
