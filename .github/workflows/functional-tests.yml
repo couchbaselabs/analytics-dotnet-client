@@ -116,16 +116,10 @@ jobs:
           EOF
           echo "settings.json written:" && cat tests/Couchbase.Analytics.FunctionalTests/settings.json
 
-      - name: Restore
-        run: dotnet restore Couchbase.Analytics.sln
-
-      - name: Build (Release)
-        run: dotnet build Couchbase.Analytics.sln --configuration Release --no-restore
-
-      - name: Run Functional Tests
+      - name: Build and Run Functional Tests
         run: |
           dotnet test tests/Couchbase.Analytics.FunctionalTests/Couchbase.Analytics.FunctionalTests.csproj \
-            --configuration Release --no-build \
+            --configuration Release \
             --logger "trx;LogFileName=functional-tests.trx" \
             --results-directory "TestResults"
 
