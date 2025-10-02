@@ -1,4 +1,7 @@
 name: Functional Tests
+permissions:
+  contents: read
+  packages: read
 
 on:
   pull_request:
@@ -16,6 +19,7 @@ on:
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: 1
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   functional-tests:
