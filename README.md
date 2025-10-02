@@ -81,12 +81,22 @@ await foreach (var row in result.Rows)
 ```csharp
 var statement = "SELECT * FROM `travel-sample`.inventory.airline WHERE country = $country LIMIT $limit";
 
-var paramResult = await cluster.ExecuteQueryAsync(
+var paramResult = await _analytics2Fixture.Cluster.ExecuteQueryAsync(
     statement,
     new QueryOptions()
         .WithNamedParameter("country", "United States")
         .WithNamedParameter("limit", 10)
-);
+).ConfigureAwait(false);
+
+await foreach (var row in paramResult.Rows)
+{
+    Console.WriteLine(row.ContentAs<JsonElement>());
+}   
+
+/** Output:
+{"airline":{"id":"airline_19433","type":"airline","name":"XAIR USA","iata":"XA","icao":"XAU","callsign":"XAIR","country":"United States"}}
+...
+*/
 ```
 
 ### Database and scope context
@@ -98,12 +108,51 @@ var db = cluster.Database("travel-sample");
 var scope = db.Scope("inventory");
 
 var scoped = await scope.ExecuteQueryAsync(
-    "SELECT META().id FROM airline LIMIT 5"
-);
+    "SELECT id FROM airline LIMIT 5"
+).ConfigureAwait(false);
 
 await foreach (var row in scoped.Rows)
 {
-    Console.WriteLine(row.Json.ToString());
+    Console.WriteLine(row.ContentAs<JsonElement>());
+}
+
+/** Output:
+{"id":"airline_19433"}
+{"id":"airline_137"}
+{"id":"airline_18239"}
+{"id":"airline_10123"}
+{"id":"airline_19290"}
+*/
+```
+
+### Options
+
+> [!WARNING]
+> Option classes are imutable records. Each mutation returns a new instance of the options.
+
+Initialize, or modify options using:
+
+`With` methods return a new instance of the options, to allow chaining:
+
+```csharp
+var options = new QueryOptions()
+    .WithReadOnly(true)
+    .WithScanConsistency(QueryScanConsistency.RequestPlus);
+```
+
+Or use the initializer syntax:
+```csharp
+var options = new QueryOptions()
+{
+    ReadOnly = true,
+    ScanConsistency = QueryScanConsistency.RequestPlus
+}
+
+// or
+
+options = options with {
+    ReadOnly = true,
+    ScanConsistency = QueryScanConsistency.RequestPlus
 }
 ```
 
@@ -117,4 +166,4 @@ cluster.Dispose();
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](LICENSE).
+Apache 2.0, see [`LICENSE`](LICENSE).

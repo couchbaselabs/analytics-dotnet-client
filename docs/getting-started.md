@@ -12,7 +12,7 @@ dotnet add package Couchbase.AnalyticsClient
 
 Requires .NET 8.0.
 
-## Connect
+### Connect
 
 Create a `Cluster` with a connection string and `Credential`. The connection string supports `http` or `https`, multiple hosts, and query/timeout/TLS parameters.
 
@@ -34,19 +34,22 @@ var cluster = Cluster.Create(
 );
 ```
 
-Notes:
-- Use `http://host:8095` for non-TLS clusters, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
-- If multiple IP addresses are resolved for a host, a connection will be attempted for a random IP address. If a connection attempt fails, another IP will be picked to attempt a connection, until all are exhausted.
-- Connection string parameters include:
-  - `timeout.connect_timeout`, `timeout.dispatch_timeout`, `timeout.query_timeout` (in milliseconds)
-  - `security.trust_only_pem_file`, `security.disable_server_certificate_verification`, `security.cipher_suites`
-  - `max_retries`
+> [!NOTE]
+> Use `http://host:8095` for non-TLS connections, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
+>
+> If multiple IP addresses are resolved for a host, a connection will be attempted for a random one. If that connection attempt fails, another IP will be picked to attempt a connection, until all are exhausted.
+>
+> Connection string parameters include:
+> - `timeout.connect_timeout`, `timeout.dispatch_timeout`, `timeout.query_timeout` (in milliseconds)
+> - `security.trust_only_pem_file`, `security.disable_server_certificate_verification`, `security.cipher_suites`
+> - `max_retries`
 
-## Query
+### Query
 
 Run an Analytics statement and stream rows:
 
-Note: Results are streamed by default. Use `QueryOptions.WithAsStreaming(false)` to get a blocking result.
+> [!NOTE]
+> Results are streamed by default. Use `QueryOptions.WithAsStreaming(false)` to get a blocking result.
 
 ```csharp
 using Couchbase.AnalyticsClient.Options;
@@ -69,12 +72,22 @@ await foreach (var row in result.Rows)
 ```csharp
 var statement = "SELECT * FROM `travel-sample`.inventory.airline WHERE country = $country LIMIT $limit";
 
-var paramResult = await cluster.ExecuteQueryAsync(
+var paramResult = await _analytics2Fixture.Cluster.ExecuteQueryAsync(
     statement,
     new QueryOptions()
         .WithNamedParameter("country", "United States")
         .WithNamedParameter("limit", 10)
-);
+).ConfigureAwait(false);
+
+await foreach (var row in paramResult.Rows)
+{
+    Console.WriteLine(row.ContentAs<JsonElement>());
+}   
+
+/** Output:
+{"airline":{"id":"airline_19433","type":"airline","name":"XAIR USA","iata":"XA","icao":"XAU","callsign":"XAIR","country":"United States"}}
+...
+*/
 ```
 
 ### Database and scope context
@@ -86,16 +99,55 @@ var db = cluster.Database("travel-sample");
 var scope = db.Scope("inventory");
 
 var scoped = await scope.ExecuteQueryAsync(
-    "SELECT META().id FROM airline LIMIT 5"
-);
+    "SELECT id FROM airline LIMIT 5"
+).ConfigureAwait(false);
 
 await foreach (var row in scoped.Rows)
 {
-    Console.WriteLine(row.Json.ToString());
+    Console.WriteLine(row.ContentAs<JsonElement>());
+}
+
+/** Output:
+{"id":"airline_19433"}
+{"id":"airline_137"}
+{"id":"airline_18239"}
+{"id":"airline_10123"}
+{"id":"airline_19290"}
+*/
+```
+
+### Options
+
+> [!WARNING]
+> Option classes are imutable records. Each mutation returns a new instance of the options.
+
+Initialize, or modify options using:
+
+`With` methods return a new instance of the options, to allow chaining:
+
+```csharp
+var options = new QueryOptions()
+    .WithReadOnly(true)
+    .WithScanConsistency(QueryScanConsistency.RequestPlus);
+```
+
+Or use the initializer syntax:
+```csharp
+var options = new QueryOptions()
+{
+    ReadOnly = true,
+    ScanConsistency = QueryScanConsistency.RequestPlus
+}
+
+// or
+
+options = options with {
+    ReadOnly = true,
+    ScanConsistency = QueryScanConsistency.RequestPlus
 }
 ```
 
-## Cleanup
+### Cleanup
 
 `Cluster` implements `IDisposable`. Dispose when done to release resources:
 
