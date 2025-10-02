@@ -123,6 +123,65 @@ jobs:
             --logger "trx;LogFileName=functional-tests.trx" \
             --results-directory "TestResults"
 
+      - name: Verify Functional Test Results
+        run: |
+          python3 - <<'PY'
+          import sys, glob
+          import xml.etree.ElementTree as ET
+
+          trx_files = glob.glob('TestResults/**/*.trx', recursive=True)
+          trx_files += glob.glob('TestResults/*.trx')
+          if not trx_files:
+              print('ERROR: No TRX results found in TestResults')
+              sys.exit(1)
+
+          trx_files.sort()
+          path = trx_files[-1]
+          print(f'Parsing TRX: {path}')
+
+          tree = ET.parse(path)
+          root = tree.getroot()
+          ns = {'ns': root.tag.split('}')[0].strip('{')} if root.tag.startswith('{') else {}
+
+          rs = root.find('.//ns:ResultSummary', ns) or root.find('.//ResultSummary')
+          if rs is None:
+              print('ERROR: ResultSummary not found in TRX')
+              sys.exit(1)
+
+          counters = rs.find('.//ns:Counters', ns) or rs.find('.//Counters')
+          if counters is None:
+              print('ERROR: Counters not found in TRX')
+              sys.exit(1)
+
+          def get_int(name):
+              v = counters.attrib.get(name)
+              try:
+                  return int(v) if v is not None else 0
+              except ValueError:
+                  return 0
+
+          total = get_int('total')
+          executed = get_int('executed')
+          passed = get_int('passed')
+          failed = get_int('failed') + get_int('error') + get_int('timeout') + get_int('aborted')
+
+          print(f'Summary: total={total}, executed={executed}, passed={passed}, failed={failed}')
+
+          if total == 0 or executed == 0:
+              print('ERROR: No tests were run.')
+              sys.exit(1)
+
+          if failed > 0:
+              print(f'ERROR: {failed} tests failed.')
+              sys.exit(1)
+
+          if passed < executed:
+              print(f'ERROR: Not all executed tests passed (passed={passed}, executed={executed}).')
+              sys.exit(1)
+
+          print('All functional tests passed.')
+          PY
+
       - name: Upload Functional Test Results
         if: always()
         uses: actions/upload-artifact@v4
