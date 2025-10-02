@@ -66,11 +66,6 @@ jobs:
           chmod +x $HOME/bin/cbdinocluster
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Pull helper images
-        run: |
-          docker pull adobe/s3mock
-          docker pull nginx
-
       - name: Initialize cbdinocluster
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,15 +80,12 @@ jobs:
           TAG=${INPUT_TAG}
 
           EA_VERSION=2.0.1-1231
-          EA_IMAGE=ghcr.io/cb-vanilla/enterprise-analytics:2.0.1-1231
 
           cat > cluster.yml <<'YAML'
           columnar: true
           nodes:
             - count: 2
               version: ${EA_VERSION}
-              docker:
-                image: ${EA_IMAGE}
           docker:
             load-balancer: true
             use-dino-certs: true
@@ -148,7 +140,5 @@ jobs:
         if: always()
         run: |
           if [ -n "${CBDINO_CLUSTER_ID}" ]; then
-            cbdinocluster -v free "$CBDINO_CLUSTER_ID" || true
+            cbdinocluster rm "$CBDINO_CLUSTER_ID" || true
           fi
-
-
