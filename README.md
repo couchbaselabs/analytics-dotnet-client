@@ -64,15 +64,15 @@ Run an Analytics statement and stream rows:
 using Couchbase.AnalyticsClient.Options;
 
 var result = await cluster.ExecuteQueryAsync(
-    "SELECT 1 AS one;",
+    "SELECT i from ARRAY_RANGE(1, 100) AS i;",
     new QueryOptions()
         .WithReadOnly(true)
         .WithScanConsistency(QueryScanConsistency.RequestPlus)
-);
+).ConfigureAwait(false);
 
-await foreach (var row in result.Rows)
+await foreach (var row in result.ConfigureAwait(false))
 {
-    Console.WriteLine(row.ContentAs<MyPOCO>());
+    Console.WriteLine(row.ContentAs<JsonElement>());
 }
 ```
 
@@ -88,7 +88,7 @@ var paramResult = await _analytics2Fixture.Cluster.ExecuteQueryAsync(
         .WithNamedParameter("limit", 10)
 ).ConfigureAwait(false);
 
-await foreach (var row in paramResult.Rows)
+await foreach (var row in paramResult.ConfigureAwait(false))
 {
     Console.WriteLine(row.ContentAs<JsonElement>());
 }   
@@ -111,7 +111,7 @@ var scoped = await scope.ExecuteQueryAsync(
     "SELECT id FROM airline LIMIT 5"
 ).ConfigureAwait(false);
 
-await foreach (var row in scoped.Rows)
+await foreach (var row in scoped.ConfigureAwait(false))
 {
     Console.WriteLine(row.ContentAs<JsonElement>());
 }
