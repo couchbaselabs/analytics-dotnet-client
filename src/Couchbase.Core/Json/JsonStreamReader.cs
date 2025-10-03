@@ -29,7 +29,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Couchbase.Core.Internal;
 
-namespace Couchbase.Core;
+namespace Couchbase.Core.Json;
 
 public sealed class JsonStreamReader : IJsonStreamReader
 {

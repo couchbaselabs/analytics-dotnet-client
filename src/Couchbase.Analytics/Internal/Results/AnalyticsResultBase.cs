@@ -22,7 +22,7 @@
 using System.Net;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
-using Couchbase.Core;
+using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Internal.Results;
 

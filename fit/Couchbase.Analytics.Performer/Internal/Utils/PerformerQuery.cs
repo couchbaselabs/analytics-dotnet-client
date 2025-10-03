@@ -1,9 +1,5 @@
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Grpc.Protocol.Columnar;
-using Google.Protobuf;
-using Google.Protobuf.Collections;
-using Google.Protobuf.WellKnownTypes;
-using Error = Couchbase.Grpc.Protocol.Columnar.Error;
 
 namespace Couchbase.Analytics.Performer.Internal.Utils;
 

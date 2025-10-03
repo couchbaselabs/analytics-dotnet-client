@@ -1,8 +1,6 @@
-using System.Net;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Configuration;
-using Xunit;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 

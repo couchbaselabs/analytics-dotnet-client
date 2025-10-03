@@ -19,11 +19,11 @@
  * ************************************************************/
 #endregion
 
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Globalization;
 
-namespace Couchbase.Core;
+namespace Couchbase.Core.Json;
 
 /// <summary>
 /// Serializes and deserializes <see cref="TimeSpan"/> as the number of whole milliseconds in the format

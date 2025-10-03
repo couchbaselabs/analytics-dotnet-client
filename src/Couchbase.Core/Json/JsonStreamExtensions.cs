@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Core;
+namespace Couchbase.Core.Json;
 
 /// <summary>
 /// Extensions for <seealso cref="IJsonStreamReader"/>.

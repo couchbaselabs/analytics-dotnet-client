@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-using Couchbase.Core;
+using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Results;
 

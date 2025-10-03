@@ -24,7 +24,7 @@ using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.AnalyticsClient.Utils;
-using Couchbase.Core;
+using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Internal.Results;
 

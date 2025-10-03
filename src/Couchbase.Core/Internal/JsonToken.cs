@@ -1,5 +1,6 @@
 using System.Dynamic;
 using System.Text.Json;
+using Couchbase.Core.Json;
 
 namespace Couchbase.Core.Internal;
 
