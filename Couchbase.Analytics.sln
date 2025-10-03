@@ -24,7 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fit", "fit", "{A58FEC0E-429
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Analytics.Performer.UnitTests", "fit\Couchbase.Analytics.Performer.UnitTests\Couchbase.Analytics.Performer.UnitTests.csproj", "{65B53BDA-D674-4CD8-A5DC-763A8F816F0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Text.Json", "src\Couchbase.Text.Json\Couchbase.Text.Json.csproj", "{0B9D51A9-E71B-4151-A177-73BE3BE34FCD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Couchbase.Core", "src\Couchbase.Core\Couchbase.Core.csproj", "{0B9D51A9-E71B-4151-A177-73BE3BE34FCD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
