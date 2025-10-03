@@ -128,7 +128,7 @@ await foreach (var row in scoped.ConfigureAwait(false))
 ### Options
 
 > [!WARNING]
-> Option classes are imutable records. Each mutation returns a new instance of the options.
+> Option classes are immutable records. Each mutation returns a new instance of the options.
 
 Initialize, or modify options using:
 
