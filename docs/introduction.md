@@ -4,7 +4,7 @@ _layout: landing
 
 # Couchbase Analytics .NET Client
 
-This library provides a lightweight, focused .NET client for interacting with the Couchbase Analytics service.
+This library provides a lightweight, high-performance .NET client for interacting with the Couchbase Analytics service.
 
 It is designed for high-throughput analytics workloads and exposes a simple API to:
 
@@ -19,9 +19,6 @@ It is designed for high-throughput analytics workloads and exposes a simple API 
 
 ## Packages
 
-This repo contains two projects:
-
 - `Couchbase.Analytics` — the main client library
-- `Couchbase.Text.Json` — internal JSON utilities used by the client
 
 Installation instructions are in Getting Started](getting-started.md).
