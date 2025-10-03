@@ -2,7 +2,7 @@
 
 using System.Text.Json;
 
-namespace Couchbase.Text.Json.Internal;
+namespace Couchbase.Core.Internal;
 
 /// <summary>
 /// Extensions for <see cref="JsonElement"/>.

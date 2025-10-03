@@ -1,6 +1,6 @@
 using Moq;
 using Xunit;
-using Couchbase.Text.Json;
+using Couchbase.Core;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;

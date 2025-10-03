@@ -6,7 +6,7 @@ using Couchbase.Analytics.Performer.Internal.Utils;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Grpc.Protocol.Columnar;
-using Couchbase.Text.Json.Utils;
+using Couchbase.Core.Utils;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Error = Couchbase.Grpc.Protocol.Columnar.Error;

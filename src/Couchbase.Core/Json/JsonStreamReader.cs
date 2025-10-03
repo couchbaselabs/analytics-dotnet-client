@@ -27,9 +27,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
-using Couchbase.Text.Json.Internal;
+using Couchbase.Core.Internal;
 
-namespace Couchbase.Text.Json;
+namespace Couchbase.Core;
 
 public sealed class JsonStreamReader : IJsonStreamReader
 {

@@ -23,7 +23,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Globalization;
 
-namespace Couchbase.Text.Json;
+namespace Couchbase.Core;
 
 /// <summary>
 /// Serializes and deserializes <see cref="TimeSpan"/> as the number of whole milliseconds in the format

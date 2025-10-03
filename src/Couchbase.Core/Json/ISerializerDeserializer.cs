@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Text.Json;
+namespace Couchbase.Core;
 
 public interface ISerializerDeserializer
 {

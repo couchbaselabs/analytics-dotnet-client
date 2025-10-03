@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Text.Json;
+namespace Couchbase.Core;
 
 /// <summary>
 /// Reads values and objects from a JSON stream asynchronously.

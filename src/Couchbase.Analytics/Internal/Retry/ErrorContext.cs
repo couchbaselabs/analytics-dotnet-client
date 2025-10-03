@@ -23,7 +23,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.Text.Json.Utils;
+using Couchbase.Core.Utils;
 
 namespace Couchbase.AnalyticsClient.Internal.Retry;
 

@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Text.Json;
+namespace Couchbase.Core;
 
 /// <summary>
 /// Used to support dynamic object reading during streaming JSON deserialization.
