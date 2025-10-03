@@ -6,7 +6,7 @@ using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Options;
-using Couchbase.Text.Json;
+using Couchbase.Core;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;

@@ -19,22 +19,31 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Text.Json.Utils;
+namespace Couchbase.Core.Utils;
 
 /// <summary>
-/// Annotation for the interface stability of a given API. A stable interface is one that
-/// is guaranteed not to change between versions, meaning that you may use an API of a
-/// given SDK version and be assured that the given API will retain the same parameters
-/// and behavior in subsequent versions. An unstable interface is one which may appear to
-/// work or behave in a specific way within a given SDK version, but may change in its
-/// behavior or arguments in future SDK versions, causing odd application behavior or
-/// compiler/API usage errors.
+/// A lightweight stopwatch implementation for measuring elapsed time.
 /// </summary>
-[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
-public class InterfaceStabilityAttribute(StabilityLevel level) : Attribute
+public struct LightweightStopwatch
 {
+    private readonly long _startTimestamp;
+
+    private LightweightStopwatch(long startTimestamp)
+    {
+        _startTimestamp = startTimestamp;
+    }
+
     /// <summary>
-    /// The interface stability of the API.
+    /// Gets the elapsed time since the stopwatch was started.
     /// </summary>
-    public StabilityLevel Level { get; } = level;
+    public TimeSpan Elapsed => TimeSpan.FromTicks((DateTime.UtcNow.Ticks - _startTimestamp));
+
+    /// <summary>
+    /// Creates and starts a new lightweight stopwatch.
+    /// </summary>
+    /// <returns>A started stopwatch instance.</returns>
+    public static LightweightStopwatch StartNew()
+    {
+        return new LightweightStopwatch(DateTime.UtcNow.Ticks);
+    }
 }

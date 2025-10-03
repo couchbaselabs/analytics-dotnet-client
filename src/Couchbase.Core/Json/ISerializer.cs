@@ -19,29 +19,20 @@
  * ************************************************************/
 #endregion
 
-using System.Text.Json;
+namespace Couchbase.Core;
 
-namespace Couchbase.Text.Json;
-
-/// <inheritdoc />>
-public class StjJsonDeserializer(JsonSerializerOptions jsonSerializerOptions): IDeserializer
+/// <summary>
+/// The Default serializer that is based on System.Text.Json
+/// </summary>
+public interface ISerializer
 {
-    /// <inheritdoc />
-    public StjJsonDeserializer() : this(JsonSerializerOptions.Default)
-    {
-    }
-
-    /// <inheritdoc />
-    public ValueTask<T?> DeserializeAsync<T>(Stream stream,
-        CancellationToken cancellationToken = default)
-    {
-        return JsonSerializer.DeserializeAsync<T>(stream, jsonSerializerOptions, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public IJsonStreamReader CreateJsonStreamReader(Stream stream,
-        CancellationToken cancellationToken = default)
-    {
-        return new JsonStreamReader(stream, jsonSerializerOptions);
-    }
+   /// <summary>
+   /// Serializes .NET objects into a stream.
+   /// </summary>
+   /// <param name="stream">The stream of JSON bytes.</param>
+   /// <param name="obj">The </param>
+   /// <param name="cancellationToken">An optional CancellationToken.</param>
+   /// <typeparam name="T">The type to deserialize into.</typeparam>
+   /// <returns>A ValueTask that can be awaited.</returns>
+   ValueTask SerializeAsync<T>(Stream stream, T obj, CancellationToken cancellationToken = default);
 }

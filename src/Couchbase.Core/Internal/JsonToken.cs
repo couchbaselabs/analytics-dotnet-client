@@ -1,7 +1,7 @@
 using System.Dynamic;
 using System.Text.Json;
 
-namespace Couchbase.Text.Json.Internal;
+namespace Couchbase.Core.Internal;
 
 internal sealed class JsonToken : IJsonToken
 {

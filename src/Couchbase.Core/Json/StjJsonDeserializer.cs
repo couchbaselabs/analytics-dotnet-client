@@ -21,19 +21,27 @@
 
 using System.Text.Json;
 
-namespace Couchbase.Text.Json;
+namespace Couchbase.Core;
 
-/// <inheritdoc />
-public class StjJsonSerializer(JsonSerializerOptions jsonSerializerOptions) : ISerializer
+/// <inheritdoc />>
+public class StjJsonDeserializer(JsonSerializerOptions jsonSerializerOptions): IDeserializer
 {
-    public StjJsonSerializer() : this(JsonSerializerOptions.Default)
+    /// <inheritdoc />
+    public StjJsonDeserializer() : this(JsonSerializerOptions.Default)
     {
     }
 
     /// <inheritdoc />
-    public ValueTask SerializeAsync<T>(Stream stream, T obj,
+    public ValueTask<T?> DeserializeAsync<T>(Stream stream,
         CancellationToken cancellationToken = default)
     {
-        return new ValueTask(JsonSerializer.SerializeAsync(stream, obj, jsonSerializerOptions, cancellationToken));
+        return JsonSerializer.DeserializeAsync<T>(stream, jsonSerializerOptions, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public IJsonStreamReader CreateJsonStreamReader(Stream stream,
+        CancellationToken cancellationToken = default)
+    {
+        return new JsonStreamReader(stream, jsonSerializerOptions);
     }
 }

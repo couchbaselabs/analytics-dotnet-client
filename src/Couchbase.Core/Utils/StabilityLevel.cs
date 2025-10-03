@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Text.Json.Utils;
+namespace Couchbase.Core.Utils;
 
 /// <summary>
 /// Designates the interface stability of a given API; how likely the interface is to change or be removed entirely.

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Couchbase.Grpc.Protocol.Columnar;
-using Couchbase.Text.Json.Utils;
+using Couchbase.Core.Utils;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Couchbase.Analytics.Performer.Internal.Utils;

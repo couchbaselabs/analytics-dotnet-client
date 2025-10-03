@@ -1,7 +1,7 @@
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.Grpc.Protocol.Columnar;
-using Couchbase.Text.Json;
+using Couchbase.Core;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using ArgumentOutOfRangeException = System.ArgumentOutOfRangeException;

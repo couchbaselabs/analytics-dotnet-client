@@ -19,31 +19,24 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Text.Json.Utils;
+namespace Couchbase.Core;
 
-/// <summary>
-/// A lightweight stopwatch implementation for measuring elapsed time.
-/// </summary>
-public struct LightweightStopwatch
+public interface IDeserializer
 {
-    private readonly long _startTimestamp;
-
-    private LightweightStopwatch(long startTimestamp)
-    {
-        _startTimestamp = startTimestamp;
-    }
+    /// <summary>
+    /// Deserializes a stream of JSON into an object.
+    /// </summary>
+    /// <param name="stream">The stream of JSON bytes.</param>
+    /// <param name="cancellationToken">An optional CancellationToken.</param>
+    /// <typeparam name="T">The type to deserialize into.</typeparam>
+    /// <returns>A ValueTask that can be awaited.</returns>
+    ValueTask<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the elapsed time since the stopwatch was started.
+    /// Creates a Json stream reader based on STJ.
     /// </summary>
-    public TimeSpan Elapsed => TimeSpan.FromTicks((DateTime.UtcNow.Ticks - _startTimestamp));
-
-    /// <summary>
-    /// Creates and starts a new lightweight stopwatch.
-    /// </summary>
-    /// <returns>A started stopwatch instance.</returns>
-    public static LightweightStopwatch StartNew()
-    {
-        return new LightweightStopwatch(DateTime.UtcNow.Ticks);
-    }
+    /// <param name="stream">The stream to read from.</param>
+    /// <param name="cancellationToken">An optional CancellationToken.</param>
+    /// <returns>The <see cref="IJsonStreamReader"/> to read the stream.</returns>
+    IJsonStreamReader CreateJsonStreamReader(Stream stream, CancellationToken cancellationToken = default);
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Couchbase.AnalyticsClient;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.Text.Json;
+using Couchbase.Core;
 using Xunit;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;
