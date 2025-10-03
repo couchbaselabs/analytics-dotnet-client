@@ -1,6 +1,5 @@
 using Moq;
 using Xunit;
-using Couchbase.Core;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text;
@@ -9,6 +8,7 @@ using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
+using Couchbase.Core.Json;
 using Moq.Protected;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;

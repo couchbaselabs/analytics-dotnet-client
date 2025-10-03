@@ -1,4 +1,3 @@
-using System.Net;
 using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Xunit;
 using Xunit.Abstractions;

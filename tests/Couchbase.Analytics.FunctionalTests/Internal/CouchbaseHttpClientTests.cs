@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 using System.Net;
 using Couchbase.AnalyticsClient.DnsUtil;
 using Couchbase.AnalyticsClient.Exceptions;
+using Couchbase.AnalyticsClient.FunctionalTests.Utils;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.DI;
 using Couchbase.AnalyticsClient.Internal.DnsUtil;

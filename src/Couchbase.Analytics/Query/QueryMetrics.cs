@@ -20,7 +20,7 @@
 #endregion
 
 using System.Text.Json.Serialization;
-using Couchbase.Core;
+using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Query;
 

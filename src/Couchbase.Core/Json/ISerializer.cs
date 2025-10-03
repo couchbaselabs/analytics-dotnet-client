@@ -19,7 +19,7 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.Core;
+namespace Couchbase.Core.Json;
 
 /// <summary>
 /// The Default serializer that is based on System.Text.Json

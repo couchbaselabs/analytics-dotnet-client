@@ -1,16 +1,13 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Options;
-using Couchbase.Core;
+using Couchbase.Core.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
-using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 

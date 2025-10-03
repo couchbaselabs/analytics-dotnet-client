@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using Couchbase.AnalyticsClient;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.Core;
+using Couchbase.Core.Json;
 using Xunit;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;

@@ -11,7 +11,7 @@ using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Couchbase.AnalyticsClient.UnitTests.Internal.HTTP;
+namespace Couchbase.AnalyticsClient.UnitTests.Internal.DnsUtil;
 
 public class ConnectCallbackRoundRobinTests
 {

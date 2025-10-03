@@ -1,7 +1,5 @@
 using System.Net;
 using Xunit;
-using System.Linq;
-using System.Reflection;
 using Couchbase.AnalyticsClient.Internal.DnsUtil.Strategies;
 using Xunit.Abstractions;
 

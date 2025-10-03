@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Core.Utils;
 using Google.Protobuf.WellKnownTypes;

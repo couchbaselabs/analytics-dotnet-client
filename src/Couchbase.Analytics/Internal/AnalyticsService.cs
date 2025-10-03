@@ -27,7 +27,7 @@ using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Internal.Retry;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Results;
-using Couchbase.Core;
+using Couchbase.Core.Json;
 using Couchbase.Core.Utils;
 using Microsoft.Extensions.Logging;
 

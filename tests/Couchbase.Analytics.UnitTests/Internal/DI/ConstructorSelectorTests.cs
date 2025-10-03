@@ -1,9 +1,8 @@
-using System;
 using Couchbase.AnalyticsClient.Internal.DI;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Couchbase.Analytics.UnitTests.Internal
+namespace Couchbase.AnalyticsClient.UnitTests.Internal.DI
 {
     public class ConstructorSelectorTests
     {
