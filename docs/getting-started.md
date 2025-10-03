@@ -59,11 +59,11 @@ var result = await cluster.ExecuteQueryAsync(
     new QueryOptions()
         .WithReadOnly(true)
         .WithScanConsistency(QueryScanConsistency.RequestPlus)
-);
+).ConfigureAwait(false);
 
-await foreach (var row in result.Rows)
+await foreach (var row in result.ConfigureAwait(false))
 {
-    Console.WriteLine(row.ContentAs<MyPOCO>());
+    Console.WriteLine(row.ContentAs<JsonElement>());
 }
 ```
 
@@ -79,7 +79,7 @@ var paramResult = await _analytics2Fixture.Cluster.ExecuteQueryAsync(
         .WithNamedParameter("limit", 10)
 ).ConfigureAwait(false);
 
-await foreach (var row in paramResult.Rows)
+await foreach (var row in paramResult.ConfigureAwait(false))
 {
     Console.WriteLine(row.ContentAs<JsonElement>());
 }   
@@ -102,7 +102,7 @@ var scoped = await scope.ExecuteQueryAsync(
     "SELECT id FROM airline LIMIT 5"
 ).ConfigureAwait(false);
 
-await foreach (var row in scoped.Rows)
+await foreach (var row in scoped.ConfigureAwait(false))
 {
     Console.WriteLine(row.ContentAs<JsonElement>());
 }
@@ -119,7 +119,7 @@ await foreach (var row in scoped.Rows)
 ### Options
 
 > [!WARNING]
-> Option classes are imutable records. Each mutation returns a new instance of the options.
+> Option classes are immutable records. Each mutation returns a new instance of the options.
 
 Initialize, or modify options using:
 
