@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Couchbase.AnalyticsClient</RootNamespace>
-        <VersionPrefix>1.0.0-rc1</VersionPrefix>
+        <VersionPrefix>1.0.0-rc3</VersionPrefix>
         
         <AssemblyName>Couchbase.AnalyticsClient</AssemblyName>
         <PackageId>Couchbase.AnalyticsClient</PackageId>
@@ -34,7 +34,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Couchbase.Core\Couchbase.Core.csproj" />
+      <ProjectReference Include="..\Couchbase.Core\Couchbase.Core.csproj" >
+          <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+          <IncludeAssets>Couchbase.Core.dll</IncludeAssets>
+      </ProjectReference>
     </ItemGroup>
 
     <ItemGroup>

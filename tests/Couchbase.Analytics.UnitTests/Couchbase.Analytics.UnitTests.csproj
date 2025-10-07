@@ -11,6 +11,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\Couchbase.Analytics\Couchbase.Analytics.csproj" />
+      <ProjectReference Include="..\..\src\Couchbase.Core\Couchbase.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
