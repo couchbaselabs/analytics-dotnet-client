@@ -214,7 +214,73 @@ internal class ConnectionString
     {
         if (TryGetParameter(key, out string value))
         {
-            parameter = TimeSpan.FromMilliseconds(Convert.ToUInt32(value));
+            var trimmed = value.Trim();
+            if (trimmed.Length == 0)
+            {
+                parameter = default;
+                return false;
+            }
+
+            // Parse optional unit suffix: us, ms, s, m, h (case-insensitive)
+            // Default unit is milliseconds if no suffix is provided
+            var lower = trimmed.ToLowerInvariant();
+
+            // Determine unit and numeric portion (check longest suffixes first)
+            string unit;
+            string numericPortion;
+            if (lower.EndsWith("us"))
+            {
+                unit = "us";
+                numericPortion = trimmed[..^2].Trim();
+            }
+            else if (lower.EndsWith("ms"))
+            {
+                unit = "ms";
+                numericPortion = trimmed[..^2].Trim();
+            }
+            else if (lower.EndsWith("s"))
+            {
+                unit = "s";
+                numericPortion = trimmed[..^1].Trim();
+            }
+            else if (lower.EndsWith("m"))
+            {
+                unit = "m";
+                numericPortion = trimmed[..^1].Trim();
+            }
+            else if (lower.EndsWith("h"))
+            {
+                unit = "h";
+                numericPortion = trimmed[..^1].Trim();
+            }
+            else
+            {
+                unit = "ms";
+                numericPortion = trimmed;
+            }
+
+            if (numericPortion.Length == 0)
+            {
+                parameter = TimeSpan.Zero;
+                return false;
+            }
+
+            // Allow integer or decimal values
+            if (!double.TryParse(numericPortion, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var amount))
+            {
+                parameter = TimeSpan.Zero;
+                throw new FormatException($"Invalid numeric value for parameter '{key}': '{value}'");
+            }
+
+            parameter = unit switch
+            {
+                "us" => TimeSpan.FromMicroseconds(amount),
+                "ms" => TimeSpan.FromMilliseconds(amount),
+                "s" => TimeSpan.FromSeconds(amount),
+                "m" => TimeSpan.FromMinutes(amount),
+                "h" => TimeSpan.FromHours(amount),
+                _ => TimeSpan.FromMilliseconds(amount)
+            };
             return true;
         }
 
