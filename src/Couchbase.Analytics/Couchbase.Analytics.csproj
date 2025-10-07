@@ -5,16 +5,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Couchbase.AnalyticsClient</RootNamespace>
-        <VersionPrefix>1.0.0-rc1</VersionPrefix>
+        <VersionPrefix>1.0.0</VersionPrefix>
         
         <AssemblyName>Couchbase.AnalyticsClient</AssemblyName>
         <PackageId>Couchbase.AnalyticsClient</PackageId>
         <Product>Couchbase Analytics Client</Product>
         <Description>The Official Couchbase Analytics .NET SDK</Description>
         
-        <!--   TODO: Confirm release notes URL when repository is created  -->
         <PackageReleaseNotes>https://docs.couchbase.com/analytics-dotnet-sdk/current/project-docs/sdk-release-notes.html</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(SignAssembly)'=='true'">
