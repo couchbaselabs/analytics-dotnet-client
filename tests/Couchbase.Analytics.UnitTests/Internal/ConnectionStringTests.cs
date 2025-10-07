@@ -302,6 +302,27 @@ namespace Couchbase.AnalyticsClient.UnitTests.Internal
         }
 
         [Theory]
+        [InlineData("500us", 5_000L)] // 500 microseconds -> 5000 ticks
+        [InlineData("250ms", 2_500_000L)] // 250 milliseconds -> 2,500,000 ticks
+        [InlineData("30s", 300_000_000L)] // 30 seconds -> 300,000,000 ticks
+        [InlineData("2m", 1_200_000_000L)] // 2 minutes -> 1,200,000,000 ticks
+        [InlineData("1h", 36_000_000_000L)] // 1 hour -> 36,000,000,000 ticks
+        [InlineData("30S", 300_000_000L)] // case-insensitive
+        [InlineData("1.5s", 15_000_000L)] // fractional seconds
+        [InlineData("0s", 0L)] // zero value
+        public void Test_ConnectionString_TimeoutParameter_ConnectTimeout_WithUnits(string timeoutValue, long expectedTicks)
+        {
+            var connectionString = $"http://localhost:8095?timeout.connect_timeout={timeoutValue}";
+
+            var options = new ClusterOptions
+            {
+                ConnectionString = connectionString
+            };
+
+            Assert.Equal(expectedTicks, options.TimeoutOptions.ConnectTimeout.Ticks);
+        }
+
+        [Theory]
         [InlineData("true", true)]
         [InlineData("false", false)]
         [InlineData("True", true)]
