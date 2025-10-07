@@ -66,7 +66,7 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
 
         try
         {
-            var response = await httpClient.SendAsync(request, 
+            var response = await httpClient.SendAsync(request,
                     asStreaming ? HttpCompletionOption.ResponseHeadersRead : HttpCompletionOption.ResponseContentRead,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -105,6 +105,9 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
         var timeout = options.Timeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
         options = options with { Timeout = timeout };
 
+        // The QueryOptions' Deserializer should override the ClusterOptions'.
+        var deserializer = options.Deserializer ?? _clusterOptions.Deserializer;
+
         var errorContext = new ErrorContext(options.ClientContextId, stopwatch, timeout);
         Exception? lastException = null;
 
@@ -134,7 +137,7 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
                     "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)",
                     attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
 
-                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, options.Deserializer, errorContext, cancellationToken).ConfigureAwait(false);
+                var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, deserializer, errorContext, cancellationToken).ConfigureAwait(false);
 
                 // Always read errors from the result
                 if (result.Errors is { Count: > 0 })
