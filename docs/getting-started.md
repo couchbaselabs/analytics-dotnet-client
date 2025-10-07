@@ -40,7 +40,7 @@ var cluster = Cluster.Create(
 > If multiple IP addresses are resolved for a host, a connection will be attempted for a random one. If that connection attempt fails, another IP will be picked to attempt a connection, until all are exhausted.
 >
 > Connection string parameters include:
-> - `timeout.connect_timeout`, `timeout.dispatch_timeout`, `timeout.query_timeout` (in milliseconds)
+> - `timeout.connect_timeout`, `timeout.dispatch_timeout`, `timeout.query_timeout`
 > - `security.trust_only_pem_file`, `security.disable_server_certificate_verification`, `security.cipher_suites`
 > - `max_retries`
 
