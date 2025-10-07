@@ -3,6 +3,7 @@ using System.Text;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
+using Couchbase.AnalyticsClient.Json;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.Core.Json;
 using Microsoft.Extensions.Logging;

@@ -26,7 +26,7 @@ using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.DI;
 using Couchbase.AnalyticsClient.Internal.Utils;
-using Couchbase.Core.Json;
+using Couchbase.AnalyticsClient.Json;
 using Couchbase.Core.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

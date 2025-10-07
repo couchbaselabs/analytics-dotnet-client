@@ -20,9 +20,9 @@
 #endregion
 
 using System.Net;
+using Couchbase.AnalyticsClient.Json;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
-using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Internal.Results;
 

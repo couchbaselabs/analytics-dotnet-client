@@ -1,6 +1,6 @@
+using Couchbase.AnalyticsClient.Json;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.Core.Json;
 using Xunit;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;

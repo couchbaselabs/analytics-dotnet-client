@@ -20,6 +20,7 @@
 #endregion
 
 using System.Runtime.CompilerServices;
+using Couchbase.AnalyticsClient.Json;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Core.Json;
