@@ -67,7 +67,7 @@ public record QueryOptions
     /// Used to deserialize query rows.
     /// Default to <see cref="StjJsonDeserializer"/>
     /// </summary>
-    public IDeserializer Deserializer { get; init; } = new StjJsonDeserializer();
+    public IDeserializer? Deserializer { get; init; }
 
     /// <summary>
     /// Whether the query is read-only.

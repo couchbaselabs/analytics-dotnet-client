@@ -26,6 +26,7 @@ using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.DI;
 using Couchbase.AnalyticsClient.Internal.Utils;
+using Couchbase.Core.Json;
 using Couchbase.Core.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -40,6 +41,8 @@ public record ClusterOptions
 
     [InterfaceStability(StabilityLevel.Volatile)]
     public uint MaxRetries { get; private set; } = 7;
+
+    public IDeserializer Deserializer { get; private set; } = new StjJsonDeserializer();
 
     internal ConnectionString? ConnectionStringValue { get; private set; }
 
@@ -78,11 +81,22 @@ public record ClusterOptions
     /// </summary>
     /// <param name="loggerFactory">The logger factory.</param>
     /// <returns>
-    /// A reference to this <see cref="ClusterOptions"/> object for method chaining.
+    /// A copy of this <see cref="ClusterOptions"/> object for method chaining.
     /// </returns>
     public ClusterOptions WithLogging(ILoggerFactory? loggerFactory = null)
     {
         return this with { Logging = loggerFactory };
+    }
+
+    /// <summary>
+    /// Sets the <see cref="IDeserializer"/> to use for deserializing JSON responses.
+    /// This can be overridden on a per-operation basis by passing a deserializer to the <see cref="QueryOptions"/>.
+    /// </summary>
+    /// <param name="deserializer">An implementation of <see cref="IDeserializer"/></param>
+    /// <returns>A copy of this <see cref="ClusterOptions"/> object for method chaining.</returns>
+    public ClusterOptions WithDeserializer(IDeserializer deserializer)
+    {
+        return this with { Deserializer = deserializer };
     }
 
     private readonly IDictionary<Type, IServiceFactory> _services = DefaultServices.GetDefaultServices();
@@ -172,6 +186,4 @@ public record ClusterOptions
             }
         }
     }
-
-    //internal JsonSerializer Serializer { get; init; } //static
 }
