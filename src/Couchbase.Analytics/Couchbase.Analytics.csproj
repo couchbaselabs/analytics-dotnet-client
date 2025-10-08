@@ -5,12 +5,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Couchbase.AnalyticsClient</RootNamespace>
-        <VersionPrefix>1.0.0-rc3</VersionPrefix>
+        <VersionPrefix>1.0.1</VersionPrefix>
         
         <AssemblyName>Couchbase.AnalyticsClient</AssemblyName>
         <PackageId>Couchbase.AnalyticsClient</PackageId>
         <Product>Couchbase Analytics Client</Product>
         <Description>The Official Couchbase Analytics .NET SDK</Description>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         
         <!--   TODO: Confirm release notes URL when repository is created  -->
         <PackageReleaseNotes>https://docs.couchbase.com/analytics-dotnet-sdk/current/project-docs/sdk-release-notes.html</PackageReleaseNotes>
@@ -47,6 +49,10 @@
       <Folder Include="Internal\Query\" />
       <Folder Include="Public\" />
       <Folder Include="Retry\" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <None Include="..\..\README.md" Pack="true" PackagePath="" />
     </ItemGroup>
     
 
