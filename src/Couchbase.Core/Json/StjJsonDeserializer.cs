@@ -20,9 +20,8 @@
 #endregion
 
 using System.Text.Json;
-using Couchbase.Core.Json;
 
-namespace Couchbase.AnalyticsClient.Json;
+namespace Couchbase.Core.Json;
 
 /// <inheritdoc />>
 public class StjJsonDeserializer(JsonSerializerOptions jsonSerializerOptions): IDeserializer

@@ -19,11 +19,21 @@
  * ************************************************************/
 #endregion
 
-namespace Couchbase.AnalyticsClient.Json;
+using System.Text.Json;
 
-public interface ISerializerDeserializer
+namespace Couchbase.Core.Json;
+
+/// <inheritdoc />
+public class StjJsonSerializer(JsonSerializerOptions jsonSerializerOptions) : ISerializer
 {
-    ISerializer Serializer { get; }
+    public StjJsonSerializer() : this(JsonSerializerOptions.Default)
+    {
+    }
 
-    IDeserializer Deserializer { get; }
+    /// <inheritdoc />
+    public ValueTask SerializeAsync<T>(Stream stream, T obj,
+        CancellationToken cancellationToken = default)
+    {
+        return new ValueTask(JsonSerializer.SerializeAsync(stream, obj, jsonSerializerOptions, cancellationToken));
+    }
 }

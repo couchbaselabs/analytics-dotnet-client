@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Couchbase.AnalyticsClient.Internal.Results;
-using Couchbase.AnalyticsClient.Json;
 using Couchbase.Core.Json;
 using Moq;
 using Xunit;

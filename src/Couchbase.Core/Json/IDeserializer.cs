@@ -19,9 +19,7 @@
  * ************************************************************/
 #endregion
 
-using Couchbase.Core.Json;
-
-namespace Couchbase.AnalyticsClient.Json;
+namespace Couchbase.Core.Json;
 
 public interface IDeserializer
 {
