@@ -11,11 +11,11 @@
         <PackageId>Couchbase.AnalyticsClient</PackageId>
         <Product>Couchbase Analytics Client</Product>
         <Description>The Official Couchbase Analytics .NET SDK</Description>
+        
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         
-        <!--   TODO: Confirm release notes URL when repository is created  -->
-        <PackageReleaseNotes>https://docs.couchbase.com/analytics-dotnet-sdk/current/project-docs/sdk-release-notes.html</PackageReleaseNotes>
+        <PackageReleaseNotes>https://docs.couchbase.com/dotnet-analytics-sdk/current/project-docs/analytics-sdk-release-notes.html</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
