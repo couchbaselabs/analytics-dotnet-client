@@ -148,11 +148,13 @@ jobs:
           if ("${{ env.NETSDK_SIGNKEY }}" -eq '') { Write-Error "NETSDK_SIGNKEY secret is required"; exit 1 }
           $bytes = [System.Convert]::FromBase64String("${{ env.NETSDK_SIGNKEY }}")
           [IO.File]::WriteAllBytes("signkey.snk", $bytes)
+          $signPath = (Resolve-Path "signkey.snk").Path
+          "SIGNKEY_PATH=$signPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Pack (Release, signed)
         shell: pwsh
         run: |
-          dotnet pack src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:IncludeSource=true /p:SourceLinkCreate=true /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=signkey.snk
+          dotnet pack src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:IncludeSource=true /p:SourceLinkCreate=true /p:SignAssembly=true /p:AssemblyOriginatorKeyFile="$env:SIGNKEY_PATH"
 
       - name: Upload Packages Artifact
         uses: actions/upload-artifact@v4
