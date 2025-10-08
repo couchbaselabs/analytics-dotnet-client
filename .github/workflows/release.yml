@@ -142,34 +142,26 @@ jobs:
       - name: Restore
         run: dotnet restore src/Couchbase.Analytics/Couchbase.Analytics.csproj
 
-      - name: Prepare strong-name key (SNK) (optional)
-        if: env.NETSDK_SIGNKEY != ''
+      - name: Prepare strong-name key (SNK)
         shell: pwsh
         run: |
+          if ("${{ env.NETSDK_SIGNKEY }}" -eq '') { Write-Error "NETSDK_SIGNKEY secret is required"; exit 1 }
           $bytes = [System.Convert]::FromBase64String("${{ env.NETSDK_SIGNKEY }}")
           [IO.File]::WriteAllBytes("signkey.snk", $bytes)
-
-      - name: Build (Release, signed)
-        shell: pwsh
-        run: |
-          $signProps = ''
-          if ("${{ env.NETSDK_SIGNKEY }}" -ne '') { $signProps = "/p:SignAssembly=true /p:AssemblyOriginatorKeyFile=signkey.snk" }
-          dotnet build src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release --no-restore /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:IncludeSource=true /p:SourceLinkCreate=true $signProps
 
       - name: Pack (Release, signed)
         shell: pwsh
         run: |
-          $signProps = ''
-          if ("${{ env.NETSDK_SIGNKEY }}" -ne '') { $signProps = "/p:SignAssembly=true /p:AssemblyOriginatorKeyFile=signkey.snk" }
-          dotnet pack src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release --no-build /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:IncludeSource=true /p:SourceLinkCreate=true $signProps
+          dotnet pack src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:IncludeSource=true /p:SourceLinkCreate=true /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=signkey.snk
 
       - name: Upload Packages Artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
           path: |
-            **/*.nupkg
-            **/*.snupkg
+            src/Couchbase.Analytics/bin/Release/*.nupkg
+            src/Couchbase.Analytics/bin/Release/*.snupkg
+
 
   publish:
     name: Publish to NuGet
