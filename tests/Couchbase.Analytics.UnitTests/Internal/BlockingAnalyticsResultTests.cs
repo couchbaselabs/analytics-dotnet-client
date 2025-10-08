@@ -1,5 +1,5 @@
 using Couchbase.AnalyticsClient.Internal.Results;
-using Couchbase.AnalyticsClient.Json;
+using Couchbase.Core.Json;
 using Xunit;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;

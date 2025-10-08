@@ -21,7 +21,7 @@
 
 using System.Text.Json;
 using Couchbase.AnalyticsClient.Internal.HTTP;
-using Couchbase.AnalyticsClient.Json;
+using Couchbase.Core.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

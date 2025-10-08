@@ -6,9 +6,9 @@ using System.Text;
 using Couchbase.AnalyticsClient.DI;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal.HTTP;
-using Couchbase.AnalyticsClient.Json;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
+using Couchbase.Core.Json;
 using Moq.Protected;
 
 namespace Couchbase.AnalyticsClient.UnitTests.Internal;
