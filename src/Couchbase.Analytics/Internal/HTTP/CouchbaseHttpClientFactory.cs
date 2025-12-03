@@ -124,8 +124,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
         var connector = new DnsEndpointConnector(
             new CountBasedDnsRefreshStrategy(1), // Refresh DNS entries on every request
             _timeoutOptions.ConnectTimeout,
-            EndpointSelectionMode.RandomFromUnusedEndpoints
-        );
+            EndpointSelectionMode.RandomFromUnusedEndpoints);
 
         handler.ConnectCallback = async (context, cancellation) =>
         {
@@ -142,5 +141,4 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     }
 
     public HttpCompletionOption DefaultCompletionOption { get; set; } = HttpCompletionOption.ResponseHeadersRead;
-
 }

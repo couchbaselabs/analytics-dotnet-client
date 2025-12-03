@@ -4,13 +4,13 @@ using Xunit.Abstractions;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests;
 
-[Collection(TestCollection.Name)]
+[Collection(SimpleCollection.Name)]
 public class ClusterTests
 {
     private readonly ITestOutputHelper _output;
-    private readonly Analytics2Fixture _fixture;
+    private readonly SimpleFixture _fixture;
 
-    public ClusterTests(ITestOutputHelper output, Analytics2Fixture fixture)
+    public ClusterTests(ITestOutputHelper output, SimpleFixture fixture)
     {
         _output = output;
         _fixture = fixture;
