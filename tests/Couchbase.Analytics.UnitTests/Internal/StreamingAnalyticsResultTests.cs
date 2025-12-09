@@ -25,7 +25,7 @@ public class StreamingAnalyticsResultTests
        var analyticsResult = new StreamingAnalyticsResult(stream,new StjJsonDeserializer(), new Mock<IDisposable?>().Object);
        await analyticsResult.InitializeAsync(CancellationToken.None);
 
-       var airlines = await analyticsResult.ToListAsync();
+       var airlines = await analyticsResult.ToListAsync(CancellationToken.None);
        Assert.NotNull(airlines);
        Assert.NotEmpty(airlines);
     }

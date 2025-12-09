@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyName>Couchbase.AnalyticsClient.FunctionalTests</AssemblyName>
@@ -14,6 +14,13 @@
       <ProjectReference Include="..\..\src\Couchbase.Analytics\Couchbase.Analytics.csproj" />
     </ItemGroup>
 
+    <!--This disables parallism in the test suite and bugs that occur when too much is written to the console -->
+    <ItemGroup>
+        <None Update="xunit.runner.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Configuration" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
@@ -22,7 +29,10 @@
       <PackageReference Include="Moq" />
       <PackageReference Include="xunit" />
       <PackageReference Include="xunit.abstractions" />
-      <PackageReference Include="xunit.runner.visualstudio" />
+      <PackageReference Include="xunit.runner.visualstudio">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>

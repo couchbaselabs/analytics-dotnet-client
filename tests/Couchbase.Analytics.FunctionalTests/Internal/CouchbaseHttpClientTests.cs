@@ -27,7 +27,8 @@ public class CouchbaseHttpClientTests
     }
 
     private readonly Analytics2Fixture _fixture;
-    private static ITestOutputHelper? _outputHelper;
+    private ITestOutputHelper? _outputHelper;
+
     public CouchbaseHttpClientTests(Analytics2Fixture fixture, ITestOutputHelper? outputHelper)
     {
         _fixture = fixture;
@@ -43,10 +44,12 @@ public class CouchbaseHttpClientTests
         private IDnsRefreshStrategy _refreshStrategy;
         private IPAddress[]? _cachedAddresses;
         private IpReplacementStrategy _ipReplacementStrategy;
+        private readonly ITestOutputHelper _outputHelper;
 
-        public TestDnsEndpointResolver(IDnsRefreshStrategy refreshStrategy, IpReplacementStrategy ipReplacement = IpReplacementStrategy.None)
+        public TestDnsEndpointResolver(IDnsRefreshStrategy refreshStrategy, ITestOutputHelper? outputHelper,  IpReplacementStrategy ipReplacement = IpReplacementStrategy.None)
         {
             _refreshStrategy = refreshStrategy;
+            _outputHelper = outputHelper;
             _ipReplacementStrategy = ipReplacement;
         }
 
@@ -148,7 +151,7 @@ public class CouchbaseHttpClientTests
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
         // First, do not replace any IPs, so we can test the normal case
-        var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.None);
+        var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), _outputHelper, ipReplacement: IpReplacementStrategy.None);
         InjectFakeDnsEndpointResolver(serviceProvider, testResolver);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
@@ -163,7 +166,7 @@ public class CouchbaseHttpClientTests
     {
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
-        var testResolverMissingOneIP = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.Single);
+        var testResolverMissingOneIP = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), _outputHelper, ipReplacement: IpReplacementStrategy.Single);
         InjectFakeDnsEndpointResolver(serviceProvider, testResolverMissingOneIP);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
@@ -178,7 +181,7 @@ public class CouchbaseHttpClientTests
     {
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
-        var testResolverMissingMultipleIPs = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.Multiple);
+        var testResolverMissingMultipleIPs = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), _outputHelper, ipReplacement: IpReplacementStrategy.Multiple);
         InjectFakeDnsEndpointResolver(serviceProvider, testResolverMissingMultipleIPs);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         Assert.NotNull(response);
@@ -194,7 +197,7 @@ public class CouchbaseHttpClientTests
     {
         _fixture.ResetCluster(SmallTimeoutOptions);
         GetAnalyticsService(out var service, out var serviceProvider);
-        var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), ipReplacement: IpReplacementStrategy.All);
+        var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), _outputHelper, ipReplacement: IpReplacementStrategy.All);
         InjectFakeDnsEndpointResolver(serviceProvider, testResolver);
         await Assert.ThrowsAsync<AnalyticsException>(() => service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions()));
     }

@@ -61,6 +61,7 @@ public class Analytics2Fixture : IDisposable
     {
         ClusterOptions = clusterOptions ?? CreateClusterOptions();
         ClusterOptions.ConnectionString = FixtureSettings.ConnectionString;
+        Cluster.Dispose();
         Cluster = CreateCluster();
     }
 
