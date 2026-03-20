@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Linq;
 using Xunit;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures

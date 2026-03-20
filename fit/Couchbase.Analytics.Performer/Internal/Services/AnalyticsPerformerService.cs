@@ -4,16 +4,16 @@ using Couchbase.Analytics.Performer.Internal.Exceptions;
 using Couchbase.Analytics.Performer.Internal.Modes;
 using Couchbase.Analytics.Performer.Internal.Utils;
 using Couchbase.AnalyticsClient;
+using Couchbase.Core.Utils;
 using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Grpc.Protocol.Shared;
-using Couchbase.Core.Utils;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Exception = System.Exception;
 
 namespace Couchbase.Analytics.Performer.Internal.Services;
 
-internal class AnalyticsPerformerService: ColumnarService.ColumnarServiceBase
+internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
 {
     public AnalyticsPerformerService(ConcurrentDictionary<string, ClusterConnection> clusters)
     {
@@ -51,19 +51,19 @@ internal class AnalyticsPerformerService: ColumnarService.ColumnarServiceBase
                     return new(request, cluster);
                 });
 
-           /* context.GetHttpContext().Response.OnCompleted(() =>
-            {
-                foreach (var tunable in request.Tunables)
-                {
-                    Environment.SetEnvironmentVariable(tunable.Key, null);
-                }
+            /* context.GetHttpContext().Response.OnCompleted(() =>
+             {
+                 foreach (var tunable in request.Tunables)
+                 {
+                     Environment.SetEnvironmentVariable(tunable.Key, null);
+                 }
 
-                return Task.CompletedTask;
-            });*/
+                 return Task.CompletedTask;
+             });*/
 
-           Serilog.Log.Information(
-                "Created or using new cluster instance in {Seconds}: {ConnectionString}",
-                stopWatch.Elapsed, request.ConnectionString);
+            Serilog.Log.Information(
+                 "Created or using new cluster instance in {Seconds}: {ConnectionString}",
+                 stopWatch.Elapsed, request.ConnectionString);
 
             response.GetResponseMetaData(stopWatch, initiated);
         }
@@ -232,7 +232,7 @@ internal class AnalyticsPerformerService: ColumnarService.ColumnarServiceBase
 
     public override Task<EchoResponse> Echo(EchoRequest request, ServerCallContext context)
     {
-        Serilog.Log.Information("Calling Echo - {TestName} | {Message}",request.TestName, request.Message);
+        Serilog.Log.Information("Calling Echo - {TestName} | {Message}", request.TestName, request.Message);
         return Task.FromResult(new EchoResponse());
     }
 }

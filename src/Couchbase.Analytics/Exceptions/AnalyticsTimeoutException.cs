@@ -19,7 +19,6 @@
  * ************************************************************/
 #endregion
 
-using System.Runtime.Serialization;
 using Couchbase.AnalyticsClient.Internal.Retry;
 
 namespace Couchbase.AnalyticsClient.Exceptions;
@@ -34,9 +33,8 @@ public class AnalyticsTimeoutException : AnalyticsException
     {
     }
 
-    protected AnalyticsTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
+
+
 
     public AnalyticsTimeoutException(string? message) : base(message)
     {

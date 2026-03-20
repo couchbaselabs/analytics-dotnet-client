@@ -32,7 +32,7 @@ internal sealed class LazyService<[DynamicallyAccessedMembers(DynamicallyAccesse
     where T : notnull
 {
     public LazyService(IServiceProvider serviceProvider)
-        :base(serviceProvider.GetService<T>)
+        : base(serviceProvider.GetService<T>)
     {
     }
 

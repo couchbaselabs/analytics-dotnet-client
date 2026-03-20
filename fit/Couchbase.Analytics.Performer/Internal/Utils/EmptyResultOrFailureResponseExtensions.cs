@@ -1,5 +1,5 @@
-using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Core.Utils;
+using Couchbase.Grpc.Protocol.Columnar;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Couchbase.Analytics.Performer.Internal.Utils;

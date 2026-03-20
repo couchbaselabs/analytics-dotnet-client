@@ -54,7 +54,7 @@ internal sealed class CouchbaseServiceProvider : ICouchbaseServiceProvider
     {
         if (_services.TryGetValue(serviceType, out var factory))
         {
-            return factory.CreateService( serviceType);
+            return factory.CreateService(serviceType);
         }
 
         if (serviceType.IsGenericType && _services.TryGetValue(serviceType.GetGenericTypeDefinition(), out factory))

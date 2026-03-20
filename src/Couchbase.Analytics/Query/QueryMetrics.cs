@@ -52,5 +52,5 @@ public sealed class QueryMetrics
     public int ProcessedObjects { get; init; }
 
     [JsonPropertyName("bufferCacheHitRatio")]
-    public string BufferCacheHitRatio { get; init; }
+    public string? BufferCacheHitRatio { get; init; }
 }

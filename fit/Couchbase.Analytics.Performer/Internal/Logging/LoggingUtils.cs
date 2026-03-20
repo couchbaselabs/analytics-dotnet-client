@@ -50,16 +50,16 @@ public static class LoggingUtils
             return serilogLevel;
         }
 
-        if (Enum.TryParse<Microsoft.Extensions.Logging.LogLevel>(value, true, out var msLevel))
+        if (Enum.TryParse<LogLevel>(value, true, out var msLevel))
         {
             return msLevel switch
             {
-                Microsoft.Extensions.Logging.LogLevel.Trace => LogEventLevel.Verbose,
-                Microsoft.Extensions.Logging.LogLevel.Debug => LogEventLevel.Debug,
-                Microsoft.Extensions.Logging.LogLevel.Information => LogEventLevel.Information,
-                Microsoft.Extensions.Logging.LogLevel.Warning => LogEventLevel.Warning,
-                Microsoft.Extensions.Logging.LogLevel.Error => LogEventLevel.Error,
-                Microsoft.Extensions.Logging.LogLevel.Critical => LogEventLevel.Fatal,
+                LogLevel.Trace => LogEventLevel.Verbose,
+                LogLevel.Debug => LogEventLevel.Debug,
+                LogLevel.Information => LogEventLevel.Information,
+                LogLevel.Warning => LogEventLevel.Warning,
+                LogLevel.Error => LogEventLevel.Error,
+                LogLevel.Critical => LogEventLevel.Fatal,
                 _ => defaultLevel
             };
         }

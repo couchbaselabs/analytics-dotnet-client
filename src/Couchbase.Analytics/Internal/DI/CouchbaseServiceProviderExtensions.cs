@@ -63,7 +63,7 @@ internal static class CouchbaseServiceProviderExtensions
             ThrowHelper.ThrowArgumentNullException(nameof(serviceProvider));
         }
 
-        return (T?) serviceProvider.GetService(typeof(T));
+        return (T?)serviceProvider.GetService(typeof(T));
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ internal static class CouchbaseServiceProviderExtensions
     /// <param name="serviceProvider">The <see cref="IServiceProvider"/>.</param>
     /// <returns>The service.</returns>
     public static T GetRequiredService<T>(this IServiceProvider serviceProvider) =>
-        (T) serviceProvider.GetRequiredService(typeof(T));
+        (T)serviceProvider.GetRequiredService(typeof(T));
 
     /// <summary>
     /// Determines if the specified service type is available from the <see cref="ICouchbaseServiceProvider"/>.

@@ -43,7 +43,7 @@ internal static class AnalyticsErrorMapper
     {
         errorContext.Errors = analyticsResult.Errors.ToList();
 
-        var statusCode = errorContext.StatusCode;
+        var statusCode = errorContext.StatusCode ?? throw new InvalidOperationException("StatusCode is null in error context");
         return statusCode switch
         {
             HttpStatusCode.Unauthorized => new InvalidCredentialException($"Authentication failed - invalid credentials. Code: {(int)statusCode} - {statusCode}", errorContext),

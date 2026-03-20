@@ -99,13 +99,13 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
                     MetaData.Metrics = await reader.ReadObjectAsync<QueryMetrics>(cancellationToken).ConfigureAwait(false);
                     break;
                 case "results":
-                {
-                    await foreach (var token in reader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        rows.Add(new AnalyticsRow(token));
+                        await foreach (var token in reader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
+                        {
+                            rows.Add(new AnalyticsRow(token));
+                        }
+                        break;
                     }
-                    break;
-                }
                 case "errors":
                     var errors = await reader.ReadObjectAsync<QueryError[]>(cancellationToken).ConfigureAwait(false);
                     Errors = errors ?? Array.Empty<QueryError>();

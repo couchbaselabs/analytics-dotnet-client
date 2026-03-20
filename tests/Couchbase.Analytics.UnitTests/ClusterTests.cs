@@ -2,8 +2,8 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Options;
-using Xunit;
 using Moq;
+using Xunit;
 #nullable enable
 
 namespace Couchbase.AnalyticsClient.UnitTests
@@ -44,10 +44,10 @@ namespace Couchbase.AnalyticsClient.UnitTests
         public void Create_NullHttpEndpoint_ThrowsArgumentNullException()
         {
             // Arrange
-            Credential credential = Credential.Create("Administrator", "password");
+            var credential = Credential.Create("Administrator", "password");
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => Cluster.Create(null, credential));
+            Assert.Throws<ArgumentException>(() => Cluster.Create(null!, credential));
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace Couchbase.AnalyticsClient.UnitTests
             var httpEndpoint = "http://localhost:8091";
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => Cluster.Create(httpEndpoint, null));
+            Assert.Throws<ArgumentNullException>(() => Cluster.Create(httpEndpoint, null!));
         }
 
         [Fact]

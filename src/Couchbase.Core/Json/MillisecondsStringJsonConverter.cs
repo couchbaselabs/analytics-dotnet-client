@@ -76,10 +76,10 @@ public sealed class MillisecondsStringJsonConverter : JsonConverter<TimeSpan?>
 
         Span<char> buffer = stackalloc char[32];
 
-        if (!((uint) value.GetValueOrDefault().TotalMilliseconds).TryFormat(buffer, out var written) || written > 30)
+        if (!((uint)value.GetValueOrDefault().TotalMilliseconds).TryFormat(buffer, out var written) || written > 30)
         {
             // Fallback if the buffer is too small
-            var str = (uint) value.GetValueOrDefault().TotalMilliseconds + "ms";
+            var str = (uint)value.GetValueOrDefault().TotalMilliseconds + "ms";
             writer.WriteStringValue(str);
             return;
         }

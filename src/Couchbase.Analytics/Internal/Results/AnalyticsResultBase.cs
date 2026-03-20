@@ -51,10 +51,10 @@ internal abstract class AnalyticsResultBase : IQueryResult
 
     public abstract Task InitializeAsync(CancellationToken cancellationToken = default);
 
-    public IAsyncEnumerable<AnalyticsRow> Rows { get; protected set; }
-    public QueryMetaData MetaData { get; protected set; }
+    public IAsyncEnumerable<AnalyticsRow> Rows { get; protected set; } = null!;
+    public QueryMetaData MetaData { get; protected set; } = null!;
 
-    public IReadOnlyList<QueryError> Errors { get; protected set; }
+    public IReadOnlyList<QueryError> Errors { get; protected set; } = Array.Empty<QueryError>();
 
     public HttpStatusCode? StatusCode { get; set; }
 

@@ -52,8 +52,8 @@ public class ConnectCallbackRoundRobinTests
         // The delegate's target is the closure that holds the DnsEndpointConnector instance
         var target = connectCallback.Target!;
         var dnsConnector = target.GetType()
-            .GetFields( BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-            .Select( f => f.GetValue(target) as DnsEndpointConnector)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+            .Select(f => f.GetValue(target) as DnsEndpointConnector)
             .First();
         Assert.NotNull(dnsConnector);
 

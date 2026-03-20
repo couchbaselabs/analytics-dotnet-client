@@ -24,7 +24,7 @@ using System.Text.Json;
 namespace Couchbase.Core.Json;
 
 /// <inheritdoc />>
-public class StjJsonDeserializer(JsonSerializerOptions jsonSerializerOptions): IDeserializer
+public class StjJsonDeserializer(JsonSerializerOptions jsonSerializerOptions) : IDeserializer
 {
     /// <inheritdoc />
     public StjJsonDeserializer() : this(JsonSerializerOptions.Default)

@@ -51,7 +51,7 @@ internal class ErrorContext
 
     [JsonInclude]
     [JsonPropertyName("retry_attempts")]
-    internal int RetryAttempts { get; set;  }
+    internal int RetryAttempts { get; set; }
 
     [JsonInclude]
     [JsonPropertyName("elapsed_time")]

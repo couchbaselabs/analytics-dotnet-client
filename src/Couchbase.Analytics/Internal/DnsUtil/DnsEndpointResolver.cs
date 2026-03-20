@@ -40,7 +40,7 @@ internal class DnsEndpointResolver : IDnsEndpointResolver
         _refreshStrategy.OnRequest();
 
         if (_cachedAddresses != null && !_refreshStrategy.ShouldRefreshDns()) return _cachedAddresses;
-        _cachedAddresses = await System.Net.Dns.GetHostAddressesAsync(hostname, cancellationToken).ConfigureAwait(false);
+        _cachedAddresses = await Dns.GetHostAddressesAsync(hostname, cancellationToken).ConfigureAwait(false);
         _refreshStrategy.OnDnsRefreshed();
 
         return _cachedAddresses;

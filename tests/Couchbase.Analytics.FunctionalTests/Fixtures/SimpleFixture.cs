@@ -1,9 +1,6 @@
-﻿using Couchbase.AnalyticsClient.HTTP;
+using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures
 {

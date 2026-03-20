@@ -28,7 +28,7 @@ public interface IQueryResult : IDisposable, IAsyncEnumerable<AnalyticsRow>
 {
     IAsyncEnumerable<AnalyticsRow> Rows { get; }
 
-    public QueryMetaData MetaData{ get; }
+    public QueryMetaData MetaData { get; }
 
     public IReadOnlyList<QueryError> Errors { get; }
 

@@ -8,7 +8,7 @@ public static class ResponseMetaDataExtensions
 {
     public static QueryResultMetadataResponse.Types.QueryMetadata ToResponseMetaData(this QueryMetaData metadata)
     {
-        var sdkMetrics = metadata.Metrics;
+        var sdkMetrics = metadata.Metrics!;
         var protoMetadata = new QueryResultMetadataResponse.Types.QueryMetadata()
         {
             Metrics = new QueryResultMetadataResponse.Types.QueryMetadata.Types.Metrics
@@ -38,7 +38,7 @@ public static class ResponseMetaDataExtensions
         {
             foreach (var warnings in metadata.Warnings)
             {
-                protoMetadata.Warnings.Add( new QueryResultMetadataResponse.Types.QueryMetadata.Types.Warning()
+                protoMetadata.Warnings.Add(new QueryResultMetadataResponse.Types.QueryMetadata.Types.Warning()
                 {
                     Code = (uint)warnings.Code,
                     Message = warnings.Message

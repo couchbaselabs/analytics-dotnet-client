@@ -275,7 +275,7 @@ namespace Couchbase.AnalyticsClient.Internal.Utils
 
         public static ReadOnlyMemory<byte> StripBrackets(this ReadOnlyMemory<byte> theArray)
         {
-            if (theArray.Length > 1 && theArray.Span[0] == 0x5b && theArray.Span[theArray.Length-1] == 0x5d)
+            if (theArray.Length > 1 && theArray.Span[0] == 0x5b && theArray.Span[theArray.Length - 1] == 0x5d)
             {
                 return theArray.Slice(1, theArray.Length - 2);
             }
@@ -283,7 +283,7 @@ namespace Couchbase.AnalyticsClient.Internal.Utils
         }
 
         public static bool IsJson(this Span<byte> buffer) =>
-            ((ReadOnlySpan<byte>) buffer).IsJson();
+            ((ReadOnlySpan<byte>)buffer).IsJson();
 
         public static bool IsJson(this ReadOnlySpan<byte> buffer) =>
             buffer.Length > 1 &&

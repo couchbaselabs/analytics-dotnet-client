@@ -5,8 +5,8 @@ using Couchbase.Analytics.Performer.Internal.Modes;
 using Couchbase.Analytics.Performer.Internal.Utils;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Results;
-using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Core.Utils;
+using Couchbase.Grpc.Protocol.Columnar;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Error = Couchbase.Grpc.Protocol.Columnar.Error;
@@ -64,7 +64,8 @@ internal class AnalyticsPerformerCrossService : ColumnarCrossService.ColumnarCro
 
         _ongoingQueries.TryAdd(queryHandle, performerQuery);
 
-        var response = new ExecuteQueryResponse(){
+        var response = new ExecuteQueryResponse()
+        {
             QueryHandle = queryHandle,
             Metadata = new ResponseMetadata
             {
@@ -179,7 +180,7 @@ internal class AnalyticsPerformerCrossService : ColumnarCrossService.ColumnarCro
             performerQuery.CancellationTokenSource?.Cancel();
             response.EmptySuccess = true;
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
             //TODO: Map exceptions?
             response.Error = new Error();
@@ -220,7 +221,8 @@ internal class AnalyticsPerformerCrossService : ColumnarCrossService.ColumnarCro
                 ElapsedNanos = (long)stopwatch.Elapsed.TotalNanoseconds,
                 Initiated = initiated
             };
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             response = new QueryResultMetadataResponse();
             response.Failure = ex.ToProtoError();

@@ -23,7 +23,7 @@ public class ExecuteQueryTests
     {
         public IAsyncEnumerable<AnalyticsRow> Rows => this;
 
-        public QueryMetaData MetaData { get; } = new ();
+        public QueryMetaData MetaData { get; } = new();
 
         public IReadOnlyList<QueryError> Errors { get; } = [];
 

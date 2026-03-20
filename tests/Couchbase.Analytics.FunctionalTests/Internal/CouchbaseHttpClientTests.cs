@@ -1,10 +1,8 @@
-using System.Reflection;
-using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
-using Xunit;
-using Xunit.Abstractions;
 using System.Net;
+using System.Reflection;
 using Couchbase.AnalyticsClient.DnsUtil;
 using Couchbase.AnalyticsClient.Exceptions;
+using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Couchbase.AnalyticsClient.FunctionalTests.Utils;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.DI;
@@ -12,6 +10,8 @@ using Couchbase.AnalyticsClient.Internal.DnsUtil;
 using Couchbase.AnalyticsClient.Internal.DnsUtil.Strategies;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Options;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests.Internal;
 
@@ -44,9 +44,9 @@ public class CouchbaseHttpClientTests
         private IDnsRefreshStrategy _refreshStrategy;
         private IPAddress[]? _cachedAddresses;
         private IpReplacementStrategy _ipReplacementStrategy;
-        private readonly ITestOutputHelper _outputHelper;
+        private readonly ITestOutputHelper? _outputHelper;
 
-        public TestDnsEndpointResolver(IDnsRefreshStrategy refreshStrategy, ITestOutputHelper? outputHelper,  IpReplacementStrategy ipReplacement = IpReplacementStrategy.None)
+        public TestDnsEndpointResolver(IDnsRefreshStrategy refreshStrategy, ITestOutputHelper? outputHelper, IpReplacementStrategy ipReplacement = IpReplacementStrategy.None)
         {
             _refreshStrategy = refreshStrategy;
             _outputHelper = outputHelper;
@@ -58,8 +58,8 @@ public class CouchbaseHttpClientTests
             _refreshStrategy.OnRequest();
 
             if (_cachedAddresses != null && !_refreshStrategy.ShouldRefreshDns()) return _cachedAddresses;
-            _cachedAddresses = await System.Net.Dns.GetHostAddressesAsync(hostname, cancellationToken).ConfigureAwait(false);
-            _outputHelper.WriteLine($"Resolved addresses: {string.Join(", ", _cachedAddresses.Select(a => a.ToString()))}");
+            _cachedAddresses = await Dns.GetHostAddressesAsync(hostname, cancellationToken).ConfigureAwait(false);
+            _outputHelper?.WriteLine($"Resolved addresses: {string.Join(", ", _cachedAddresses.Select(a => a.ToString()))}");
 
             var numFalseIPs = _ipReplacementStrategy switch
             {
@@ -87,11 +87,11 @@ public class CouchbaseHttpClientTests
                 {
                     _cachedAddresses[i] = falseIPs[i];
                 }
-                _outputHelper.WriteLine($"Replaced {numFalseIPs} real addresses with false ones. New IPs: {string.Join(", ", _cachedAddresses.Select(a => a.ToString()))}");
+                _outputHelper?.WriteLine($"Replaced {numFalseIPs} real addresses with false ones. New IPs: {string.Join(", ", _cachedAddresses.Select(a => a.ToString()))}");
             }
             else
             {
-                _outputHelper.WriteLine("Replaced no addresses with unreachable ones.");
+                _outputHelper?.WriteLine("Replaced no addresses with unreachable ones.");
             }
             _refreshStrategy.OnDnsRefreshed();
 
@@ -135,7 +135,7 @@ public class CouchbaseHttpClientTests
         // Ensure the connector takes the DNS path even if host is an IP
         var forceDnsProp = typeof(DnsEndpointConnector).GetProperty("ForceDnsResolution", BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
         forceDnsProp?.SetValue(null, true);
-        _outputHelper.WriteLine("Injected TestDnsEndpointResolver into DnsEndpointConnector.");
+        _outputHelper?.WriteLine("Injected TestDnsEndpointResolver into DnsEndpointConnector.");
     }
 
     // Injects a "fake" IDnsEndpointResolver into the DnsEndpointConnector which can be configured to
@@ -156,7 +156,7 @@ public class CouchbaseHttpClientTests
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
         {
-            _outputHelper.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
+            _outputHelper?.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
         }
         Assert.NotNull(response);
     }
@@ -171,7 +171,7 @@ public class CouchbaseHttpClientTests
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         await foreach (var result in response.ConfigureAwait(false))
         {
-            _outputHelper.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
+            _outputHelper?.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
         }
         Assert.NotNull(response);
     }

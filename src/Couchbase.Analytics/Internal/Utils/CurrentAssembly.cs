@@ -25,8 +25,8 @@ namespace Couchbase.AnalyticsClient.Internal.Utils;
 
 internal static class CurrentAssembly
 {
-    private static readonly Assembly Current = typeof (CurrentAssembly).GetTypeInfo().Assembly;
-    public static readonly Version?  Version = Current.GetName().Version;
+    private static readonly Assembly Current = typeof(CurrentAssembly).GetTypeInfo().Assembly;
+    public static readonly Version? Version = Current.GetName().Version;
 }
 
 #region License

@@ -242,7 +242,7 @@ public class ClusterRetryTests
                 _ => new StjJsonDeserializer(),
                 ClusterServiceLifetime.Cluster);
 
-                return Cluster.Create(_credential, clusterOptions);
+        return Cluster.Create(_credential, clusterOptions);
     }
 
     private static string BuildErrorResponseJson(IEnumerable<QueryError> errors)

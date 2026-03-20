@@ -126,7 +126,7 @@ public record ClusterOptions
         {
             ClusterServiceLifetime.Transient => new TransientServiceFactory(serviceProvider => factory(serviceProvider)),
             ClusterServiceLifetime.Cluster => new SingletonServiceFactory(serviceProvider => factory(serviceProvider)),
-            _ => throw new InvalidEnumArgumentException(nameof(lifetime), (int) lifetime,
+            _ => throw new InvalidEnumArgumentException(nameof(lifetime), (int)lifetime,
                 typeof(ClusterServiceLifetime))
         };
 

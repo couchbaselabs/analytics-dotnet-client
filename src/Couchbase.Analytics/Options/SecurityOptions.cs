@@ -70,12 +70,12 @@ public record SecurityOptions
     public SecurityOptions WithTrustOnlyCapella()
     {
         return this with
-            {
-                TrustMode = CertificateTrustMode.CapellaOnly,
-                PemFilePath = null,
-                PemString = null,
-                Certificates = null
-            };
+        {
+            TrustMode = CertificateTrustMode.CapellaOnly,
+            PemFilePath = null,
+            PemString = null,
+            Certificates = null
+        };
     }
 
     /// <summary>
@@ -86,12 +86,12 @@ public record SecurityOptions
     public SecurityOptions WithTrustOnlyPemFile(string pathToPemFile)
     {
         return this with
-            {
-                TrustMode = CertificateTrustMode.PemFilePath,
-                PemFilePath = pathToPemFile,
-                PemString = null,
-                Certificates = null
-            };
+        {
+            TrustMode = CertificateTrustMode.PemFilePath,
+            PemFilePath = pathToPemFile,
+            PemString = null,
+            Certificates = null
+        };
     }
 
     /// <summary>

@@ -33,7 +33,7 @@ public class CouchbaseHttpClientFactoryTest
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, null, logger));
+        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, null!, logger));
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class CouchbaseHttpClientFactoryTest
         var options = new ClusterOptions();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, options, null));
+        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, options, null!));
     }
 
     [Fact]

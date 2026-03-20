@@ -22,28 +22,28 @@ public class StreamingAnalyticsResultTests
         var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
         var stream = new MemoryStream(json);
 
-       var analyticsResult = new StreamingAnalyticsResult(stream,new StjJsonDeserializer(), new Mock<IDisposable?>().Object);
-       await analyticsResult.InitializeAsync(CancellationToken.None);
+        var analyticsResult = new StreamingAnalyticsResult(stream, new StjJsonDeserializer(), new Mock<IDisposable>().Object);
+        await analyticsResult.InitializeAsync(CancellationToken.None);
 
-       var airlines = await analyticsResult.ToListAsync(CancellationToken.None);
-       Assert.NotNull(airlines);
-       Assert.NotEmpty(airlines);
+        var airlines = await analyticsResult.ToListAsync(CancellationToken.None);
+        Assert.NotNull(airlines);
+        Assert.NotEmpty(airlines);
     }
 
     public class Root
     {
-        public Airline airline { get; set; }
+        public Airline? airline { get; set; }
     }
 
     public class Airline
     {
         public int id { get; set; }
-        public string type { get; set; }
-        public string name { get; set; }
-        public string iata { get; set; }
-        public string icao { get; set; }
-        public string callsign { get; set; }
-        public string country { get; set; }
+        public string? type { get; set; }
+        public string? name { get; set; }
+        public string? iata { get; set; }
+        public string? icao { get; set; }
+        public string? callsign { get; set; }
+        public string? country { get; set; }
 
         public override string ToString()
         {
@@ -71,7 +71,7 @@ public class StreamingAnalyticsResultTests
         // Arrange
         var mockStream = new MemoryStream();
         var mockSerializer = new Mock<IDeserializer>();
-        mockSerializer.Setup(x=>x.CreateJsonStreamReader(It.IsAny<Stream>(),
+        mockSerializer.Setup(x => x.CreateJsonStreamReader(It.IsAny<Stream>(),
             It.IsAny<CancellationToken>()))
             .Returns(new Mock<IJsonStreamReader>().Object);
         var result = new StreamingAnalyticsResult(mockStream, mockSerializer.Object);

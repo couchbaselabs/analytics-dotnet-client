@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 /* ************************************************************
  *
  *    @author Couchbase <info@couchbase.com>
@@ -86,7 +86,8 @@ public class Cluster : IDisposable
     /// <param name="clusterOptions">The cluster options to use for the cluster</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
-    public static Cluster Create(string connectionString, Credential credential, ClusterOptions clusterOptions){
+    public static Cluster Create(string connectionString, Credential credential, ClusterOptions clusterOptions)
+    {
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
 
@@ -104,8 +105,9 @@ public class Cluster : IDisposable
     /// <param name="credential">The credentials to use for authentication</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
-    public static Cluster Create(string connectionString, Credential credential){
-        return Create(connectionString, credential, (ClusterOptions?)null);
+    public static Cluster Create(string connectionString, Credential credential)
+    {
+        return Create(connectionString, credential, new ClusterOptions());
     }
 
     /// <summary>
@@ -132,13 +134,13 @@ public class Cluster : IDisposable
 
     public async Task<IQueryResult> ExecuteQueryAsync(string statement, QueryOptions? options = null, CancellationToken cancellationToken = default)
     {
-       var service = _analyticsService.GetValueOrThrow();
-       return await service.SendAsync(statement, options ?? new QueryOptions(), cancellationToken).ConfigureAwait(false);
+        var service = _analyticsService.GetValueOrThrow();
+        return await service.SendAsync(statement, options ?? new QueryOptions(), cancellationToken).ConfigureAwait(false);
     }
 
     public Database Database(string databaseName)
     {
-        return _databases.GetOrAdd(databaseName, database=> new Database(this, database));
+        return _databases.GetOrAdd(databaseName, database => new Database(this, database));
     }
 
     public void Dispose()

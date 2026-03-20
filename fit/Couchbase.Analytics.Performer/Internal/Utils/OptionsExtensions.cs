@@ -1,7 +1,7 @@
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Core.Json;
+using Couchbase.Grpc.Protocol.Columnar;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 using ArgumentOutOfRangeException = System.ArgumentOutOfRangeException;
@@ -10,7 +10,7 @@ namespace Couchbase.Analytics.Performer.Internal.Utils;
 
 internal static class OptionsExtensions
 {
-    public static QueryOptions ToQueryOptions(this Couchbase.Grpc.Protocol.Columnar.ExecuteQueryRequest.Types.Options? protoOptions)
+    public static QueryOptions ToQueryOptions(this ExecuteQueryRequest.Types.Options? protoOptions)
     {
         var queryOptions = new QueryOptions();
         if (protoOptions is null) return queryOptions;
@@ -40,15 +40,15 @@ internal static class OptionsExtensions
         return queryOptions;
     }
 
-    private static IDeserializer ToCore(this  Couchbase.Grpc.Protocol.Columnar.Deserializer protoDeserializer)
+    private static IDeserializer ToCore(this Deserializer protoDeserializer)
     {
         return protoDeserializer.TypeCase switch
-            {
-                Couchbase.Grpc.Protocol.Columnar.Deserializer.TypeOneofCase.Json => new StjJsonDeserializer(),
-                Couchbase.Grpc.Protocol.Columnar.Deserializer.TypeOneofCase.Passthrough => new StjJsonDeserializer(),
-                Couchbase.Grpc.Protocol.Columnar.Deserializer.TypeOneofCase.Custom => throw new NotSupportedException("Custom deserializer is not supported in .NET"),
-                _ => throw new ArgumentOutOfRangeException(nameof(protoDeserializer.TypeCase), "Could not parse Deserializer")
-            };
+        {
+            Deserializer.TypeOneofCase.Json => new StjJsonDeserializer(),
+            Deserializer.TypeOneofCase.Passthrough => new StjJsonDeserializer(),
+            Deserializer.TypeOneofCase.Custom => throw new NotSupportedException("Custom deserializer is not supported in .NET"),
+            _ => throw new ArgumentOutOfRangeException(nameof(protoDeserializer.TypeCase), "Could not parse Deserializer")
+        };
 
     }
 
