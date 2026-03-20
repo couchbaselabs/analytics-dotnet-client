@@ -19,8 +19,10 @@
  * ************************************************************/
 #endregion
 
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Results;
+using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Internal;
 
@@ -29,4 +31,36 @@ internal interface IAnalyticsService
     Uri Uri { get; }
 
     Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default);
+
+    // Async server request API methods
+
+    /// <summary>
+    /// Starts an asynchronous query on the server.
+    /// Sends POST to /api/v1/request with mode=async.
+    /// </summary>
+    Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions options, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetches the status of an async query from the server.
+    /// Sends GET to /api/v1/request/status/{handle}.
+    /// </summary>
+    Task<QueryStatus> FetchStatusAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Fetches the results of a completed async query from the server.
+    /// Sends GET to /api/v1/request/result/{handle}.
+    /// </summary>
+    Task<IQueryResult> FetchResultsAsync(string handle, TimeSpan? requestTimeout, IDeserializer deserializer, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Discards the results of an async query on the server.
+    /// Sends DELETE to /api/v1/request/result/{handle}.
+    /// </summary>
+    Task DiscardResultsAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancels an active async query on the server.
+    /// Sends DELETE to /api/v1/active_requests with the request_id.
+    /// </summary>
+    Task CancelQueryAsync(string requestId, TimeSpan? requestTimeout, CancellationToken cancellationToken = default);
 }

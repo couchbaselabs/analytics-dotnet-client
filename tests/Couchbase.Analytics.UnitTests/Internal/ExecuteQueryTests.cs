@@ -1,9 +1,11 @@
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.DI;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
+using Couchbase.Core.Json;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -51,6 +53,21 @@ public class ExecuteQueryTests
             LastOptions = options;
             return Task.FromResult<IQueryResult>(new FakeQueryResult());
         }
+
+        public Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions options, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<QueryStatus> FetchStatusAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task<IQueryResult> FetchResultsAsync(string handle, TimeSpan? requestTimeout, IDeserializer deserializer, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task DiscardResultsAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        public Task CancelQueryAsync(string requestId, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
     }
 
     // Helper method to print out QueryOptions for debugging

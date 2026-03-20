@@ -20,6 +20,7 @@
 #endregion
 
 using System.Collections.Concurrent;
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.DI;
@@ -136,6 +137,48 @@ public class Cluster : IDisposable
     {
         var service = _analyticsService.GetValueOrThrow();
         return await service.SendAsync(statement, options ?? new QueryOptions(), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Starts an asynchronous server-side query. The query is submitted to the server and a
+    /// <see cref="QueryHandle"/> is returned that can be used to poll status, fetch results,
+    /// cancel, or discard the query.
+    /// </summary>
+    /// <param name="statement">The analytics query statement to execute.</param>
+    /// <param name="options">Options for the async query, including timeouts and result TTL.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="QueryHandle"/> for tracking and interacting with the query.</returns>
+    public async Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var service = _analyticsService.GetValueOrThrow();
+        return await service.StartQueryAsync(statement, options ?? new StartQueryOptions(), cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Starts an asynchronous server-side query with a fluent options builder.
+    /// </summary>
+    /// <param name="statement">The analytics query statement to execute.</param>
+    /// <param name="options">A function to configure the <see cref="StartQueryOptions"/>.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="QueryHandle"/> for tracking and interacting with the query.</returns>
+    public Task<QueryHandle> StartQueryAsync(string statement, Func<StartQueryOptions, StartQueryOptions> options, CancellationToken cancellationToken = default)
+    {
+        var startQueryOptions = new StartQueryOptions();
+        startQueryOptions = options.Invoke(startQueryOptions);
+        return StartQueryAsync(statement, startQueryOptions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Reconstructs a <see cref="QueryHandle"/> from a previously serialized handle string.
+    /// This method does not perform any network operations.
+    /// </summary>
+    /// <param name="serializedHandle">A JSON string previously produced by <see cref="QueryHandle.Serialize"/>.</param>
+    /// <returns>A <see cref="QueryHandle"/> that can be used to interact with the query.</returns>
+    public QueryHandle QueryHandleFromSerialized(string serializedHandle)
+    {
+        var service = _analyticsService.GetValueOrThrow();
+        return QueryHandle.Deserialize(serializedHandle, service);
     }
 
     public Database Database(string databaseName)
