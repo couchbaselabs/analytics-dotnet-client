@@ -81,9 +81,13 @@ public class QueryStatus
     public bool AreResultsReady => string.Equals(Status, "success", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Returns true if the query ended with a "fatal" or "timeout" status.
+    /// Returns true if the query ended with a terminal error status.
+    /// Per spec: "fatal" or "timeout".
+    /// Also includes "failed" which is not in the spec but has been observed
+    /// from the server (e.g., for cancelled queries).
     /// </summary>
     public bool IsError => string.Equals(Status, "fatal", StringComparison.OrdinalIgnoreCase)
+                           || string.Equals(Status, "failed", StringComparison.OrdinalIgnoreCase)
                            || string.Equals(Status, "timeout", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
