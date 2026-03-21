@@ -79,21 +79,21 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     {
         handler.SslOptions.EnabledSslProtocols = _securityOptions.SslProtocols;
 
-        X509Certificate2Collection certCollection = new X509Certificate2Collection();
+        var certCollection = new X509Certificate2Collection();
         switch (_securityOptions.TrustMode)
         {
             case CertificateTrustMode.CapellaOnly:
                 certCollection.Add(CertificateValidation.CapellaCaCert);
                 break;
             case CertificateTrustMode.CertificatesOnly:
-                certCollection.AddRange(_securityOptions.CertificatesValue);
+                certCollection.AddRange(_securityOptions.CertificatesValue!);
                 break;
             case CertificateTrustMode.PemFilePath:
-                certCollection.Add(new X509Certificate2(_securityOptions.PathToPemFileValue));
+                certCollection.Add(X509CertificateLoader.LoadCertificateFromFile(_securityOptions.PathToPemFileValue!));
                 break;
             case CertificateTrustMode.PemString:
-                certCollection.Add(new X509Certificate2(
-                    rawData: System.Text.Encoding.ASCII.GetBytes(_securityOptions.CertificateValue)));
+                certCollection.Add(X509CertificateLoader.LoadCertificate(
+                    System.Text.Encoding.ASCII.GetBytes(_securityOptions.CertificateValue!)));
                 break;
             case CertificateTrustMode.Default:
                 break;

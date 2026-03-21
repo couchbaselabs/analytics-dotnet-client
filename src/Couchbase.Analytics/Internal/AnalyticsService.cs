@@ -33,7 +33,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Couchbase.AnalyticsClient.Internal;
 
-internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
+internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsService
 {
     private readonly ClusterOptions _clusterOptions;
     private readonly ILogger<AnalyticsService> _logger;
@@ -133,9 +133,7 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
             }
             try
             {
-                _logger.LogDebug(
-                    "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)",
-                    attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
+                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
 
                 var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, deserializer, errorContext, cancellationToken).ConfigureAwait(false);
 
@@ -145,7 +143,7 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
                     // Per RFC: retry if ALL errors are retriable
                     if (AnalyticsErrorMapper.AreErrorsRetriable(result.Errors))
                     {
-                        _logger.LogDebug("Received retriable server errors for ClientContextId {ClientContextId}, retrying...", options.ClientContextId);
+                        LogRetriableServerErrors(_logger, options.ClientContextId);
 
                         lastException = AnalyticsErrorMapper.MapServiceErrors(result.Errors, errorContext);
 
@@ -161,10 +159,8 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
             }
             catch (HttpRequestException httpRequestException)
             {
-                _logger.LogDebug(httpRequestException,
-                    "Analytics query attempt {Attempt} for ClientContextId {ClientContextId} failed: {Error} (elapsed: {Elapsed}ms)",
-                    attempt + 1, options.ClientContextId, httpRequestException.Message,
-                    stopwatch.Elapsed.TotalMilliseconds);
+                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId,
+                    httpRequestException.Message, stopwatch.Elapsed.TotalMilliseconds);
 
                 // "No successful connection(s)" is retryable
                 if (httpRequestException.InnerException is AggregateException aggregateEx)
@@ -174,7 +170,7 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
 
                 if (!AnalyticsErrorMapper.IsRetriableHttpException(httpRequestException))
                 {
-                    _logger.LogDebug("HttpRequestException is not retriable, failing immediately");
+                    LogNonRetriableHttpException(_logger);
                     throw;
                 }
 
@@ -208,4 +204,20 @@ internal sealed class AnalyticsService : HttpServiceBase, IAnalyticsService
     {
         throw new AnalyticsException("Exceeded maximum number of retries.", errorContext: errorContext);
     }
+
+    #region Logging
+
+    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, double elapsed);
+
+    [LoggerMessage(2, LogLevel.Debug, "Received retriable server errors for ClientContextId {ClientContextId}, retrying...")]
+    private static partial void LogRetriableServerErrors(ILogger logger, string? clientContextId);
+
+    [LoggerMessage(3, LogLevel.Debug, "HttpRequestException is not retriable, failing immediately")]
+    private static partial void LogNonRetriableHttpException(ILogger logger);
+
+    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId} failed: {Error} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, string error, double elapsed);
+
+    #endregion
 }

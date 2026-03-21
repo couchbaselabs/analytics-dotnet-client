@@ -18,7 +18,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetInt32(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -27,7 +27,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetInt64(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -36,7 +36,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetDouble(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -45,7 +45,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetInt16(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -54,7 +54,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetDecimal(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -63,7 +63,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetByte(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -72,7 +72,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetSingle(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -81,7 +81,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetUInt32(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -90,7 +90,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetUInt16(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -99,7 +99,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetUInt64(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -108,7 +108,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetSByte(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -117,7 +117,7 @@ internal static class JsonElementExtensions
             case JsonValueKind.String:
                 if (typeof(T) == typeof(string))
                 {
-                    value = (T)(object) element.GetString()!;
+                    value = (T)(object)element.GetString()!;
                     return true;
                 }
 
@@ -125,7 +125,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetDateTime(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -134,7 +134,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetDateTimeOffset(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }
@@ -143,7 +143,7 @@ internal static class JsonElementExtensions
                 {
                     if (element.TryGetGuid(out var tempValue))
                     {
-                        value = (T)(object) tempValue;
+                        value = (T)(object)tempValue;
                         return true;
                     }
                 }

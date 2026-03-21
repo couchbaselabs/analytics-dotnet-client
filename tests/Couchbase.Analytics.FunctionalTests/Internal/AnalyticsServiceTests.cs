@@ -2,8 +2,8 @@ using System.Text.Json;
 using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Couchbase.AnalyticsClient.Options;
-using Xunit;
 using DnsClient;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Couchbase.AnalyticsClient.FunctionalTests.Internal;
@@ -43,19 +43,19 @@ public class AnalyticsServiceTests
         var statement = "select i from array_range(1, 100) as i;";
 
         var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
-            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true});
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true });
 
         await foreach (var row in result.ConfigureAwait(false))
         {
             var value = row.ContentAs<JsonElement>();
-            try{_outputHelper.WriteLine(value.ToString());}
+            try { _outputHelper.WriteLine(value.ToString()); }
             catch
             {
                 // ignored
             }
         }
 
-        Assert.Equal(99, result.MetaData.Metrics.ResultCount);
+        Assert.Equal(99, result.MetaData.Metrics!.ResultCount);
     }
 
     [Fact]
@@ -64,19 +64,19 @@ public class AnalyticsServiceTests
         var statement = "select i from array_range(1, 100) as i;";
 
         var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
-            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false});
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false });
 
         await foreach (var row in result.ConfigureAwait(false))
         {
             var value = row.ContentAs<JsonElement>();
-            try { _outputHelper.WriteLine(value.ToString());}
+            try { _outputHelper.WriteLine(value.ToString()); }
             catch
             {
                 //ignore
             }
         }
 
-        Assert.Equal(99, result.MetaData.Metrics.ResultCount);
+        Assert.Equal(99, result.MetaData.Metrics!.ResultCount);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class AnalyticsServiceTests
         var statement = "select i from array_range(1, 100) as i;";
 
         var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
-            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false});
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false });
 
         Assert.NotNull(result.MetaData);
         Assert.NotNull(result.MetaData.Metrics);
@@ -105,7 +105,7 @@ public class AnalyticsServiceTests
         try
         {
             _outputHelper.WriteLine($"RequestId: {result.MetaData.RequestId}");
-            _outputHelper.WriteLine($"ResultCount: {result.MetaData.Metrics.ResultCount}"); 
+            _outputHelper.WriteLine($"ResultCount: {result.MetaData.Metrics.ResultCount}");
             _outputHelper.WriteLine($"ElapsedTime: {result.MetaData.Metrics.ElapsedTime}");
             _outputHelper.WriteLine($"ExecutionTime: {result.MetaData.Metrics.ExecutionTime}");
             _outputHelper.WriteLine($"ProcessedObjects: {result.MetaData.Metrics.ProcessedObjects}");
@@ -114,7 +114,7 @@ public class AnalyticsServiceTests
             _outputHelper.WriteLine($"QueueWaitTime: {result.MetaData.Metrics.QueueWaitTime}");
             _outputHelper.WriteLine($"BufferCacheHitRatio: {result.MetaData.Metrics.BufferCacheHitRatio}");
         }
-        catch 
+        catch
         {
             //ignore
         }
@@ -134,7 +134,7 @@ public class AnalyticsServiceTests
         await cts.CancelAsync();
 
         var task = _simpleFixture.Cluster.ExecuteQueryAsync(statement,
-            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true},
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true },
             cts.Token);
 
         await Assert.ThrowsAsync<AnalyticsTimeoutException>(async () => await task.ConfigureAwait(false));
@@ -148,7 +148,7 @@ public class AnalyticsServiceTests
         await cts.CancelAsync();
 
         var task = _simpleFixture.Cluster.ExecuteQueryAsync(statement,
-            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false},
+            new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false },
             cts.Token);
 
         await Assert.ThrowsAsync<AnalyticsTimeoutException>(async () => await task.ConfigureAwait(false));

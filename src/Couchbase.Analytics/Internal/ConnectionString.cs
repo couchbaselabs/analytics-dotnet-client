@@ -89,7 +89,8 @@ internal class ConnectionString
             connectionString.Hosts = match.Groups["hosts"].Value.Split(',')
                 .Select(host => HostEndpoint.Parse(host.Trim()))
                 .ToList();
-        } else if (match.Groups["hosts"].Length == 0)
+        }
+        else if (match.Groups["hosts"].Length == 0)
         {
             throw new ArgumentException("Hosts list is empty. At least one host is expected in the connection string.");
         }
@@ -124,7 +125,7 @@ internal class ConnectionString
             }
             else
             {
-                yield return new HostEndpointWithPort(endpoint.Host, Scheme == Scheme.Https ? HttpsPort: HttpPort);
+                yield return new HostEndpointWithPort(endpoint.Host, Scheme == Scheme.Https ? HttpsPort : HttpPort);
             }
         }
     }
@@ -178,7 +179,7 @@ internal class ConnectionString
     {
         if (TryGetParameter(key, out string value))
         {
-            parameter =  Convert.ToInt32(value);
+            parameter = Convert.ToInt32(value);
             return true;
         }
 
@@ -190,7 +191,7 @@ internal class ConnectionString
     {
         if (TryGetParameter(key, out string value))
         {
-            parameter =  Convert.ToUInt32(value);
+            parameter = Convert.ToUInt32(value);
             return true;
         }
 
@@ -202,7 +203,7 @@ internal class ConnectionString
     {
         if (TryGetParameter(key, out string value))
         {
-            parameter =  Convert.ToSingle(value);
+            parameter = Convert.ToSingle(value);
             return true;
         }
 

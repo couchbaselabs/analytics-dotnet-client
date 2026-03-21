@@ -19,7 +19,6 @@
  * ************************************************************/
 #endregion
 
-using System.Runtime.Serialization;
 using Couchbase.AnalyticsClient.Internal.Retry;
 
 namespace Couchbase.AnalyticsClient.Exceptions;
@@ -33,9 +32,8 @@ public class QueryException : AnalyticsException
     {
     }
 
-    protected QueryException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
+
+
 
     public QueryException(string? message) : base(message)
     {

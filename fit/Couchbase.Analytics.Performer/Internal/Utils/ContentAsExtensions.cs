@@ -8,7 +8,7 @@ namespace Couchbase.Analytics.Performer.Internal.Utils;
 
 public static class ContentAsExtensions
 {
-    public static ContentWas ContentAsToAnalyticsRow(this AnalyticsRow analyticsRow, Couchbase.Grpc.Protocol.Columnar.ContentAs contentAs)
+    public static ContentWas ContentAsToAnalyticsRow(this AnalyticsRow analyticsRow, ContentAs contentAs)
     {
         switch (contentAs.AsCase)
         {

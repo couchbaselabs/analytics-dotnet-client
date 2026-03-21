@@ -44,7 +44,7 @@ public static class ClusterNewInstanceRequestExtensions
         return clusterOptions;
     }
 
-    private static TimeoutOptions ToCore(this Couchbase.Grpc.Protocol.Columnar.ClusterNewInstanceRequest.Types.Options.Types.TimeoutOptions? protoTimeout)
+    private static TimeoutOptions ToCore(this ClusterNewInstanceRequest.Types.Options.Types.TimeoutOptions? protoTimeout)
     {
         var timeoutOptions = new TimeoutOptions();
         if (protoTimeout is null) return timeoutOptions;
@@ -65,7 +65,7 @@ public static class ClusterNewInstanceRequestExtensions
     }
 
     private static SecurityOptions ToCore(
-        this Couchbase.Grpc.Protocol.Columnar.ClusterNewInstanceRequest.Types.Options.Types.SecurityOptions? protoSecurity)
+        this ClusterNewInstanceRequest.Types.Options.Types.SecurityOptions? protoSecurity)
     {
         var securityOptions = new SecurityOptions();
         if (protoSecurity is null) return securityOptions;
@@ -74,7 +74,7 @@ public static class ClusterNewInstanceRequestExtensions
         {
             // what is this?
         }
-        else if(protoSecurity.HasTrustOnlyCapella)
+        else if (protoSecurity.HasTrustOnlyCapella)
         {
             securityOptions = securityOptions.WithTrustOnlyCapella();
         }

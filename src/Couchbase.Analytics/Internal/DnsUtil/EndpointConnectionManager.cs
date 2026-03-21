@@ -27,7 +27,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Couchbase.AnalyticsClient.Internal.DnsUtil;
 
-internal class EndpointConnectionManager
+internal partial class EndpointConnectionManager
 {
     private readonly TimeSpan _connectionTimeout;
     private readonly ILogger<EndpointConnectionManager> _logger;
@@ -62,7 +62,7 @@ internal class EndpointConnectionManager
             }
             catch (Exception ex)
             {
-                _logger.LogDebug("Could not connect to endpoint {Address}:{Port} - {Message}", address, port, ex.Message);;
+                LogEndpointConnectionFailed(_logger, address, port, ex.Message); ;
                 allExceptions.Add(ex);
             }
         }
@@ -129,4 +129,7 @@ internal class EndpointConnectionManager
             timeoutCts?.Dispose();
         }
     }
+
+    [LoggerMessage(1, LogLevel.Debug, "Could not connect to endpoint {Address}:{Port} - {Message}")]
+    private static partial void LogEndpointConnectionFailed(ILogger logger, IPAddress address, int port, string message);
 }

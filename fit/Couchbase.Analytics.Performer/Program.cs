@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Couchbase.Analytics.Performer.Internal.Connections;
 using Couchbase.Analytics.Performer.Internal.Logging;
 using Couchbase.Analytics.Performer.Internal.Services;

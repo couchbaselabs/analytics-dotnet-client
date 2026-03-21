@@ -50,13 +50,13 @@ public record QueryOptions
     /// Named parameters for the query request.
     /// Use <see cref="WithNamedParameters(Dictionary{string, object})"/> or <see cref="WithNamedParameter(string, object)"/> to create updated copies.
     /// </summary>
-    public Dictionary<string, object> NamedParameters { get; init; } = new ();
+    public Dictionary<string, object> NamedParameters { get; init; } = new();
 
     /// <summary>
     /// Positional parameters for the query request.
     /// Use <see cref="WithPositionalParameters(IEnumerable{object})"/> or <see cref="WithPositionalParameter(object)"/> to create updated copies.
     /// </summary>
-    public List<object> PositionalParameters { get; init; } = new ();
+    public List<object> PositionalParameters { get; init; } = new();
 
     /// <summary>
     /// The scan consistency for the query request.
@@ -85,7 +85,7 @@ public record QueryOptions
     /// Raw parameters passed directly to the analytics service for advanced options.
     /// Use <see cref="WithRawParameters(Dictionary{string, object})"/> or <see cref="WithRaw(string, object)"/> to create updated copies.
     /// </summary>
-    public Dictionary<string, object> Raw { get; init; } = new ();
+    public Dictionary<string, object> Raw { get; init; } = new();
 
     /// <summary>
     /// The query context (database and scope) applied to the query. Internal use.

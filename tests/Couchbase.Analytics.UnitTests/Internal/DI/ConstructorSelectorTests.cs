@@ -51,7 +51,7 @@ namespace Couchbase.AnalyticsClient.UnitTests.Internal.DI
 
         private static IServiceProvider BuildServiceProvider()
         {
-            var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            var services = new ServiceCollection();
             services.AddSingleton<DepA>();
             services.AddSingleton<DepB>();
 

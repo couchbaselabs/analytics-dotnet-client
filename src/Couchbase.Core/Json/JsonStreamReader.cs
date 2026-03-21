@@ -179,7 +179,7 @@ public sealed class JsonStreamReader : IJsonStreamReader
             // limitations when using JsonSerializerContext via ContextSystemTextJsonStreamReader. It would
             // require that the JsonSerializerContext have the type T for basic types like string, long, etc
             // registered on it via attributes, which is cumbersome for the consumer.
-            JsonElement element = JsonElement.ParseValue(ref reader);
+            var element = JsonElement.ParseValue(ref reader);
             if (element.TryGetValue<T>(out var value))
             {
                 obj = value;
@@ -322,7 +322,7 @@ public sealed class JsonStreamReader : IJsonStreamReader
                 JsonTokenType.False => false,
                 JsonTokenType.Number => ReaderHasDecimalPlace(ref reader)
                     ? reader.GetDouble()
-                    : (object) reader.GetInt64(),
+                    : (object)reader.GetInt64(),
                 _ => null
             };
         }
@@ -398,7 +398,7 @@ public sealed class JsonStreamReader : IJsonStreamReader
 
         // For other types, use the type info from the consumer-provided inner resolver
 
-        return (JsonTypeInfo<T>) Options.GetTypeInfo(typeof(T));
+        return (JsonTypeInfo<T>)Options.GetTypeInfo(typeof(T));
     }
 
     private static bool TryGetInternalTypeInfo<T>([NotNullWhen(true)] out JsonTypeInfo<T>? typeInfo)
@@ -454,28 +454,28 @@ public sealed class JsonStreamReader : IJsonStreamReader
             switch (reader.TokenType)
             {
                 case JsonTokenType.StartObject:
-                {
-                    var path = Path;
-                    if (path.Length > 0)
                     {
-                        // Only add a "." if this is not the root object
-                        path += ".";
-                    }
+                        var path = Path;
+                        if (path.Length > 0)
+                        {
+                            // Only add a "." if this is not the root object
+                            path += ".";
+                        }
 
-                    _stack.Push(new(path));
-                    break;
-                }
+                        _stack.Push(new(path));
+                        break;
+                    }
 
                 case JsonTokenType.StartArray:
                     _stack.Push(new($"{Path}[0]", 0));
                     break;
 
                 case JsonTokenType.PropertyName:
-                {
-                    var propertyName = reader.GetString()!;
-                    _stack.Push(new(Path + propertyName));
-                    break;
-                }
+                    {
+                        var propertyName = reader.GetString()!;
+                        _stack.Push(new(Path + propertyName));
+                        break;
+                    }
 
                 case JsonTokenType.EndObject:
                 case JsonTokenType.EndArray:
@@ -536,7 +536,7 @@ public sealed class JsonStreamReader : IJsonStreamReader
         _tokenType = reader.TokenType;
         Depth = reader.CurrentDepth;
 
-        _buffer.ConsumeBytes((int) reader.BytesConsumed);
+        _buffer.ConsumeBytes((int)reader.BytesConsumed);
     }
 
     private async Task ReadFromStreamAsync(CancellationToken cancellationToken)
@@ -625,15 +625,15 @@ public sealed class JsonStreamReader : IJsonStreamReader
 
         public void EnsureBufferSpace()
         {
-            var halfOfBufferLength = (uint) Buffer.Length / 2;
-            if ((uint) Offset >= halfOfBufferLength)
+            var halfOfBufferLength = (uint)Buffer.Length / 2;
+            if ((uint)Offset >= halfOfBufferLength)
             {
                 // We're more than halfway into the buffer, time to shift it back to the beginning
 
                 System.Buffer.BlockCopy(Buffer, Offset, Buffer, 0, UsedBytes);
                 Offset = 0;
             }
-            else if ((uint) (UsedBytes + Offset) > halfOfBufferLength)
+            else if ((uint)(UsedBytes + Offset) > halfOfBufferLength)
             {
                 // We've used more than half of the buffer, grow it to make more room and shift to the beginning
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -27,8 +27,6 @@
       <PackageReference Include="DnsClient" />
       <PackageReference Include="Microsoft.Extensions.Logging" />
       <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-        <PackageReference Include="System.Linq.AsyncEnumerable" />
-      <PackageReference Include="System.Net.Http.Json" />
     </ItemGroup>
 
     <ItemGroup>

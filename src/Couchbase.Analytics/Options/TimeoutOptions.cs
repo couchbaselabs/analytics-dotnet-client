@@ -32,7 +32,7 @@ public record TimeoutOptions
     /// for establishing an individual authenticated connection.
     /// <remarks>The default is 10s.</remarks>
     /// </summary>
-    public TimeoutOptions WithConnectTimeout(TimeSpan connectTimeout )
+    public TimeoutOptions WithConnectTimeout(TimeSpan connectTimeout)
     {
         ConnectTimeout = connectTimeout;
         return this;
@@ -45,7 +45,7 @@ public record TimeoutOptions
     /// timeout, since recovery may involve multiple connection attempts.
     /// <remarks>The default is 30s.</remarks>
     /// </summary>
-    public TimeoutOptions WithDispatchTimeout(TimeSpan dispatchTimeout )
+    public TimeoutOptions WithDispatchTimeout(TimeSpan dispatchTimeout)
     {
         DispatchTimeout = dispatchTimeout;
         return this;
@@ -55,7 +55,7 @@ public record TimeoutOptions
     /// Columnar query timeout.
     /// <remarks>The default is 10m.</remarks>
     /// </summary>
-    public TimeoutOptions WithQueryTimeout(TimeSpan queryTimeout )
+    public TimeoutOptions WithQueryTimeout(TimeSpan queryTimeout)
     {
         QueryTimeout = queryTimeout;
         return this;
