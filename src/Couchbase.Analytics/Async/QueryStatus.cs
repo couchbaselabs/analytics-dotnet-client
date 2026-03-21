@@ -57,11 +57,36 @@ public class QueryStatus
     /// </summary>
     public QueryMetrics? Metrics { get; }
 
+    /// <summary>
+    /// The total number of result rows, available when the query has completed successfully.
+    /// </summary>
+    public long? ResultCount { get; }
+
+    /// <summary>
+    /// Partition information from the status response, if available.
+    /// Each element contains a handle path and result count for that partition.
+    /// </summary>
+    public IReadOnlyList<QueryPartition>? Partitions { get; }
+
+    /// <summary>
+    /// Whether the result set is ordered. Available when the query has completed successfully.
+    /// </summary>
+    public bool? ResultSetOrdered { get; }
+
+    /// <summary>
+    /// The timestamp when the query was created on the server.
+    /// </summary>
+    public DateTimeOffset? CreatedAt { get; }
+
     internal QueryStatus(
         string status,
         string? resultHandle,
         IReadOnlyList<QueryError>? errors,
         QueryMetrics? metrics,
+        long? resultCount,
+        IReadOnlyList<QueryPartition>? partitions,
+        bool? resultSetOrdered,
+        DateTimeOffset? createdAt,
         IAnalyticsService analyticsService,
         IDeserializer deserializer,
         TimeSpan? requestTimeout = null)
@@ -70,6 +95,10 @@ public class QueryStatus
         ResultHandle = resultHandle;
         Errors = errors;
         Metrics = metrics;
+        ResultCount = resultCount;
+        Partitions = partitions;
+        ResultSetOrdered = resultSetOrdered;
+        CreatedAt = createdAt;
         _analyticsService = analyticsService;
         _deserializer = deserializer;
         _requestTimeout = requestTimeout;

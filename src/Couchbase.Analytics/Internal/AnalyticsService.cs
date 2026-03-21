@@ -374,7 +374,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
 
             // Parse optional fields
-            string? resultHandle = root.TryGetProperty("handle", out var handleProp) ? handleProp.GetString() : null;
+            var resultHandle = root.TryGetProperty("handle", out var handleProp) ? handleProp.GetString() : null;
 
             IReadOnlyList<QueryError>? errors = null;
             if (root.TryGetProperty("errors", out var errorsElement))
@@ -389,7 +389,19 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 metrics = JsonSerializer.Deserialize<QueryMetrics>(metricsElement.GetRawText());
             }
 
-            return new QueryStatus(status, resultHandle, errors, metrics, this, deserializer, requestTimeout);
+            // Parse additional status response fields per spec
+            long? resultCount = root.TryGetProperty("resultCount", out var rcProp) && rcProp.TryGetInt64(out var rc) ? rc : null;
+            bool? resultSetOrdered = root.TryGetProperty("resultSetOrdered", out var rsoProp) ? rsoProp.GetBoolean() : null;
+            DateTimeOffset? createdAt = root.TryGetProperty("createdAt", out var caProp) && caProp.TryGetDateTimeOffset(out var ca) ? ca : null;
+
+            IReadOnlyList<QueryPartition>? partitions = null;
+            if (root.TryGetProperty("partitions", out var partitionsElement))
+            {
+                partitions = JsonSerializer.Deserialize<QueryPartition[]>(partitionsElement.GetRawText())
+                             ?? Array.Empty<QueryPartition>();
+            }
+
+            return new QueryStatus(status, resultHandle, errors, metrics, resultCount, partitions, resultSetOrdered, createdAt, this, deserializer, requestTimeout);
         }
         catch (TaskCanceledException taskCanceledEx)
         {

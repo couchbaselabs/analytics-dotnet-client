@@ -561,7 +561,7 @@ public sealed class JsonStreamReader : IJsonStreamReader
                     _buffer.Buffer.AsMemory(writeIndex),
                     cancellationToken).ConfigureAwait(false);
 #else
-            int readBytes = await _stream.ReadAsync(
+            var readBytes = await _stream.ReadAsync(
                 _buffer.Buffer,
                 writeIndex,
                 _buffer.Buffer.Length - writeIndex,
@@ -637,8 +637,8 @@ public sealed class JsonStreamReader : IJsonStreamReader
             {
                 // We've used more than half of the buffer, grow it to make more room and shift to the beginning
 
-                byte[] oldBuffer = Buffer;
-                byte[] newBuffer = ArrayPool<byte>.Shared.Rent(oldBuffer.Length * 2);
+                var oldBuffer = Buffer;
+                var newBuffer = ArrayPool<byte>.Shared.Rent(oldBuffer.Length * 2);
 
                 System.Buffer.BlockCopy(oldBuffer, Offset, newBuffer, 0, UsedBytes);
                 Buffer = newBuffer;

@@ -28,7 +28,7 @@ public class RetryUtilsTests
     public void CalculateBackoffDelay_ReturnsExpectedRange(int attemptNumber, double expectedMinMs, double expectedMaxMs)
     {
         var delays = new List<double>();
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             var delay = RetryUtils.CalculateBackoffDelay(attemptNumber);
             delays.Add(delay.TotalMilliseconds);
@@ -65,7 +65,7 @@ public class RetryUtilsTests
         _outputHelper.WriteLine("Attempt | Base Delay | Expected Range (±25% jitter) | Actual Sample");
         _outputHelper.WriteLine("--------|------------|-------------------------------|---------------");
 
-        for (int attempt = 0; attempt <= 10; attempt++)
+        for (var attempt = 0; attempt <= 10; attempt++)
         {
             // Calculate the theoretical base delay (before jitter)
             const uint baseDelayMs = 100;
@@ -106,7 +106,7 @@ public class RetryUtilsTests
     public void CalculateBackoffDelay_MinDelayIsNonNegative()
     {
         // Test that delays are never negative (even with jitter)
-        for (int attempt = 0; attempt <= 5; attempt++)
+        for (var attempt = 0; attempt <= 5; attempt++)
         {
             var delay = RetryUtils.CalculateBackoffDelay(attempt);
 

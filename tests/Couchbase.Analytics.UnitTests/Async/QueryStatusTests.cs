@@ -3,6 +3,7 @@ using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Core.Json;
 using Xunit;
@@ -15,7 +16,9 @@ public class QueryStatusTests
     private static readonly IDeserializer StubDeserializer = new StjJsonDeserializer(new JsonSerializerOptions());
 
     private static QueryStatus Create(string status, string? resultHandle = null) =>
-        new(status, resultHandle, errors: null, metrics: null, StubService, StubDeserializer);
+        new(status, resultHandle, errors: null, metrics: null,
+            resultCount: null, partitions: null, resultSetOrdered: null, createdAt: null,
+            StubService, StubDeserializer);
 
     // ─── AreResultsReady ───
 
@@ -106,6 +109,56 @@ public class QueryStatusTests
     public void GetResults_WhenInProgress_ThrowsInvalidOperation(string status)
     {
         Assert.Throws<InvalidOperationException>(() => Create(status).GetResults());
+    }
+
+    // ─── FetchStatus stores errors without throwing ───
+
+    [Theory]
+    [InlineData("fatal")]
+    [InlineData("timeout")]
+    public void FatalOrTimeout_WithErrors_StoresErrorsWithoutThrowing(string status)
+    {
+        var errors = new[] { new QueryError(23034, "Insufficient memory", false) };
+        var qs = new QueryStatus(status, null, errors, null,
+            null, null, null, null,
+            StubService, StubDeserializer);
+
+        // QueryStatus itself should never throw — errors surface via GetResults
+        Assert.True(qs.IsError);
+        var (results, error) = qs.GetResults();
+        Assert.Null(results);
+        Assert.NotNull(error);
+        Assert.Contains("Insufficient memory", error.Message);
+    }
+
+    // ─── Additional response fields ───
+
+    [Fact]
+    public void ResponseFields_AreExposed()
+    {
+        var partitions = new[] { new QueryPartition { Handle = "/api/v1/request/result/abc/1-0/0", ResultCount = 100 } };
+        var createdAt = new DateTimeOffset(2026, 3, 16, 17, 15, 40, 850, TimeSpan.Zero);
+
+        var qs = new QueryStatus("success", "/api/v1/request/result/abc/1-0", null, null,
+            resultCount: 100, partitions: partitions, resultSetOrdered: false, createdAt: createdAt,
+            StubService, StubDeserializer);
+
+        Assert.Equal(100, qs.ResultCount);
+        Assert.Single(qs.Partitions!);
+        Assert.Equal("/api/v1/request/result/abc/1-0/0", qs.Partitions![0].Handle);
+        Assert.Equal(100, qs.Partitions![0].ResultCount);
+        Assert.False(qs.ResultSetOrdered);
+        Assert.Equal(createdAt, qs.CreatedAt);
+    }
+
+    [Fact]
+    public void ResponseFields_AreNullWhenNotProvided()
+    {
+        var qs = Create("queued");
+        Assert.Null(qs.ResultCount);
+        Assert.Null(qs.Partitions);
+        Assert.Null(qs.ResultSetOrdered);
+        Assert.Null(qs.CreatedAt);
     }
 
     // ─── Stub service ───

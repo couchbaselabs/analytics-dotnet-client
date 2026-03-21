@@ -48,7 +48,7 @@ public record ClusterOptions
     internal ConnectionString? ConnectionStringValue { get; private set; }
 
     /// <summary>
-    /// The level of log redaction to apply. Default is <see cref="Logging.RedactionLevel.None"/>.
+    /// The level of log redaction to apply. Default is <see cref="RedactionLevel.None"/>.
     /// </summary>
     public RedactionLevel RedactionLevel { get; private set; } = RedactionLevel.None;
 
