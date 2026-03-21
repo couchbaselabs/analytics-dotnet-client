@@ -28,6 +28,7 @@ using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Internal.Retry;
+using Couchbase.AnalyticsClient.Logging;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
@@ -41,13 +42,15 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 {
     private readonly ClusterOptions _clusterOptions;
     private readonly ILogger<AnalyticsService> _logger;
+    private readonly TypedRedactor _redactor;
     private readonly Uri _baseUri;
 
     public AnalyticsService(ClusterOptions clusterOptions, ICouchbaseHttpClientFactory httpClientFactory,
-        ILogger<AnalyticsService> logger) : base(httpClientFactory)
+        ILogger<AnalyticsService> logger, TypedRedactor redactor) : base(httpClientFactory)
     {
         _clusterOptions = clusterOptions;
         _logger = logger;
+        _redactor = redactor;
         HttpClientFactory = httpClientFactory;
         Uri = clusterOptions.ConnectionStringValue!.GetAnalyticsServiceUri();
         _baseUri = clusterOptions.ConnectionStringValue!.GetBaseServiceUri();
@@ -143,7 +146,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
             try
             {
-                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
+                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
 
                 var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, deserializer, errorContext, cancellationToken).ConfigureAwait(false);
 
@@ -169,7 +172,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
             catch (HttpRequestException httpRequestException)
             {
-                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId,
+                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, _redactor.UserData(statement),
                     httpRequestException.Message, stopwatch.Elapsed.TotalMilliseconds);
 
                 // "No successful connection(s)" is retryable
@@ -236,7 +239,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             try
             {
-                LogAsyncStartQueryAttempt(_logger, attempt + 1, Uri, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
+                LogAsyncStartQueryAttempt(_logger, attempt + 1, _redactor.SystemData(Uri), options.ClientContextId, _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
 
                 var request = new HttpRequestMessage(HttpMethod.Post, Uri) { Content = content };
                 var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
@@ -291,12 +294,12 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                     ? handlePath["/api/v1/request/status/".Length..]
                     : handlePath;
 
-                LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, handle, requestId, (int)response.StatusCode);
+                LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, _redactor.SystemData(handle), _redactor.SystemData(requestId), (int)response.StatusCode);
                 return new QueryHandle(handle, requestId, this, requestTimeout);
             }
             catch (HttpRequestException httpRequestException)
             {
-                LogAsyncStartQueryFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, httpRequestException.Message);
+                LogAsyncStartQueryFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, _redactor.UserData(statement), httpRequestException.Message);
 
                 if (httpRequestException.InnerException is AggregateException aggregateEx)
                 {
@@ -337,7 +340,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var statusUri = new Uri(_baseUri, $"api/v1/request/status/{handle}");
         var request = new HttpRequestMessage(HttpMethod.Get, statusUri);
 
-        LogFetchStatusRequest(_logger, statusUri, handle);
+        LogFetchStatusRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle));
 
         try
         {
@@ -363,11 +366,11 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             if (!response.IsSuccessStatusCode
                 && response.StatusCode != HttpStatusCode.NotFound)
             {
-                LogFetchStatusUnexpectedHttp(_logger, handle, (int)response.StatusCode);
+                LogFetchStatusUnexpectedHttp(_logger, _redactor.SystemData(handle), (int)response.StatusCode);
             }
             else
             {
-                LogFetchStatusResponse(_logger, handle, status, (int)response.StatusCode);
+                LogFetchStatusResponse(_logger, _redactor.SystemData(handle), status, (int)response.StatusCode);
             }
 
             // Parse optional fields
@@ -402,14 +405,14 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var resultUri = new Uri(_baseUri, $"api/v1/request/result/{handle}");
         var request = new HttpRequestMessage(HttpMethod.Get, resultUri);
 
-        LogFetchResultsRequest(_logger, resultUri, handle);
+        LogFetchResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handle));
 
         try
         {
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
                 .ConfigureAwait(false);
 
-            LogFetchResultsResponse(_logger, handle, (int)response.StatusCode);
+            LogFetchResultsResponse(_logger, _redactor.SystemData(handle), (int)response.StatusCode);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -447,7 +450,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var resultUri = new Uri(_baseUri, $"api/v1/request/result/{handle}");
         var request = new HttpRequestMessage(HttpMethod.Delete, resultUri);
 
-        LogDiscardResultsRequest(_logger, resultUri, handle);
+        LogDiscardResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handle));
 
         try
         {
@@ -457,11 +460,11 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 // Per spec: 404 means already discarded or canceled — not an error
-                LogDiscardResults404(_logger, handle);
+                LogDiscardResults404(_logger, _redactor.SystemData(handle));
                 return;
             }
 
-            LogDiscardResultsResponse(_logger, handle, (int)response.StatusCode);
+            LogDiscardResultsResponse(_logger, _redactor.SystemData(handle), (int)response.StatusCode);
 
             if (response.StatusCode != HttpStatusCode.Accepted)
             {
@@ -489,7 +492,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             })
         };
 
-        LogCancelQueryRequest(_logger, cancelUri, requestId);
+        LogCancelQueryRequest(_logger, _redactor.SystemData(cancelUri), _redactor.SystemData(requestId));
 
         try
         {
@@ -499,11 +502,11 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 // Per spec: 404 means already discarded or canceled — not an error
-                LogCancelQuery404(_logger, requestId);
+                LogCancelQuery404(_logger, _redactor.SystemData(requestId));
                 return;
             }
 
-            LogCancelQueryResponse(_logger, requestId, (int)response.StatusCode);
+            LogCancelQueryResponse(_logger, _redactor.SystemData(requestId), (int)response.StatusCode);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -534,8 +537,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     #region Logging
 
-    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)")]
-    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, double elapsed);
+    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId}: {Statement} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, Redacted<string> statement, double elapsed);
 
     [LoggerMessage(2, LogLevel.Debug, "Received retriable server errors for ClientContextId {ClientContextId}, retrying...")]
     private static partial void LogRetriableServerErrors(ILogger logger, string? clientContextId);
@@ -543,52 +546,52 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     [LoggerMessage(3, LogLevel.Debug, "HttpRequestException is not retriable, failing immediately")]
     private static partial void LogNonRetriableHttpException(ILogger logger);
 
-    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId} failed: {Error} (elapsed: {Elapsed}ms)")]
-    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, string error, double elapsed);
+    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId}: {Statement} failed: {Error} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, Redacted<string> statement, string error, double elapsed);
 
-    [LoggerMessage(5, LogLevel.Debug, "Async StartQuery attempt {Attempt} sending POST to {Uri} for {ClientContextId} (elapsed: {Elapsed}ms)")]
-    private static partial void LogAsyncStartQueryAttempt(ILogger logger, int attempt, Uri uri, string? clientContextId, double elapsed);
+    [LoggerMessage(5, LogLevel.Debug, "Async StartQuery attempt {Attempt} sending POST to {Uri} for {ClientContextId}: {Statement} (elapsed: {Elapsed}ms)")]
+    private static partial void LogAsyncStartQueryAttempt(ILogger logger, int attempt, Redacted<Uri> uri, string? clientContextId, Redacted<string> statement, double elapsed);
 
-    [LoggerMessage(6, LogLevel.Debug, "Async StartQuery attempt {Attempt} for {ClientContextId} failed: {Error}")]
-    private static partial void LogAsyncStartQueryFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, string error);
+    [LoggerMessage(6, LogLevel.Debug, "Async StartQuery attempt {Attempt} for {ClientContextId}: {Statement} failed: {Error}")]
+    private static partial void LogAsyncStartQueryFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, Redacted<string> statement, string error);
 
     [LoggerMessage(7, LogLevel.Debug, "DiscardResults returned 404 for handle {Handle} — already discarded or canceled.")]
-    private static partial void LogDiscardResults404(ILogger logger, string handle);
+    private static partial void LogDiscardResults404(ILogger logger, Redacted<string> handle);
 
     [LoggerMessage(8, LogLevel.Debug, "CancelQuery returned 404 for requestId {RequestId} — already discarded or canceled.")]
-    private static partial void LogCancelQuery404(ILogger logger, string requestId);
+    private static partial void LogCancelQuery404(ILogger logger, Redacted<string> requestId);
 
     // ── Async API: request-sent / response-received pairs ──
 
     [LoggerMessage(9, LogLevel.Debug, "Async StartQuery succeeded for {ClientContextId}. Handle={Handle}, RequestId={RequestId} (HTTP {StatusCode})")]
-    private static partial void LogAsyncStartQuerySucceeded(ILogger logger, string? clientContextId, string handle, string requestId, int statusCode);
+    private static partial void LogAsyncStartQuerySucceeded(ILogger logger, string? clientContextId, Redacted<string> handle, Redacted<string> requestId, int statusCode);
 
     [LoggerMessage(10, LogLevel.Debug, "FetchStatus sending GET to {Uri} for handle {Handle}")]
-    private static partial void LogFetchStatusRequest(ILogger logger, Uri uri, string handle);
+    private static partial void LogFetchStatusRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
 
     [LoggerMessage(11, LogLevel.Debug, "FetchStatus for handle {Handle} returned status={Status} (HTTP {StatusCode})")]
-    private static partial void LogFetchStatusResponse(ILogger logger, string handle, string status, int statusCode);
+    private static partial void LogFetchStatusResponse(ILogger logger, Redacted<string> handle, string status, int statusCode);
 
     [LoggerMessage(12, LogLevel.Warning, "FetchStatus for handle {Handle} returned unexpected HTTP {StatusCode}")]
-    private static partial void LogFetchStatusUnexpectedHttp(ILogger logger, string handle, int statusCode);
+    private static partial void LogFetchStatusUnexpectedHttp(ILogger logger, Redacted<string> handle, int statusCode);
 
     [LoggerMessage(13, LogLevel.Debug, "FetchResults sending GET to {Uri} for handle {Handle}")]
-    private static partial void LogFetchResultsRequest(ILogger logger, Uri uri, string handle);
+    private static partial void LogFetchResultsRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
 
     [LoggerMessage(14, LogLevel.Debug, "FetchResults for handle {Handle} received HTTP {StatusCode}")]
-    private static partial void LogFetchResultsResponse(ILogger logger, string handle, int statusCode);
+    private static partial void LogFetchResultsResponse(ILogger logger, Redacted<string> handle, int statusCode);
 
     [LoggerMessage(15, LogLevel.Debug, "DiscardResults sending DELETE to {Uri} for handle {Handle}")]
-    private static partial void LogDiscardResultsRequest(ILogger logger, Uri uri, string handle);
+    private static partial void LogDiscardResultsRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
 
     [LoggerMessage(16, LogLevel.Debug, "DiscardResults for handle {Handle} completed with HTTP {StatusCode}")]
-    private static partial void LogDiscardResultsResponse(ILogger logger, string handle, int statusCode);
+    private static partial void LogDiscardResultsResponse(ILogger logger, Redacted<string> handle, int statusCode);
 
     [LoggerMessage(17, LogLevel.Debug, "CancelQuery sending DELETE to {Uri} for requestId {RequestId}")]
-    private static partial void LogCancelQueryRequest(ILogger logger, Uri uri, string requestId);
+    private static partial void LogCancelQueryRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> requestId);
 
     [LoggerMessage(18, LogLevel.Debug, "CancelQuery for requestId {RequestId} completed with HTTP {StatusCode}")]
-    private static partial void LogCancelQueryResponse(ILogger logger, string requestId, int statusCode);
+    private static partial void LogCancelQueryResponse(ILogger logger, Redacted<string> requestId, int statusCode);
 
     #endregion
 }

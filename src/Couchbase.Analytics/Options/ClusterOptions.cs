@@ -26,6 +26,7 @@ using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.DI;
 using Couchbase.AnalyticsClient.Internal.Utils;
+using Couchbase.AnalyticsClient.Logging;
 using Couchbase.Core.Json;
 using Couchbase.Core.Utils;
 using Microsoft.Extensions.Logging;
@@ -45,6 +46,11 @@ public record ClusterOptions
     public IDeserializer Deserializer { get; private set; } = new StjJsonDeserializer();
 
     internal ConnectionString? ConnectionStringValue { get; private set; }
+
+    /// <summary>
+    /// The level of log redaction to apply. Default is <see cref="Logging.RedactionLevel.None"/>.
+    /// </summary>
+    public RedactionLevel RedactionLevel { get; private set; } = RedactionLevel.None;
 
     private ILoggerFactory? Logging { get; set; }
 
@@ -99,12 +105,23 @@ public record ClusterOptions
         return this with { Deserializer = deserializer };
     }
 
+    /// <summary>
+    /// Set the <see cref="Logging.RedactionLevel"/> to use for log redaction.
+    /// </summary>
+    /// <param name="redactionLevel">The redaction level.</param>
+    /// <returns>A copy of this <see cref="ClusterOptions"/> object for method chaining.</returns>
+    public ClusterOptions WithRedactionLevel(RedactionLevel redactionLevel)
+    {
+        return this with { RedactionLevel = redactionLevel };
+    }
+
     private readonly IDictionary<Type, IServiceFactory> _services = DefaultServices.GetDefaultServices();
 
     internal ICouchbaseServiceProvider BuildServiceProvider(ICredential? credential = null)
     {
         this.AddClusterService(this);
         this.AddClusterService(Logging ??= new NullLoggerFactory());
+        this.AddClusterService(new TypedRedactor(RedactionLevel));
         if (credential is not null) this.AddClusterService(credential);
         return new CouchbaseServiceProvider(_services);
     }
