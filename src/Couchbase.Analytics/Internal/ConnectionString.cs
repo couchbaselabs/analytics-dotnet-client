@@ -151,6 +151,20 @@ internal class ConnectionString
         }.Uri;
     }
 
+    /// <summary>
+    /// Returns the base service URI (scheme + host + port) without any path.
+    /// Used for building dynamic paths for the async query API endpoints.
+    /// </summary>
+    internal Uri GetBaseServiceUri()
+    {
+        return new UriBuilder
+        {
+            Scheme = Scheme.ToString(),
+            Host = Hosts.First().Host,
+            Port = Hosts.First().Port ?? (Scheme == Scheme.Https ? HttpsPort : HttpPort),
+        }.Uri;
+    }
+
     public bool TryGetParameter(string key, out object parameter)
     {
         if (Parameters.TryGetValue(key, out var value))

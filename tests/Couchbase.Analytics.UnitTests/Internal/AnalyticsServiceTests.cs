@@ -3,6 +3,7 @@ using System.Text;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
+using Couchbase.AnalyticsClient.Logging;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.Core.Json;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,8 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
 
         const string ExecuteQueryPath = "/api/v1/request";
         var expected = new UriBuilder(_endPoint);
@@ -74,7 +76,8 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
 
         var queryOptions = new QueryOptions { AsStreaming = false };
 
@@ -110,7 +113,8 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
 
         var queryOptions = new QueryOptions { AsStreaming = false };
 
@@ -142,7 +146,8 @@ public class AnalyticsServiceTests
         var service = new AnalyticsService(
             _clusterOptions,
             _httpClientFactoryMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
 
         var queryOptions = new QueryOptions { AsStreaming = true };
 

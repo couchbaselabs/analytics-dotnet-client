@@ -150,7 +150,7 @@ internal static class JsonElementExtensions
 
                 if (typeof(T) == typeof(char) || typeof(T) == typeof(char?))
                 {
-                    string str = element.GetString()!;
+                    var str = element.GetString()!;
                     if (str.Length == 1)
                     {
                         value = (T)(object)str[0];

@@ -19,13 +19,18 @@
  * ************************************************************/
 #endregion
 
+using System.Net;
 using System.Text;
+using System.Text.Json;
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Internal.Retry;
+using Couchbase.AnalyticsClient.Logging;
 using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Core.Json;
 using Couchbase.Core.Utils;
@@ -37,17 +42,25 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 {
     private readonly ClusterOptions _clusterOptions;
     private readonly ILogger<AnalyticsService> _logger;
+    private readonly TypedRedactor _redactor;
+    private readonly Uri _baseUri;
 
     public AnalyticsService(ClusterOptions clusterOptions, ICouchbaseHttpClientFactory httpClientFactory,
-        ILogger<AnalyticsService> logger) : base(httpClientFactory)
+        ILogger<AnalyticsService> logger, TypedRedactor redactor) : base(httpClientFactory)
     {
         _clusterOptions = clusterOptions;
         _logger = logger;
+        _redactor = redactor;
         HttpClientFactory = httpClientFactory;
         Uri = clusterOptions.ConnectionStringValue!.GetAnalyticsServiceUri();
+        _baseUri = clusterOptions.ConnectionStringValue!.GetBaseServiceUri();
     }
 
     public Uri Uri { get; }
+
+    // ────────────────────────────────────────────────────────────
+    // Synchronous query API (existing)
+    // ────────────────────────────────────────────────────────────
 
     public async Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default)
     {
@@ -133,7 +146,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
             try
             {
-                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, stopwatch.Elapsed.TotalMilliseconds);
+                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
 
                 var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, deserializer, errorContext, cancellationToken).ConfigureAwait(false);
 
@@ -159,7 +172,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
             catch (HttpRequestException httpRequestException)
             {
-                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId,
+                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, _redactor.UserData(statement),
                     httpRequestException.Message, stopwatch.Elapsed.TotalMilliseconds);
 
                 // "No successful connection(s)" is retryable
@@ -193,6 +206,335 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         throw lastException ?? ThrowTooManyRetries(errorContext);
     }
 
+    // ────────────────────────────────────────────────────────────
+    // Async server request API (new)
+    // ────────────────────────────────────────────────────────────
+
+    public async Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions options, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = LightweightStopwatch.StartNew();
+        var queryTimeout = options.QueryTimeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
+        var requestTimeout = options.RequestTimeout ?? _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var deserializer = options.Deserializer ?? _clusterOptions.Deserializer;
+
+        var errorContext = new ErrorContext(options.ClientContextId, stopwatch, queryTimeout);
+        Exception? lastException = null;
+
+        var body = options.GetFormValuesAsJson(statement);
+        using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
+        var httpClient = CreateHttpClient(requestTimeout);
+
+        var maxRetries = options.MaxRetries ?? _clusterOptions.MaxRetries;
+        var attempt = -1;
+
+        while (attempt < maxRetries)
+        {
+            attempt++;
+            errorContext.RetryAttempts = attempt;
+
+            if (stopwatch.Elapsed > queryTimeout)
+            {
+                ThrowGlobalTimeout(lastException, stopwatch.Elapsed, errorContext);
+            }
+
+            try
+            {
+                LogAsyncStartQueryAttempt(_logger, attempt + 1, _redactor.SystemData(Uri), options.ClientContextId, _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
+
+                var request = new HttpRequestMessage(HttpMethod.Post, Uri) { Content = content };
+                var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                    .ConfigureAwait(false);
+
+                errorContext.StatusCode = response.StatusCode;
+
+                var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                var json = JsonDocument.Parse(responseBody);
+                var root = json.RootElement;
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    // Try to parse errors from the response
+                    if (root.TryGetProperty("errors", out var errorsElement))
+                    {
+                        var errors = JsonSerializer.Deserialize<QueryError[]>(errorsElement.GetRawText())
+                                     ?? Array.Empty<QueryError>();
+
+                        if (AnalyticsErrorMapper.AreErrorsRetriable(errors))
+                        {
+                            lastException = AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                            await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
+                            continue;
+                        }
+
+                        throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                    }
+
+                    // 503 is retriable
+                    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    {
+                        lastException = new AnalyticsException("Service temporarily unavailable.", errorContext);
+                        await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    throw new AnalyticsException($"HTTP {(int)response.StatusCode} {response.StatusCode}", errorContext);
+                }
+
+                // Parse the successful response
+                var requestId = root.TryGetProperty("requestID", out var reqIdProp) ? reqIdProp.GetString() : null;
+                var handlePath = root.TryGetProperty("handle", out var handleProp) ? handleProp.GetString() : null;
+
+                if (string.IsNullOrWhiteSpace(requestId) || string.IsNullOrWhiteSpace(handlePath))
+                {
+                    throw new AnalyticsException("Server response is missing required 'requestID' or 'handle' fields.", errorContext);
+                }
+
+                // Strip the leading path prefix from the handle
+                var handle = handlePath.StartsWith("/api/v1/request/status/")
+                    ? handlePath["/api/v1/request/status/".Length..]
+                    : handlePath;
+
+                LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, _redactor.SystemData(handle), _redactor.SystemData(requestId), (int)response.StatusCode);
+                return new QueryHandle(handle, requestId, this, requestTimeout);
+            }
+            catch (HttpRequestException httpRequestException)
+            {
+                LogAsyncStartQueryFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, _redactor.UserData(statement), httpRequestException.Message);
+
+                if (httpRequestException.InnerException is AggregateException aggregateEx)
+                {
+                    lastException = new AnalyticsException("No connections could be established to any of the endpoints.", aggregateEx, errorContext);
+                }
+
+                if (!AnalyticsErrorMapper.IsRetriableHttpException(httpRequestException))
+                {
+                    throw;
+                }
+
+                await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException taskCanceledEx)
+            {
+                throw new AnalyticsTimeoutException("The async StartQuery request was canceled.", taskCanceledEx, errorContext);
+            }
+            catch (OperationCanceledException)
+            {
+                if (stopwatch.Elapsed > queryTimeout)
+                {
+                    ThrowGlobalTimeout(lastException, stopwatch.Elapsed, errorContext);
+                }
+
+                await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        throw lastException ?? ThrowTooManyRetries(errorContext);
+    }
+
+    public async Task<QueryStatus> FetchStatusAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+    {
+        var timeout = requestTimeout ?? _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var httpClient = CreateHttpClient(timeout);
+        var deserializer = _clusterOptions.Deserializer;
+
+        var statusUri = new Uri(_baseUri, $"api/v1/request/status/{handle}");
+        var request = new HttpRequestMessage(HttpMethod.Get, statusUri);
+
+        LogFetchStatusRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle));
+
+        try
+        {
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new AnalyticsException("Query has been discarded or canceled (404 Not Found).");
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var json = JsonDocument.Parse(responseBody);
+            var root = json.RootElement;
+
+            var status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                throw new AnalyticsException("Server response is missing required 'status' field.");
+            }
+
+            if (!response.IsSuccessStatusCode
+                && response.StatusCode != HttpStatusCode.NotFound)
+            {
+                LogFetchStatusUnexpectedHttp(_logger, _redactor.SystemData(handle), (int)response.StatusCode);
+            }
+            else
+            {
+                LogFetchStatusResponse(_logger, _redactor.SystemData(handle), status, (int)response.StatusCode);
+            }
+
+            // Parse optional fields
+            var resultHandle = root.TryGetProperty("handle", out var handleProp) ? handleProp.GetString() : null;
+
+            IReadOnlyList<QueryError>? errors = null;
+            if (root.TryGetProperty("errors", out var errorsElement))
+            {
+                errors = JsonSerializer.Deserialize<QueryError[]>(errorsElement.GetRawText())
+                         ?? Array.Empty<QueryError>();
+            }
+
+            QueryMetrics? metrics = null;
+            if (root.TryGetProperty("metrics", out var metricsElement))
+            {
+                metrics = JsonSerializer.Deserialize<QueryMetrics>(metricsElement.GetRawText());
+            }
+
+            // Parse additional status response fields per spec
+            long? resultCount = root.TryGetProperty("resultCount", out var rcProp) && rcProp.TryGetInt64(out var rc) ? rc : null;
+            bool? resultSetOrdered = root.TryGetProperty("resultSetOrdered", out var rsoProp) ? rsoProp.GetBoolean() : null;
+            DateTimeOffset? createdAt = root.TryGetProperty("createdAt", out var caProp) && caProp.TryGetDateTimeOffset(out var ca) ? ca : null;
+
+            IReadOnlyList<QueryPartition>? partitions = null;
+            if (root.TryGetProperty("partitions", out var partitionsElement))
+            {
+                partitions = JsonSerializer.Deserialize<QueryPartition[]>(partitionsElement.GetRawText())
+                             ?? Array.Empty<QueryPartition>();
+            }
+
+            return new QueryStatus(status, resultHandle, errors, metrics, resultCount, partitions, resultSetOrdered, createdAt, this, deserializer, requestTimeout);
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            throw new AnalyticsTimeoutException("The FetchStatus request was canceled.", taskCanceledEx);
+        }
+    }
+
+    public async Task<IQueryResult> FetchResultsAsync(string handle, TimeSpan? requestTimeout, IDeserializer deserializer, CancellationToken cancellationToken = default)
+    {
+        var timeout = requestTimeout ?? _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var httpClient = CreateHttpClient(timeout);
+
+        var resultUri = new Uri(_baseUri, $"api/v1/request/result/{handle}");
+        var request = new HttpRequestMessage(HttpMethod.Get, resultUri);
+
+        LogFetchResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handle));
+
+        try
+        {
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            LogFetchResultsResponse(_logger, _redactor.SystemData(handle), (int)response.StatusCode);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new AnalyticsException("Query results have been discarded or canceled (404 Not Found).");
+            }
+
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+            // Reuse the existing StreamingAnalyticsResult - the response format is identical to sync queries
+            var result = new StreamingAnalyticsResult(stream, deserializer, httpClient);
+            result.StatusCode = response.StatusCode;
+
+            await result.InitializeAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
+                errorContext.StatusCode = response.StatusCode;
+                throw AnalyticsErrorMapper.MapHttpErrorCode(result, errorContext);
+            }
+
+            return result;
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            throw new AnalyticsTimeoutException("The FetchResults request was canceled.", taskCanceledEx);
+        }
+    }
+
+    public async Task DiscardResultsAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+    {
+        var timeout = requestTimeout ?? _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var httpClient = CreateHttpClient(timeout);
+
+        var resultUri = new Uri(_baseUri, $"api/v1/request/result/{handle}");
+        var request = new HttpRequestMessage(HttpMethod.Delete, resultUri);
+
+        LogDiscardResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handle));
+
+        try
+        {
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                // Per spec: 404 means already discarded or canceled — not an error
+                LogDiscardResults404(_logger, _redactor.SystemData(handle));
+                return;
+            }
+
+            LogDiscardResultsResponse(_logger, _redactor.SystemData(handle), (int)response.StatusCode);
+
+            if (response.StatusCode != HttpStatusCode.Accepted)
+            {
+                throw new AnalyticsException($"Unexpected response from DiscardResults: HTTP {(int)response.StatusCode} {response.StatusCode}");
+            }
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            throw new AnalyticsTimeoutException("The DiscardResults request was canceled.", taskCanceledEx);
+        }
+    }
+
+    public async Task CancelQueryAsync(string requestId, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+    {
+        var timeout = requestTimeout ?? _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var httpClient = CreateHttpClient(timeout);
+
+        var cancelUri = new Uri(_baseUri, "api/v1/active_requests");
+        var request = new HttpRequestMessage(HttpMethod.Delete, cancelUri)
+        {
+            // Per spec: content-type must be application/x-www-form-urlencoded
+            Content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("request_id", requestId)
+            })
+        };
+
+        LogCancelQueryRequest(_logger, _redactor.SystemData(cancelUri), _redactor.SystemData(requestId));
+
+        try
+        {
+            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                // Per spec: 404 means already discarded or canceled — not an error
+                LogCancelQuery404(_logger, _redactor.SystemData(requestId));
+                return;
+            }
+
+            LogCancelQueryResponse(_logger, _redactor.SystemData(requestId), (int)response.StatusCode);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new AnalyticsException($"Unexpected response from CancelQuery: HTTP {(int)response.StatusCode} {response.StatusCode}");
+            }
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            throw new AnalyticsTimeoutException("The CancelQuery request was canceled.", taskCanceledEx);
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // Shared helpers
+    // ────────────────────────────────────────────────────────────
+
     private static void ThrowGlobalTimeout(Exception? lastException, TimeSpan elapsed, ErrorContext? errorContext = null)
     {
         var timeoutException = new AnalyticsTimeoutException(
@@ -207,8 +549,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     #region Logging
 
-    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId} (elapsed: {Elapsed}ms)")]
-    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, double elapsed);
+    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId}: {Statement} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, Redacted<string> statement, double elapsed);
 
     [LoggerMessage(2, LogLevel.Debug, "Received retriable server errors for ClientContextId {ClientContextId}, retrying...")]
     private static partial void LogRetriableServerErrors(ILogger logger, string? clientContextId);
@@ -216,8 +558,52 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     [LoggerMessage(3, LogLevel.Debug, "HttpRequestException is not retriable, failing immediately")]
     private static partial void LogNonRetriableHttpException(ILogger logger);
 
-    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId} failed: {Error} (elapsed: {Elapsed}ms)")]
-    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, string error, double elapsed);
+    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId}: {Statement} failed: {Error} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, Redacted<string> statement, string error, double elapsed);
+
+    [LoggerMessage(5, LogLevel.Debug, "Async StartQuery attempt {Attempt} sending POST to {Uri} for {ClientContextId}: {Statement} (elapsed: {Elapsed}ms)")]
+    private static partial void LogAsyncStartQueryAttempt(ILogger logger, int attempt, Redacted<Uri> uri, string? clientContextId, Redacted<string> statement, double elapsed);
+
+    [LoggerMessage(6, LogLevel.Debug, "Async StartQuery attempt {Attempt} for {ClientContextId}: {Statement} failed: {Error}")]
+    private static partial void LogAsyncStartQueryFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, Redacted<string> statement, string error);
+
+    [LoggerMessage(7, LogLevel.Debug, "DiscardResults returned 404 for handle {Handle} — already discarded or canceled.")]
+    private static partial void LogDiscardResults404(ILogger logger, Redacted<string> handle);
+
+    [LoggerMessage(8, LogLevel.Debug, "CancelQuery returned 404 for requestId {RequestId} — already discarded or canceled.")]
+    private static partial void LogCancelQuery404(ILogger logger, Redacted<string> requestId);
+
+    // ── Async API: request-sent / response-received pairs ──
+
+    [LoggerMessage(9, LogLevel.Debug, "Async StartQuery succeeded for {ClientContextId}. Handle={Handle}, RequestId={RequestId} (HTTP {StatusCode})")]
+    private static partial void LogAsyncStartQuerySucceeded(ILogger logger, string? clientContextId, Redacted<string> handle, Redacted<string> requestId, int statusCode);
+
+    [LoggerMessage(10, LogLevel.Debug, "FetchStatus sending GET to {Uri} for handle {Handle}")]
+    private static partial void LogFetchStatusRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
+
+    [LoggerMessage(11, LogLevel.Debug, "FetchStatus for handle {Handle} returned status={Status} (HTTP {StatusCode})")]
+    private static partial void LogFetchStatusResponse(ILogger logger, Redacted<string> handle, string status, int statusCode);
+
+    [LoggerMessage(12, LogLevel.Warning, "FetchStatus for handle {Handle} returned unexpected HTTP {StatusCode}")]
+    private static partial void LogFetchStatusUnexpectedHttp(ILogger logger, Redacted<string> handle, int statusCode);
+
+    [LoggerMessage(13, LogLevel.Debug, "FetchResults sending GET to {Uri} for handle {Handle}")]
+    private static partial void LogFetchResultsRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
+
+    [LoggerMessage(14, LogLevel.Debug, "FetchResults for handle {Handle} received HTTP {StatusCode}")]
+    private static partial void LogFetchResultsResponse(ILogger logger, Redacted<string> handle, int statusCode);
+
+    [LoggerMessage(15, LogLevel.Debug, "DiscardResults sending DELETE to {Uri} for handle {Handle}")]
+    private static partial void LogDiscardResultsRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
+
+    [LoggerMessage(16, LogLevel.Debug, "DiscardResults for handle {Handle} completed with HTTP {StatusCode}")]
+    private static partial void LogDiscardResultsResponse(ILogger logger, Redacted<string> handle, int statusCode);
+
+    [LoggerMessage(17, LogLevel.Debug, "CancelQuery sending DELETE to {Uri} for requestId {RequestId}")]
+    private static partial void LogCancelQueryRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> requestId);
+
+    [LoggerMessage(18, LogLevel.Debug, "CancelQuery for requestId {RequestId} completed with HTTP {StatusCode}")]
+    private static partial void LogCancelQueryResponse(ILogger logger, Redacted<string> requestId, int statusCode);
 
     #endregion
 }
