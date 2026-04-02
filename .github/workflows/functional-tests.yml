@@ -79,7 +79,7 @@ jobs:
         run: |
           TAG=${INPUT_TAG}
 
-          EA_VERSION=2.0.1-1231
+          EA_VERSION=2.2.0-1166
 
           cat > cluster.yml <<'YAML'
           columnar: true
