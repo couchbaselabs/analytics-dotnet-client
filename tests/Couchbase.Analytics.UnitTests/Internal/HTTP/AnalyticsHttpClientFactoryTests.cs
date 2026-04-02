@@ -10,16 +10,17 @@ namespace Couchbase.AnalyticsClient.UnitTests.Internal.HTTP;
 
 public class CouchbaseHttpClientFactoryTest
 {
+    private static Func<ICredential> TestCredentialProvider() => () => Credential.Create("test", "test");
+
     [Fact]
     public void Constructor_ValidParameters_CreatesInstance()
     {
         // Arrange
-        var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions().WithSecurityOptions(new SecurityOptions().WithDisableCertificateVerification(true));
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
         // Act
-        var factory = new CouchbaseHttpClientFactory(credential, options, logger);
+        var factory = new CouchbaseHttpClientFactory(TestCredentialProvider(), options, logger);
 
         // Assert
         Assert.NotNull(factory);
@@ -29,32 +30,29 @@ public class CouchbaseHttpClientFactoryTest
     public void Constructor_NullSecurityOptions_ThrowsArgumentNullException()
     {
         // Arrange
-        var credential = new Mock<ICredential>().Object;
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, null!, logger));
+        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(TestCredentialProvider(), null!, logger));
     }
 
     [Fact]
     public void Constructor_NullLogger_ThrowsArgumentNullException()
     {
         // Arrange
-        var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(credential, options, null!));
+        Assert.Throws<ArgumentNullException>(() => new CouchbaseHttpClientFactory(TestCredentialProvider(), options, null!));
     }
 
     [Fact]
     public void Create_ReturnsHttpClientInstance()
     {
         // Arrange
-        var credential = new Credential("Administrator", "password");
         var options = new ClusterOptions().WithSecurityOptions(new SecurityOptions().WithSslProtocols(SslProtocols.Tls12));
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, options, logger);
+        var factory = new CouchbaseHttpClientFactory(TestCredentialProvider(), options, logger);
 
         // Act
         var httpClient = factory.Create();
@@ -68,13 +66,12 @@ public class CouchbaseHttpClientFactoryTest
     public void CreateClientHandler_DisableServerCertificateValidation_SetsValidationCallback()
     {
         // Arrange
-        var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions().WithSecurityOptions(new SecurityOptions()
             .WithDisableCertificateVerification(true)
             .WithTrustOnlyCapella());
 
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, options, logger);
+        var factory = new CouchbaseHttpClientFactory(TestCredentialProvider(), options, logger);
 
         // Act
         var handler = factory.Create().DefaultRequestHeaders;
@@ -87,10 +84,9 @@ public class CouchbaseHttpClientFactoryTest
     public void DefaultCompletionOption_HasExpectedValue()
     {
         // Arrange
-        var credential = new Mock<ICredential>().Object;
         var options = new ClusterOptions();
         var logger = new Mock<ILogger<CouchbaseHttpClientFactory>>().Object;
-        var factory = new CouchbaseHttpClientFactory(credential, options, logger);
+        var factory = new CouchbaseHttpClientFactory(TestCredentialProvider(), options, logger);
 
         // Act
         var completionOption = factory.DefaultCompletionOption;

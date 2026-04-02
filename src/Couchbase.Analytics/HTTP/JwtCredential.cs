@@ -24,17 +24,32 @@ using System.Net.Http.Headers;
 namespace Couchbase.AnalyticsClient.HTTP;
 
 /// <summary>
-/// Represents a credential used to authenticate HTTP requests to the analytics service.
+/// A JSON Web Token (JWT) credential that authenticates using the HTTP Bearer scheme.
 /// </summary>
-/// <remarks>
-/// Implementations should pre-compute the <see cref="AuthorizationHeader"/> value at
-/// construction time for efficiency, since credential instances are immutable.
-/// </remarks>
-public interface ICredential
+/// <param name="Token">The JWT token string.</param>
+public sealed record JwtCredential(string Token) : ICredential
 {
+    /// <inheritdoc />
+    public AuthenticationHeaderValue AuthorizationHeader { get; } =
+        new("Bearer", Token);
+
     /// <summary>
-    /// The Authorization header value for this credential, or <c>null</c> if
-    /// authentication is handled outside HTTP headers (e.g. mTLS).
+    /// Creates a JWT credential.
     /// </summary>
-    AuthenticationHeaderValue? AuthorizationHeader { get; }
+    /// <param name="token">The JWT token string.</param>
+    /// <returns>A <see cref="JwtCredential"/> instance.</returns>
+    public static JwtCredential Create(string token)
+    {
+        return new(token);
+    }
+
+    /// <summary>
+    /// Excludes the full token and <see cref="AuthorizationHeader"/> from the record's
+    /// ToString output to prevent leaking credentials into logs.
+    /// </summary>
+    private bool PrintMembers(System.Text.StringBuilder builder)
+    {
+        builder.Append($"Token = <{Token.Length} chars>");
+        return true;
+    }
 }

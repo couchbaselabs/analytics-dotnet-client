@@ -19,44 +19,38 @@
  * ************************************************************/
 #endregion
 
-using System.Net.Http.Headers;
-using System.Text;
 using Couchbase.AnalyticsClient.HTTP;
 
 namespace Couchbase.AnalyticsClient.Internal.HTTP;
 
+/// <summary>
+/// A delegating handler that sets the Authorization header on outgoing HTTP requests
+/// based on the current <see cref="ICredential"/>.
+/// </summary>
+/// <remarks>
+/// The credential is resolved via a <see cref="Func{ICredential}"/> on every request,
+/// enabling credential hot-swap at runtime via <see cref="Cluster.UpdateCredential"/>.
+/// </remarks>
 internal class AuthenticationHandler : DelegatingHandler
 {
-    private const string BasicScheme = "Basic";
-    private readonly string? _headerValue;
+    private readonly Func<ICredential> _credentialProvider;
 
-    public AuthenticationHandler(HttpMessageHandler innerHandler)
-        : this(innerHandler, "default", string.Empty)
-    {
-    }
-
-    public AuthenticationHandler(HttpMessageHandler innerHandler, ICredential credential)
-        : this(innerHandler, credential.Username ?? "default", credential.Password ?? string.Empty)
-    {
-    }
-
-    public AuthenticationHandler(HttpMessageHandler innerHandler, string username, string password)
+    /// <summary>
+    /// Creates an <see cref="AuthenticationHandler"/> that resolves credentials from the given provider.
+    /// </summary>
+    /// <param name="innerHandler">The inner HTTP handler.</param>
+    /// <param name="credentialProvider">A function that returns the current credential.</param>
+    public AuthenticationHandler(HttpMessageHandler innerHandler, Func<ICredential> credentialProvider)
         : base(innerHandler)
     {
-        if (!string.IsNullOrEmpty(username))
-        {
-            // Just build once for speed
-            _headerValue = Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Concat(username, ":", password)));
-        }
+        _credentialProvider = credentialProvider ?? throw new ArgumentNullException(nameof(credentialProvider));
     }
 
+    /// <inheritdoc />
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (_headerValue != null)
-        {
-            request.Headers.Authorization = new AuthenticationHeaderValue(BasicScheme, _headerValue);
-        }
-
+        var credential = _credentialProvider();
+        request.Headers.Authorization = credential.AuthorizationHeader;
         return base.SendAsync(request, cancellationToken);
     }
 }

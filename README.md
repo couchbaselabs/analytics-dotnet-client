@@ -43,6 +43,15 @@ var cluster = Cluster.Create(
 );
 ```
 
+Or authenticate with a JWT:
+
+```csharp
+var cluster = Cluster.Create(
+    connectionString: "https://analytics.my-couchbase.example.com:18095",
+    credential: JwtCredential.Create("xxxxx.yyyyy.zzzzz")
+);
+```
+
 > [!NOTE]
 > Use `http://host:8095` for non-TLS connections, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
 >

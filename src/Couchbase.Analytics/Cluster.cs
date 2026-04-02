@@ -32,14 +32,14 @@ namespace Couchbase.AnalyticsClient;
 
 public class Cluster : IDisposable
 {
-    private readonly Credential _credential;
+    private volatile ICredential _credential;
     private readonly ClusterOptions _clusterOptions;
     private readonly ILogger<Cluster> _logger;
     private readonly ICouchbaseServiceProvider _serviceProvider;
     private readonly LazyService<IAnalyticsService> _analyticsService;
     private readonly ConcurrentDictionary<string, Database> _databases = new();
 
-    private Cluster(Credential credential, ClusterOptions clusterOptions)
+    private Cluster(ICredential credential, ClusterOptions clusterOptions)
     {
         if (string.IsNullOrWhiteSpace(clusterOptions.ConnectionString))
         {
@@ -48,11 +48,10 @@ public class Cluster : IDisposable
 
         _credential = credential ?? throw new ArgumentNullException(nameof(credential));
         _clusterOptions = clusterOptions ?? throw new ArgumentNullException(nameof(clusterOptions));
-        _serviceProvider = clusterOptions.BuildServiceProvider(_credential);
+        _serviceProvider = clusterOptions.BuildServiceProvider(() => _credential);
 
         _logger = _serviceProvider.GetRequiredService<ILogger<Cluster>>();
         _analyticsService = new LazyService<IAnalyticsService>(_serviceProvider);
-
     }
 
     /// <summary>
@@ -63,7 +62,7 @@ public class Cluster : IDisposable
     /// <param name="configureOptions">Action to configure cluster options</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
-    public static Cluster Create(string connectionString, Credential credential, Func<ClusterOptions, ClusterOptions> configureOptions)
+    public static Cluster Create(string connectionString, ICredential credential, Func<ClusterOptions, ClusterOptions> configureOptions)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
@@ -87,7 +86,7 @@ public class Cluster : IDisposable
     /// <param name="clusterOptions">The cluster options to use for the cluster</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
-    public static Cluster Create(string connectionString, Credential credential, ClusterOptions clusterOptions)
+    public static Cluster Create(string connectionString, ICredential credential, ClusterOptions clusterOptions)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
@@ -106,7 +105,7 @@ public class Cluster : IDisposable
     /// <param name="credential">The credentials to use for authentication</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentException">Thrown when the connection string is null or empty, or the credential is null</exception>
-    public static Cluster Create(string connectionString, Credential credential)
+    public static Cluster Create(string connectionString, ICredential credential)
     {
         return Create(connectionString, credential, new ClusterOptions());
     }
@@ -118,12 +117,57 @@ public class Cluster : IDisposable
     /// <param name="clusterOptions">Pre-configured cluster options with connection string</param>
     /// <returns>A Cluster instance</returns>
     /// <exception cref="ArgumentNullException">Thrown when the credential or cluster options are null</exception>
-    public static Cluster Create(Credential credential, ClusterOptions clusterOptions)
+    public static Cluster Create(ICredential credential, ClusterOptions clusterOptions)
     {
         ArgumentNullException.ThrowIfNull(credential);
         ArgumentNullException.ThrowIfNull(clusterOptions);
 
         return new Cluster(credential, clusterOptions);
+    }
+
+    // ── Binary-compatible forwarding overloads ──────────────────────────
+    // These preserve the exact method signatures from before the ICredential
+    // widening, so that existing compiled code continues to resolve correctly
+    // at runtime without recompilation.
+
+    /// <summary>
+    /// Creates a cluster with a connection string, username/password credential, and an options builder.
+    /// </summary>
+    public static Cluster Create(string connectionString, Credential credential, Func<ClusterOptions, ClusterOptions> configureOptions)
+        => Create(connectionString, (ICredential)credential, configureOptions);
+
+    /// <summary>
+    /// Creates a cluster with a connection string, username/password credential, and cluster options.
+    /// </summary>
+    public static Cluster Create(string connectionString, Credential credential, ClusterOptions clusterOptions)
+        => Create(connectionString, (ICredential)credential, clusterOptions);
+
+    /// <summary>
+    /// Creates a cluster with a connection string and username/password credential.
+    /// </summary>
+    public static Cluster Create(string connectionString, Credential credential)
+        => Create(connectionString, (ICredential)credential);
+
+    /// <summary>
+    /// Creates a cluster with a username/password credential and cluster options.
+    /// </summary>
+    public static Cluster Create(Credential credential, ClusterOptions clusterOptions)
+        => Create((ICredential)credential, clusterOptions);
+
+    /// <summary>
+    /// Replaces the credential used for all subsequent HTTP requests.
+    /// Thread-safe. The new credential must be the same type as the current credential.
+    /// </summary>
+    /// <param name="newCredential">The new credential to use.</param>
+    /// <exception cref="InvalidOperationException">Thrown if the new credential is a different type than the current one.</exception>
+    public void UpdateCredential(ICredential newCredential)
+    {
+        ArgumentNullException.ThrowIfNull(newCredential);
+        var current = _credential;
+        if (current.GetType() != newCredential.GetType())
+            throw new InvalidOperationException(
+                $"Cannot change credential type from {current.GetType().Name} to {newCredential.GetType().Name}.");
+        _credential = newCredential;
     }
 
     public Task<IQueryResult> ExecuteQueryAsync(string statement, Func<QueryOptions, QueryOptions> options, CancellationToken cancellationToken = default)

@@ -33,17 +33,17 @@ namespace Couchbase.AnalyticsClient.Internal.HTTP;
 
 internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 {
-    private readonly ICredential _credential;
+    private readonly Func<ICredential> _credentialProvider;
     private readonly SecurityOptions _securityOptions;
     private readonly TimeoutOptions _timeoutOptions;
     private readonly ILogger<CouchbaseHttpClientFactory> _logger;
     private readonly AuthenticationHandler _sharedHandler;
 
-    public CouchbaseHttpClientFactory(ICredential credential, ClusterOptions options,
+    public CouchbaseHttpClientFactory(Func<ICredential> credentialProvider, ClusterOptions options,
         ILogger<CouchbaseHttpClientFactory> logger)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _credential = credential;
+        _credentialProvider = credentialProvider ?? throw new ArgumentNullException(nameof(credentialProvider));
         _securityOptions = options.SecurityOptions ?? throw new ArgumentNullException(nameof(options));
         _timeoutOptions = options.TimeoutOptions ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -61,7 +61,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     /// - Server certificate validation callback based on the configured trust settings
     /// </returns>
     /// <remarks>
-    /// The handler is not configured for Certificate Based Authentication. A username/password credential is still required.
+    /// The handler is not configured for Certificate Based Authentication.
     /// </remarks>
     private AuthenticationHandler CreateClientHandler()
     {
@@ -72,7 +72,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 
         handler.SslOptions.RemoteCertificateValidationCallback =
             CertificateValidation.CreateRemoteCertificateValidationCallback(_securityOptions, _logger);
-        return new AuthenticationHandler(handler, _credential);
+        return new AuthenticationHandler(handler, _credentialProvider);
     }
 
     private void ConfigureClientCertificates(SocketsHttpHandler handler)
