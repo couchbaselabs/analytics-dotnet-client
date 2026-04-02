@@ -89,6 +89,7 @@ jobs:
           docker:
             load-balancer: true
             use-dino-certs: true
+            jwt: true
           YAML
 
           # Substitute shell vars into YAML
@@ -102,6 +103,16 @@ jobs:
           echo "CBDINO_USER=Administrator" >> "$GITHUB_ENV"
           echo "CBDINO_PASS=password" >> "$GITHUB_ENV"
 
+      - name: Create JWT test user and generate token
+        run: |
+          echo "Creating jwt-test-user on cluster $CBDINO_CLUSTER_ID"
+          cbdinocluster -v users add "$CBDINO_CLUSTER_ID" jwt-test-user \
+            --password testpass --can-read --can-write
+
+          echo "Generating JWT for jwt-test-user"
+          CBDINO_JWT=$(cbdinocluster jwt generate jwt-test-user --can-read --can-write)
+          echo "CBDINO_JWT=$CBDINO_JWT" >> "$GITHUB_ENV"
+
       - name: Prepare Functional Test settings.json
         run: |
           echo "Writing functional test settings.json with cluster connection string"
@@ -110,7 +121,8 @@ jobs:
             "TestSettings": {
               "ConnectionString": "${CBDINO_CONNSTR}",
               "Username": "${CBDINO_USER}",
-              "Password": "${CBDINO_PASS}"
+              "Password": "${CBDINO_PASS}",
+              "JwtToken": "${CBDINO_JWT}"
             }
           }
           EOF

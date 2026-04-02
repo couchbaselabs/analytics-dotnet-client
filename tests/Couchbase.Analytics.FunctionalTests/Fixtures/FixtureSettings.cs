@@ -12,4 +12,7 @@ public class FixtureSettings
 
     [JsonPropertyName("Password")]
     public string? Password { get; set; } = "password";
+
+    [JsonPropertyName("JwtToken")]
+    public string? JwtToken { get; set; }
 }
