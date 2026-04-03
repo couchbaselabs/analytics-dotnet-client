@@ -160,3 +160,105 @@ public class JwtCredentialTests
         Assert.Contains($"<{"xxxxx.yyyyy.zzzzz".Length} chars>", str);
     }
 }
+
+public class CertificateCredentialTests
+{
+    /// <summary>
+    /// Creates a self-signed X.509 certificate with a private key for testing.
+    /// </summary>
+    private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateSelfSignedCert()
+    {
+        using var rsa = System.Security.Cryptography.RSA.Create(2048);
+        var request = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+            "CN=TestClient", rsa,
+            System.Security.Cryptography.HashAlgorithmName.SHA256,
+            System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+
+        // Add client auth EKU
+        request.CertificateExtensions.Add(
+            new System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension(
+                new System.Security.Cryptography.OidCollection
+                {
+                    new System.Security.Cryptography.Oid("1.3.6.1.5.5.7.3.2") // Client Authentication
+                }, false));
+
+        return request.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(1));
+    }
+
+    /// <summary>
+    /// Creates a certificate WITHOUT a private key (public cert only).
+    /// </summary>
+    private static System.Security.Cryptography.X509Certificates.X509Certificate2 CreatePublicOnlyCert()
+    {
+        var fullCert = CreateSelfSignedCert();
+        // Export only the public portion (DER) and reimport — strips the private key
+        var publicBytes = fullCert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert);
+        return System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificate(publicBytes);
+    }
+
+    [Fact]
+    public void Create_WithValidCert_ReturnsNullAuthHeader()
+    {
+        using var cert = CreateSelfSignedCert();
+        var credential = CertificateCredential.Create(cert);
+
+        Assert.Null(credential.AuthorizationHeader);
+    }
+
+    [Fact]
+    public void Create_WithoutPrivateKey_ThrowsArgumentException()
+    {
+        using var publicCert = CreatePublicOnlyCert();
+
+        Assert.Throws<ArgumentException>(() => CertificateCredential.Create(publicCert));
+    }
+
+    [Fact]
+    public void Create_WithNullCert_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => CertificateCredential.Create(null!));
+    }
+
+    [Fact]
+    public void Constructor_ExposesOriginalCertificate()
+    {
+        using var cert = CreateSelfSignedCert();
+        var credential = new CertificateCredential(cert);
+
+        Assert.Same(cert, credential.Certificate);
+        Assert.True(credential.Certificate.HasPrivateKey);
+    }
+
+    [Fact]
+    public void ToString_RedactsCertDetails()
+    {
+        using var cert = CreateSelfSignedCert();
+        var credential = CertificateCredential.Create(cert);
+        var str = credential.ToString();
+
+        Assert.Contains("Subject = CN=TestClient", str);
+        Assert.Contains("Thumbprint =", str);
+        Assert.DoesNotContain("AuthorizationHeader", str);
+    }
+
+    [Fact]
+    public void CertificateCredential_ImplementsICredential()
+    {
+        using var cert = CreateSelfSignedCert();
+        ICredential credential = CertificateCredential.Create(cert);
+
+        Assert.Null(credential.AuthorizationHeader);
+    }
+
+    [Fact]
+    public void CertificateCredential_NotEqualToOtherCredentialTypes()
+    {
+        using var cert = CreateSelfSignedCert();
+        ICredential certCred = CertificateCredential.Create(cert);
+        ICredential basicCred = Credential.Create("user", "pass");
+        ICredential jwtCred = JwtCredential.Create("token");
+
+        Assert.NotEqual(certCred, basicCred);
+        Assert.NotEqual(certCred, jwtCred);
+    }
+}

@@ -113,6 +113,30 @@ jobs:
           CBDINO_JWT=$(cbdinocluster jwt generate jwt-test-user --can-read --can-write)
           echo "CBDINO_JWT=$CBDINO_JWT" >> "$GITHUB_ENV"
 
+      - name: Generate mTLS client certificates
+        run: |
+          echo "Creating mtls-swap-user for certificate swap test"
+          cbdinocluster -v users add "$CBDINO_CLUSTER_ID" mtls-swap-user \
+            --password testpass --can-read --can-write
+
+          echo "Generating client certificate for Administrator"
+          CERT_OUTPUT=$(cbdinocluster certificates get-client-cert Administrator)
+
+          # cbdinocluster outputs PEM cert followed by PEM key
+          echo "$CERT_OUTPUT" | awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/' > /tmp/client-cert.pem
+          echo "$CERT_OUTPUT" | awk '/BEGIN RSA PRIVATE KEY/,/END RSA PRIVATE KEY/' > /tmp/client-key.pem
+
+          echo "Generating client certificate for mtls-swap-user"
+          CERT_OUTPUT_2=$(cbdinocluster certificates get-client-cert mtls-swap-user)
+
+          echo "$CERT_OUTPUT_2" | awk '/BEGIN CERTIFICATE/,/END CERTIFICATE/' > /tmp/client-cert-2.pem
+          echo "$CERT_OUTPUT_2" | awk '/BEGIN RSA PRIVATE KEY/,/END RSA PRIVATE KEY/' > /tmp/client-key-2.pem
+
+          echo "CBDINO_CLIENT_CERT_PATH=/tmp/client-cert.pem" >> "$GITHUB_ENV"
+          echo "CBDINO_CLIENT_KEY_PATH=/tmp/client-key.pem" >> "$GITHUB_ENV"
+          echo "CBDINO_CLIENT_CERT_PATH_2=/tmp/client-cert-2.pem" >> "$GITHUB_ENV"
+          echo "CBDINO_CLIENT_KEY_PATH_2=/tmp/client-key-2.pem" >> "$GITHUB_ENV"
+
       - name: Prepare Functional Test settings.json
         run: |
           echo "Writing functional test settings.json with cluster connection string"
@@ -122,7 +146,11 @@ jobs:
               "ConnectionString": "${CBDINO_CONNSTR}",
               "Username": "${CBDINO_USER}",
               "Password": "${CBDINO_PASS}",
-              "JwtToken": "${CBDINO_JWT}"
+              "JwtToken": "${CBDINO_JWT}",
+              "ClientCertPath": "${CBDINO_CLIENT_CERT_PATH}",
+              "ClientKeyPath": "${CBDINO_CLIENT_KEY_PATH}",
+              "ClientCertPath2": "${CBDINO_CLIENT_CERT_PATH_2}",
+              "ClientKeyPath2": "${CBDINO_CLIENT_KEY_PATH_2}"
             }
           }
           EOF

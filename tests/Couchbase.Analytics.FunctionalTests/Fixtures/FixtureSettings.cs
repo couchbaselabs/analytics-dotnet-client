@@ -15,4 +15,16 @@ public class FixtureSettings
 
     [JsonPropertyName("JwtToken")]
     public string? JwtToken { get; set; }
+
+    [JsonPropertyName("ClientCertPath")]
+    public string? ClientCertPath { get; set; }
+
+    [JsonPropertyName("ClientKeyPath")]
+    public string? ClientKeyPath { get; set; }
+
+    [JsonPropertyName("ClientCertPath2")]
+    public string? ClientCertPath2 { get; set; }
+
+    [JsonPropertyName("ClientKeyPath2")]
+    public string? ClientKeyPath2 { get; set; }
 }

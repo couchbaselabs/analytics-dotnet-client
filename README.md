@@ -52,6 +52,16 @@ var cluster = Cluster.Create(
 );
 ```
 
+Or use mutual TLS (mTLS) with a client certificate:
+
+```csharp
+var cluster = Cluster.Create(
+    connectionString: "https://analytics.my-couchbase.example.com:18095",
+    credential: CertificateCredential.FromPkcs12("/path/to/client.pfx", "password")
+    // or: CertificateCredential.FromPem("/path/to/cert.pem", "/path/to/key.pem")
+);
+```
+
 > [!NOTE]
 > Use `http://host:8095` for non-TLS connections, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
 >

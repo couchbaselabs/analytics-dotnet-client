@@ -47,6 +47,27 @@ var cluster = Cluster.Create(
 );
 ```
 
+#### Mutual TLS (mTLS) Authentication
+
+To authenticate with a client certificate during the TLS handshake:
+
+```csharp
+// From a PKCS#12 (.pfx / .p12) file
+var credential = CertificateCredential.FromPkcs12("/path/to/client.pfx", "password");
+
+// Or from PEM-encoded certificate and key files
+var credential = CertificateCredential.FromPem("/path/to/cert.pem", "/path/to/key.pem");
+
+var cluster = Cluster.Create(
+    connectionString: "https://analytics.my-couchbase.example.com:18095",
+    credential: credential
+);
+```
+
+> [!NOTE]
+> The client certificate must contain a private key. When using mTLS, no HTTP `Authorization` header
+> is sent — authentication is handled entirely during the TLS handshake.
+
 #### Updating Credentials
 
 After the cluster is created, you can supply a new credential (of the same type) for all subsequent requests:
@@ -55,6 +76,8 @@ After the cluster is created, you can supply a new credential (of the same type)
 cluster.UpdateCredential(Credential.Create("newuser", "newpassword"));
 // or
 cluster.UpdateCredential(JwtCredential.Create("new.jwt.token"));
+// or
+cluster.UpdateCredential(CertificateCredential.FromPkcs12("/path/to/new-client.pfx", "password"));
 ```
 
 > [!NOTE]

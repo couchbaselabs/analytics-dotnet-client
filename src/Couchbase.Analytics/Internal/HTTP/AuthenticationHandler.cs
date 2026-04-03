@@ -50,7 +50,12 @@ internal class AuthenticationHandler : DelegatingHandler
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var credential = _credentialProvider();
-        request.Headers.Authorization = credential.AuthorizationHeader;
+        var authHeader = credential.AuthorizationHeader;
+        if (authHeader is not null)
+        {
+            request.Headers.Authorization = authHeader;
+        }
+
         return base.SendAsync(request, cancellationToken);
     }
 }

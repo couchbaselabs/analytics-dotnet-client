@@ -86,4 +86,28 @@ public class AuthenticationHandlerTests
         var inner = new CapturingHandler();
         Assert.Throws<ArgumentNullException>(() => new AuthenticationHandler(inner, null!));
     }
+
+    [Fact]
+    public async Task SendAsync_CertificateCredential_DoesNotSetAuthHeader()
+    {
+        // Arrange — CertificateCredential returns null AuthorizationHeader
+        using var rsa = System.Security.Cryptography.RSA.Create(2048);
+        var certReq = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+            "CN=TestClient", rsa,
+            System.Security.Cryptography.HashAlgorithmName.SHA256,
+            System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+        using var cert = certReq.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(1));
+
+        var credential = CertificateCredential.Create(cert);
+        var inner = new CapturingHandler();
+        var handler = new AuthenticationHandler(inner, () => credential);
+        var client = new HttpClient(handler);
+
+        // Act
+        await client.GetAsync("http://localhost/test");
+
+        // Assert — no Authorization header should be set
+        Assert.NotNull(inner.CapturedRequest);
+        Assert.Null(inner.CapturedRequest!.Headers.Authorization);
+    }
 }
