@@ -93,9 +93,8 @@ jobs:
             jwt: true
           YAML
 
-          # Substitute shell vars into YAML (envsubst preserves YAML structure;
-          # the previous eval+echo approach collapsed newlines and silently
-          # dropped the load-balancer flag)
+          # Substitute shell vars (e.g. EA_VERSION) into YAML.
+          # envsubst preserves YAML structure better than eval+echo.
           envsubst < cluster.yml > cluster.resolved.yml
           echo "Resolved cluster definition:" && cat cluster.resolved.yml
 
@@ -107,9 +106,10 @@ jobs:
           # Direct-to-node connection string (required for mTLS tests because
           # the nginx passive load balancer terminates TLS at L7, so client
           # certificates are not forwarded to the analytics service).
-          # We get the first cluster node IP by listing nodes and filtering
-          # out non-cluster containers (s3mock, nginx, haproxy).
-          NODE_IP=$(cbdinocluster -v ps 2>&1 | grep -E 'columnar-node|server-node' | head -1 | grep -oP '\d+\.\d+\.\d+\.\d+' || echo "")
+          # Extract the first cluster node IP from cbdinocluster ps --json.
+          NODE_IP=$(cbdinocluster ps --json 2>/dev/null \
+            | python3 -c "import sys,json; data=json.load(sys.stdin); [print(n['ip_address']) or sys.exit(0) for c in data for n in c.get('nodes',[]) if n.get('is_cluster_node')]" 2>/dev/null \
+            || echo "")
           if [ -n "$NODE_IP" ]; then
             CBDINO_CONNSTR_DIRECT="https://${NODE_IP}:18095"
           else
