@@ -37,9 +37,15 @@ public class CertificateFixture : IDisposable
             FixtureSettings.ClientCertPath,
             FixtureSettings.ClientKeyPath);
 
+        // mTLS requires a direct-to-node connection because the nginx passive
+        // load balancer terminates TLS at L7 and does not forward client
+        // certificates to the analytics service.
+        var connectionString = FixtureSettings.DirectConnectionString
+                               ?? FixtureSettings.ConnectionString!;
+
         ClusterOptions = new ClusterOptions();
         Cluster = Cluster.Create(
-            FixtureSettings.ConnectionString!,
+            connectionString,
             CertificateCredential,
             ClusterOptions);
     }

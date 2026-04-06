@@ -7,6 +7,15 @@ public class FixtureSettings
     [JsonPropertyName("ConnectionString")]
     public string? ConnectionString { get; set; } = "http://localhost:8095";
 
+    /// <summary>
+    /// Direct-to-node connection string that bypasses the load balancer.
+    /// Required for mTLS tests because the nginx passive load balancer
+    /// terminates TLS at L7 and does not forward client certificates.
+    /// Falls back to <see cref="ConnectionString"/> if not set.
+    /// </summary>
+    [JsonPropertyName("DirectConnectionString")]
+    public string? DirectConnectionString { get; set; }
+
     [JsonPropertyName("Username")]
     public string Username { get; set; } = "Administrator";
 

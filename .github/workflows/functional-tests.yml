@@ -80,6 +80,7 @@ jobs:
           TAG=${INPUT_TAG}
 
           EA_VERSION=2.2.0-1166
+          export EA_VERSION
 
           cat > cluster.yml <<'YAML'
           columnar: true
@@ -92,16 +93,37 @@ jobs:
             jwt: true
           YAML
 
-          # Substitute shell vars into YAML
-          eval "echo \"$(cat cluster.yml)\"" > cluster.resolved.yml
+          # Substitute shell vars into YAML (envsubst preserves YAML structure;
+          # the previous eval+echo approach collapsed newlines and silently
+          # dropped the load-balancer flag)
+          envsubst < cluster.yml > cluster.resolved.yml
+          echo "Resolved cluster definition:" && cat cluster.resolved.yml
 
           CBDINO_CLUSTER_ID=$(cbdinocluster -v alloc --def="$(cat cluster.resolved.yml)")
+
+          # Connection string through the load balancer (used by most tests)
           CBDINO_CONNSTR=$(cbdinocluster -v connstr --tls --analytics "$CBDINO_CLUSTER_ID")
+
+          # Direct-to-node connection string (required for mTLS tests because
+          # the nginx passive load balancer terminates TLS at L7, so client
+          # certificates are not forwarded to the analytics service).
+          # We get the first cluster node IP by listing nodes and filtering
+          # out non-cluster containers (s3mock, nginx, haproxy).
+          NODE_IP=$(cbdinocluster -v ps 2>&1 | grep -E 'columnar-node|server-node' | head -1 | grep -oP '\d+\.\d+\.\d+\.\d+' || echo "")
+          if [ -n "$NODE_IP" ]; then
+            CBDINO_CONNSTR_DIRECT="https://${NODE_IP}:18095"
+          else
+            # No LB or couldn't parse — fall back to the primary connstr
+            CBDINO_CONNSTR_DIRECT="$CBDINO_CONNSTR"
+          fi
 
           echo "CBDINO_CLUSTER_ID=$CBDINO_CLUSTER_ID" >> "$GITHUB_ENV"
           echo "CBDINO_CONNSTR=$CBDINO_CONNSTR" >> "$GITHUB_ENV"
+          echo "CBDINO_CONNSTR_DIRECT=$CBDINO_CONNSTR_DIRECT" >> "$GITHUB_ENV"
           echo "CBDINO_USER=Administrator" >> "$GITHUB_ENV"
           echo "CBDINO_PASS=password" >> "$GITHUB_ENV"
+          echo "Load balancer connstr: $CBDINO_CONNSTR"
+          echo "Direct node connstr:   $CBDINO_CONNSTR_DIRECT"
 
       - name: Create JWT test user and generate token
         run: |
@@ -144,6 +166,7 @@ jobs:
           {
             "TestSettings": {
               "ConnectionString": "${CBDINO_CONNSTR}",
+              "DirectConnectionString": "${CBDINO_CONNSTR_DIRECT}",
               "Username": "${CBDINO_USER}",
               "Password": "${CBDINO_PASS}",
               "JwtToken": "${CBDINO_JWT}",
