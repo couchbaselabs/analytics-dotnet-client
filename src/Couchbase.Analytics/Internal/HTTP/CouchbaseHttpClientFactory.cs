@@ -192,9 +192,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     /// The old handler is disposed after a grace period via <see cref="DisposeAfterDelayAsync"/>.
     /// This follows the same pattern as <c>IHttpClientFactory</c> in ASP.NET Core, which defers
     /// handler disposal to allow request draining. The grace period is generous (1 minute) to
-    /// accommodate the maximum query timeout. This avoids the <see cref="ObjectDisposedException"/>
-    /// race that would occur with immediate disposal (a known issue in the operational SDK's
-    /// <c>CouchbaseHttpClientFactory.RecreateHandler</c>).
+    /// accommodate the maximum query timeout.
     /// </para>
     /// </remarks>
     /// <param name="newCredential">The new credential that triggered the rebuild.</param>

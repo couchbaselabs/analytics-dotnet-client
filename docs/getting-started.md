@@ -65,8 +65,7 @@ var cluster = Cluster.Create(
 ```
 
 > [!NOTE]
-> The client certificate must contain a private key. When using mTLS, no HTTP `Authorization` header
-> is sent — authentication is handled entirely during the TLS handshake.
+> The client certificate must contain a private key.
 
 #### Updating Credentials
 

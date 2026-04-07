@@ -49,7 +49,7 @@ public sealed record JwtCredential(string Token) : ICredential
     /// </summary>
     private bool PrintMembers(System.Text.StringBuilder builder)
     {
-        builder.Append($"Token = <{Token.Length} chars>");
+        builder.Append($"{nameof(Token)} = <{Token.Length} chars>");
         return true;
     }
 }

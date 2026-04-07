@@ -125,10 +125,6 @@ public class Cluster : IDisposable
         return new Cluster(credential, clusterOptions);
     }
 
-    // ── Binary-compatible forwarding overloads ──────────────────────────
-    // These preserve the exact method signatures from before the ICredential
-    // widening, so that existing compiled code continues to resolve correctly
-    // at runtime without recompilation.
 
     /// <summary>
     /// Creates a cluster with a connection string, username/password credential, and an options builder.

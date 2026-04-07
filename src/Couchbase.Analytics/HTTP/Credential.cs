@@ -52,7 +52,7 @@ public record Credential(string Username, string Password) : ICredential
     /// </summary>
     protected virtual bool PrintMembers(System.Text.StringBuilder builder)
     {
-        builder.Append($"Username = {Username}");
+        builder.Append($"{nameof(Username)} = {Username}");
         return true;
     }
 }

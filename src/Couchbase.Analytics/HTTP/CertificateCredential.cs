@@ -96,7 +96,7 @@ public sealed record CertificateCredential : ICredential
     /// </summary>
     private bool PrintMembers(StringBuilder builder)
     {
-        builder.Append($"Subject = {Certificate.Subject}, Thumbprint = {Certificate.Thumbprint}");
+        builder.Append($"{nameof(Certificate.Subject)} = {Certificate.Subject}, {nameof(Certificate.Thumbprint)} = {Certificate.Thumbprint}");
         return true;
     }
 }
