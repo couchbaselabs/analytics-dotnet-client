@@ -1,7 +1,8 @@
 {
   "TestSettings": {
-    "ConnectionString": "http://192.168.106.129:8095",
+    "ConnectionString": "http://192.168.64.129:8095",
     "Username": "Administrator",
-    "Password": "password"
+    "Password": "password",
+    "JwtToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJpc3MiOiJkaW5vIiwic3ViIjoiand0X3VzZXIiLCJhdWQiOlsiY2xpZW50Il0sImV4cCI6MTgwNjcxNzk5NX0.Ax4mVQpPIJ9vTh9JGQha-2ebcLd2psZoAGaGJG1d7HiRfprFY2sDskrIIw2doP3z6X_7-4q3TNoWXNtCLXvsEu070U-nnzO9lJPFn-QHRtB5DTt_H5lIj8DqWMjMNHDcUETyYU-kcWqk3uCmql5ST6mmnjLtir8wJR3nVyHyxVku77xuzkluxLIBLXgiJ6-iyfu10LthP69ZbRpJbDhw3MLXq8KI-POlEZMNlRylIR-gzifkwQSuIZhxANpsZb802YtcoWM_zqkj-H7u4rzVLpRZejPgrwqTH3hujSQ72XioJiBeU-iEVy9HU1Vky8727eKZT3RN2JC7cTO5XNS74rHm6zWRnzB1NcPy5iGs67J1LDSbTdLqDGZwIOUofEI7tlk0IHTooZYaAT4Hn8y5lt2Lz2rffzw8MTntPdF6Bp5DWW1VBDFeKh_f8kqXlqYdJwGW5nH3eOlL8MrC8yUI2IS6iFZE3SJLsN--ScwB5C7cEATglZkG9cps_AsWZ74PbI54QQoMF0YgoJjqFBRXqA7sKEqYwZrZJFE5Y9tW_MaL7nhEXlNudTtVed4o6TlRHgNoBGgeYUxIbEbca8MWXFZxoh4c_hwVPFMsoVVpL3KQNKHIraO2LNZCv3bvh_h4M4FzvOg8-KH9CelkJ2QNS9RdIp4SV2d8BXAoPRCo9d0"
   }
 }

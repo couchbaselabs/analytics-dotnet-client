@@ -19,27 +19,22 @@
  * ************************************************************/
 #endregion
 
+using System.Net.Http.Headers;
+
 namespace Couchbase.AnalyticsClient.HTTP;
 
+/// <summary>
+/// Represents a credential used to authenticate HTTP requests to the analytics service.
+/// </summary>
+/// <remarks>
+/// Implementations should pre-compute the <see cref="AuthorizationHeader"/> value at
+/// construction time for efficiency, since credential instances are immutable.
+/// </remarks>
 public interface ICredential
 {
     /// <summary>
-    /// The username to authenticate against.
+    /// The Authorization header value for this credential, or <c>null</c> if
+    /// authentication is handled outside HTTP headers (e.g. mTLS).
     /// </summary>
-    string Username { get; init; }
-
-    /// <summary>
-    /// The password of the principle
-    /// </summary>
-    string Password { get; init; }
-
-    bool Equals(Credential? other);
-
-    bool Equals(object? other);
-
-    int GetHashCode();
-
-    void Deconstruct(out string Username, out string Password);
-
-    string ToString();
+    AuthenticationHeaderValue? AuthorizationHeader { get; }
 }

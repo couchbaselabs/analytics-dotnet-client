@@ -115,5 +115,59 @@ namespace Couchbase.AnalyticsClient.UnitTests
             Assert.NotNull(clusterOptions.TimeoutOptions);
             Assert.NotNull(clusterOptions.ConnectionStringValue);
         }
+        [Fact]
+        public void Create_WithJwtCredential_ReturnsClusterInstance()
+        {
+            // Arrange
+            var httpEndpoint = "http://localhost:8091";
+            var credential = JwtCredential.Create("xxxxx.yyyyy.zzzzz");
+
+            // Act
+            var cluster = Cluster.Create(httpEndpoint, credential);
+
+            // Assert
+            Assert.NotNull(cluster);
+        }
+
+        [Fact]
+        public void UpdateCredential_SameType_Succeeds()
+        {
+            // Arrange
+            var cluster = Cluster.Create("http://localhost:8091", Credential.Create("admin", "pass1"));
+
+            // Act — no exception
+            cluster.UpdateCredential(Credential.Create("admin", "pass2"));
+        }
+
+        [Fact]
+        public void UpdateCredential_SameTypeJwt_Succeeds()
+        {
+            // Arrange
+            var cluster = Cluster.Create("http://localhost:8091", JwtCredential.Create("token1"));
+
+            // Act — no exception
+            cluster.UpdateCredential(JwtCredential.Create("token2"));
+        }
+
+        [Fact]
+        public void UpdateCredential_DifferentType_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var cluster = Cluster.Create("http://localhost:8091", Credential.Create("admin", "pass"));
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() =>
+                cluster.UpdateCredential(JwtCredential.Create("token")));
+        }
+
+        [Fact]
+        public void UpdateCredential_Null_ThrowsArgumentNullException()
+        {
+            // Arrange
+            var cluster = Cluster.Create("http://localhost:8091", Credential.Create("admin", "pass"));
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => cluster.UpdateCredential(null!));
+        }
     }
 }

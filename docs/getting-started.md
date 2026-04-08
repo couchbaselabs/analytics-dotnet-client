@@ -34,6 +34,51 @@ var cluster = Cluster.Create(
 );
 ```
 
+#### JWT Authentication
+
+To authenticate with a JSON Web Token (JWT) instead of username and password:
+
+```csharp
+var credential = JwtCredential.Create("xxxxx.yyyyy.zzzzz");
+
+var cluster = Cluster.Create(
+    connectionString: "https://analytics.my-couchbase.example.com:18095",
+    credential: credential
+);
+```
+
+#### Mutual TLS (mTLS) Authentication
+
+To authenticate with a client certificate during the TLS handshake:
+
+```csharp
+// From a PKCS#12 (.pfx / .p12) file
+var credential = CertificateCredential.FromPkcs12("/path/to/client.pfx", "password");
+
+// Or from PEM-encoded certificate and key files
+var credential = CertificateCredential.FromPem("/path/to/cert.pem", "/path/to/key.pem");
+
+var cluster = Cluster.Create(
+    connectionString: "https://analytics.my-couchbase.example.com:18095",
+    credential: credential
+);
+```
+
+> [!NOTE]
+> The client certificate must contain a private key.
+
+#### Updating Credentials
+
+After the cluster is created, you can supply a new credential (of the same type) for all subsequent requests:
+
+```csharp
+cluster.UpdateCredential(Credential.Create("newuser", "newpassword"));
+// or
+cluster.UpdateCredential(JwtCredential.Create("new.jwt.token"));
+// or
+cluster.UpdateCredential(CertificateCredential.FromPkcs12("/path/to/new-client.pfx", "password"));
+```
+
 > [!NOTE]
 > Use `http://host:8095` for non-TLS connections, `https://host:18095` for TLS (or your own custom ports for a load balancer or proxy)
 >

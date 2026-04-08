@@ -33,20 +33,33 @@ namespace Couchbase.AnalyticsClient.Internal.HTTP;
 
 internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 {
-    private readonly ICredential _credential;
+    /// <summary>
+    /// Grace period before disposing a retired handler, allowing in-flight requests to complete.
+    /// </summary>
+    private static readonly TimeSpan RetiredHandlerDisposeDelay = TimeSpan.FromMinutes(1);
+
+    private readonly Func<ICredential> _credentialProvider;
     private readonly SecurityOptions _securityOptions;
     private readonly TimeoutOptions _timeoutOptions;
     private readonly ILogger<CouchbaseHttpClientFactory> _logger;
-    private readonly AuthenticationHandler _sharedHandler;
+    private readonly object _handlerLock = new();
+    private volatile AuthenticationHandler _sharedHandler;
+    private volatile ICredential _lastKnownCredential;
 
-    public CouchbaseHttpClientFactory(ICredential credential, ClusterOptions options,
+    /// <summary>
+    /// Exposes the current shared handler for testing handler lifecycle behavior.
+    /// </summary>
+    internal AuthenticationHandler CurrentHandler => _sharedHandler;
+
+    public CouchbaseHttpClientFactory(Func<ICredential> credentialProvider, ClusterOptions options,
         ILogger<CouchbaseHttpClientFactory> logger)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _credential = credential;
+        _credentialProvider = credentialProvider ?? throw new ArgumentNullException(nameof(credentialProvider));
         _securityOptions = options.SecurityOptions ?? throw new ArgumentNullException(nameof(options));
         _timeoutOptions = options.TimeoutOptions ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _lastKnownCredential = _credentialProvider();
         _sharedHandler = CreateClientHandler();
     }
 
@@ -61,7 +74,8 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     /// - Server certificate validation callback based on the configured trust settings
     /// </returns>
     /// <remarks>
-    /// The handler is not configured for Certificate Based Authentication. A username/password credential is still required.
+    /// When the credential is a <see cref="CertificateCredential"/>, the client certificate is
+    /// attached to the handler's SSL options for mutual TLS authentication.
     /// </remarks>
     private AuthenticationHandler CreateClientHandler()
     {
@@ -72,7 +86,7 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 
         handler.SslOptions.RemoteCertificateValidationCallback =
             CertificateValidation.CreateRemoteCertificateValidationCallback(_securityOptions, _logger);
-        return new AuthenticationHandler(handler, _credential);
+        return new AuthenticationHandler(handler, _credentialProvider);
     }
 
     private void ConfigureClientCertificates(SocketsHttpHandler handler)
@@ -99,6 +113,13 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(_securityOptions.TrustMode));
+        }
+
+        // If using mTLS, add the client authentication certificate
+        var credential = _credentialProvider();
+        if (credential is CertificateCredential certCred)
+        {
+            certCollection.Add(certCred.Certificate);
         }
 
         handler.SslOptions.ClientCertificates = certCollection;
@@ -135,9 +156,71 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 
     public HttpClient Create()
     {
+        var currentCredential = _credentialProvider();
+
+        // Only rebuild the handler when the mTLS certificate changes.
+        // JWT and Basic credential swaps don't need a handler rebuild because they work
+        // via per-request header injection in AuthenticationHandler.SendAsync.
+        // Note: Cluster.UpdateCredential prevents changing the credential type, so checking
+        // currentCredential alone is sufficient — if it's a CertificateCredential now, it
+        // always was.
+        if (!ReferenceEquals(currentCredential, _lastKnownCredential) &&
+            currentCredential is CertificateCredential)
+        {
+            RecreateHandler(currentCredential);
+        }
+
+        _lastKnownCredential = currentCredential;
         var httpClient = new HttpClient(_sharedHandler, false);
         ClientIdentifier.SetUserAgent(httpClient.DefaultRequestHeaders);
         return httpClient;
+    }
+
+    /// <summary>
+    /// Creates a new HTTP handler with the updated credential, replacing the shared handler.
+    /// The old handler is disposed after <see cref="RetiredHandlerDisposeDelay"/> to allow
+    /// in-flight requests to complete.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Each <see cref="SocketsHttpHandler"/> maintains its own independent connection pool.
+    /// By swapping <c>_sharedHandler</c> to a new instance, all subsequent <see cref="Create"/>
+    /// calls return clients bound to a fresh pool with the new certificate. In-flight requests
+    /// on the old handler continue to work until its deferred disposal.
+    /// </para>
+    /// <para>
+    /// The old handler is disposed after a grace period via <see cref="DisposeAfterDelayAsync"/>.
+    /// This follows the same pattern as <c>IHttpClientFactory</c> in ASP.NET Core, which defers
+    /// handler disposal to allow request draining. The grace period is generous (1 minute) to
+    /// accommodate the maximum query timeout.
+    /// </para>
+    /// </remarks>
+    /// <param name="newCredential">The new credential that triggered the rebuild.</param>
+    private void RecreateHandler(ICredential newCredential)
+    {
+        lock (_handlerLock)
+        {
+            // Double-check after acquiring lock — another thread may have already rebuilt
+            if (ReferenceEquals(newCredential, _lastKnownCredential))
+                return;
+
+            var oldHandler = _sharedHandler;
+            _sharedHandler = CreateClientHandler();
+            _lastKnownCredential = newCredential;
+
+            // Schedule deferred disposal of the old handler.
+            // In-flight requests may still reference it, so we wait before disposing.
+            _ = DisposeAfterDelayAsync(oldHandler);
+        }
+    }
+
+    /// <summary>
+    /// Disposes a retired handler after a grace period, allowing in-flight requests to drain.
+    /// </summary>
+    private static async Task DisposeAfterDelayAsync(AuthenticationHandler handler)
+    {
+        await Task.Delay(RetiredHandlerDisposeDelay).ConfigureAwait(false);
+        handler.Dispose();
     }
 
     public HttpCompletionOption DefaultCompletionOption { get; set; } = HttpCompletionOption.ResponseHeadersRead;

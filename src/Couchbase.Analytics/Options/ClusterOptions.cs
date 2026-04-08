@@ -117,12 +117,12 @@ public record ClusterOptions
 
     private readonly IDictionary<Type, IServiceFactory> _services = DefaultServices.GetDefaultServices();
 
-    internal ICouchbaseServiceProvider BuildServiceProvider(ICredential? credential = null)
+    internal ICouchbaseServiceProvider BuildServiceProvider(Func<ICredential>? credentialProvider = null)
     {
         this.AddClusterService(this);
         this.AddClusterService(Logging ??= new NullLoggerFactory());
         this.AddClusterService(new TypedRedactor(RedactionLevel));
-        if (credential is not null) this.AddClusterService(credential);
+        if (credentialProvider is not null) this.AddClusterService(credentialProvider);
         return new CouchbaseServiceProvider(_services);
     }
 

@@ -20,39 +20,36 @@
 #endregion
 
 using System.Net.Http.Headers;
-using System.Text;
 
 namespace Couchbase.AnalyticsClient.HTTP;
 
 /// <summary>
-/// A username and password credential that authenticates using the HTTP Basic scheme.
+/// A JSON Web Token (JWT) credential that authenticates using the HTTP Bearer scheme.
 /// </summary>
-/// <param name="Username">The username to authenticate with.</param>
-/// <param name="Password">The password to authenticate with.</param>
-public record Credential(string Username, string Password) : ICredential
+/// <param name="Token">The JWT token string.</param>
+public sealed record JwtCredential(string Token) : ICredential
 {
     /// <inheritdoc />
     public AuthenticationHeaderValue AuthorizationHeader { get; } =
-        new("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{Username}:{Password}")));
+        new("Bearer", Token);
 
     /// <summary>
-    /// Creates a username and password credential.
+    /// Creates a JWT credential.
     /// </summary>
-    /// <param name="username">The username to authenticate with.</param>
-    /// <param name="password">The password to authenticate with.</param>
-    /// <returns>A <see cref="Credential"/> instance.</returns>
-    public static Credential Create(string username, string password)
+    /// <param name="token">The JWT token string.</param>
+    /// <returns>A <see cref="JwtCredential"/> instance.</returns>
+    public static JwtCredential Create(string token)
     {
-        return new(username, password);
+        return new(token);
     }
 
     /// <summary>
-    /// Excludes <see cref="AuthorizationHeader"/> from the record's ToString output
-    /// to prevent leaking encoded credentials into logs.
+    /// Excludes the full token and <see cref="AuthorizationHeader"/> from the record's
+    /// ToString output to prevent leaking credentials into logs.
     /// </summary>
-    protected virtual bool PrintMembers(System.Text.StringBuilder builder)
+    private bool PrintMembers(System.Text.StringBuilder builder)
     {
-        builder.Append($"{nameof(Username)} = {Username}");
+        builder.Append($"{nameof(Token)} = <{Token.Length} chars>");
         return true;
     }
 }
