@@ -330,7 +330,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
         var httpClient = CreateHttpClient(timeout);
 
-        var statusUri = Uri.TryCreate(handle.Handle, UriKind.Absolute, out var absUri)
+        var statusUri = Uri.TryCreate(handle.Handle, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
             : new Uri(_baseUri, handle.Handle);
             
@@ -405,7 +405,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var httpClient = CreateHttpClient(timeout);
         var deserializer = options.Deserializer ?? _clusterOptions.Deserializer;
 
-        var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri)
+        var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
             : new Uri(_baseUri, handlePath);
             
@@ -453,7 +453,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
         var httpClient = CreateHttpClient(timeout);
 
-        var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri)
+        var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
             : new Uri(_baseUri, handlePath);
             
