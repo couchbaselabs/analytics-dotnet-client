@@ -98,8 +98,11 @@ public class AsyncAnalyticsTests
             }
         });
 
-        // The query should have been killed, resulting in a QueryNotFoundException when it's purged.
-        Assert.IsType<QueryNotFoundException>(ex);
+        // The query should have been killed, resulting in a QueryNotFoundException when it's purged,
+        // or a cleanly mapped QueryException ("Job Killed") if the server responds gracefully before purging.
+        Assert.NotNull(ex);
+        Assert.True(ex is QueryNotFoundException || ex is QueryException, 
+            $"Expected QueryNotFoundException or QueryException upon cancellation, but received: {ex.GetType().FullName}");
     }
 
     [Fact]
