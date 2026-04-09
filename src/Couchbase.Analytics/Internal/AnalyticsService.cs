@@ -362,27 +362,60 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             if (!response.IsSuccessStatusCode)
             {
                 LogFetchStatusUnexpectedHttp(_logger, _redactor.SystemData(handle.Handle), (int)response.StatusCode);
-                
-                IReadOnlyList<QueryError>? errors = null;
-                if (root.TryGetProperty("errors", out var errorsElement))
-                {
-                    errors = JsonSerializer.Deserialize<QueryError[]>(errorsElement.GetRawText()) ?? Array.Empty<QueryError>();
-                }
-                
+            }
+
+            IReadOnlyList<QueryError>? errors = null;
+            if (root.TryGetProperty("errors", out var errorsElement))
+            {
+                errors = JsonSerializer.Deserialize<QueryError[]>(errorsElement.GetRawText()) ?? Array.Empty<QueryError>();
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
                 var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
                 errorContext.StatusCode = response.StatusCode;
                 if (errors is { Count: > 0 })
                 {
                     throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
                 }
-                throw new AnalyticsException($"Query status fetch failed with status: {status}", errorContext);
+                throw new AnalyticsException($"Query status fetch failed with HTTP {(int)response.StatusCode} and status: {status}", errorContext);
             }
 
             LogFetchStatusResponse(_logger, _redactor.SystemData(handle.Handle), status, (int)response.StatusCode);
 
-            if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(status, "running", StringComparison.OrdinalIgnoreCase))
             {
                 return null;
+            }
+
+            if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase) || 
+                    string.Equals(status, "aborted", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(status, "closed", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new QueryNotFoundException($"Query has been discarded or canceled (status: {status}).");
+                }
+                
+                if (string.Equals(status, "timeout", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new AnalyticsTimeoutException("The query evaluation timed out on the server.");
+                }
+                
+                if (string.Equals(status, "fatal", StringComparison.OrdinalIgnoreCase) || 
+                    string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(status, "errors", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (errors is { Count: > 0 })
+                    {
+                        var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
+                        errorContext.StatusCode = response.StatusCode;
+                        throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                    }
+                    throw new AnalyticsException($"Query execution failed on the server (status: {status}).");
+                }
+                
+                throw new AnalyticsException($"Query status fetch failed with unrecognized status: {status}");
             }
 
             var resultHandle = root.TryGetProperty("handle", out var handleProp) ? handleProp.GetString() : null;
