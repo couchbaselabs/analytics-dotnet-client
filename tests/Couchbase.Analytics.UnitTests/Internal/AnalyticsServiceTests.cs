@@ -6,6 +6,8 @@ using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Logging;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.Core.Json;
+using Couchbase.AnalyticsClient.Async;
+using Couchbase.AnalyticsClient.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -157,5 +159,111 @@ public class AnalyticsServiceTests
         // Assert
         Assert.IsType<StreamingAnalyticsResult>(result);
         _httpClientFactoryMock.Verify(f => f.Create(), Times.Once);
+    }
+
+    [Fact]
+    public async Task FetchResultHandleAsync_When404_ThrowsQueryNotFoundException()
+    {
+        // Arrange
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        httpClientMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
+
+        var handle = new QueryHandle("mock-handle", "mock-req", service);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<QueryNotFoundException>(() =>
+            service.FetchResultHandleAsync(handle, new FetchResultHandleOptions()));
+    }
+
+    [Fact]
+    public async Task FetchResultsAsync_When404_ThrowsQueryNotFoundException()
+    {
+        // Arrange
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        httpClientMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<QueryNotFoundException>(() =>
+            service.FetchResultsAsync("mock-req", "mock-path", new FetchResultsOptions()));
+    }
+
+    [Fact]
+    public async Task DiscardResultsAsync_When404_CompletesSuccessfully()
+    {
+        // Arrange
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        httpClientMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
+
+        // Act & Assert
+        var exception = await Record.ExceptionAsync(() =>
+            service.DiscardResultsAsync("mock-req", "mock-path", new DiscardResultsOptions()));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task CancelQueryAsync_When404_CompletesSuccessfully()
+    {
+        // Arrange
+        var httpClientMock = new Mock<HttpMessageHandler>();
+        httpClientMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var httpClient = new HttpClient(httpClientMock.Object);
+        _httpClientFactoryMock.Setup(f => f.Create()).Returns(httpClient);
+        var service = new AnalyticsService(
+            _clusterOptions,
+            _httpClientFactoryMock.Object,
+            _loggerMock.Object,
+            new TypedRedactor(RedactionLevel.None));
+
+        // Act & Assert
+        var exception = await Record.ExceptionAsync(() =>
+            service.CancelQueryAsync("mock-req", new CancelOptions()));
+
+        Assert.Null(exception);
     }
 }

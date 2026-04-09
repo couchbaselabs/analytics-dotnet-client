@@ -21,6 +21,8 @@
 
 using System.Text.Json;
 using Couchbase.AnalyticsClient.Internal;
+using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Results;
 
 namespace Couchbase.AnalyticsClient.Async;
 
@@ -31,7 +33,6 @@ namespace Couchbase.AnalyticsClient.Async;
 public class QueryHandle
 {
     private readonly IAnalyticsService _analyticsService;
-    private readonly TimeSpan? _requestTimeout;
 
     /// <summary>
     /// The query handle string used to poll status and fetch results.
@@ -44,75 +45,53 @@ public class QueryHandle
     /// </summary>
     public string RequestId { get; }
 
-    internal QueryHandle(string handle, string requestId, IAnalyticsService analyticsService, TimeSpan? requestTimeout = null)
+    internal QueryHandle(string handle, string requestId, IAnalyticsService analyticsService)
     {
         Handle = handle ?? throw new ArgumentNullException(nameof(handle));
         RequestId = requestId ?? throw new ArgumentNullException(nameof(requestId));
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
-        _requestTimeout = requestTimeout;
     }
 
     /// <summary>
-    /// Fetches the current status of the asynchronous query from the server.
+    /// Fetches the result handle of the asynchronous query from the server.
     /// </summary>
+    /// <param name="options">Options for fetching the result handle.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A <see cref="QueryStatus"/> representing the current state of the query.</returns>
-    public async Task<QueryStatus> FetchStatusAsync(CancellationToken cancellationToken = default)
+    /// <returns>A <see cref="QueryResultHandle"/> if results are ready, otherwise null.</returns>
+    public Task<QueryResultHandle?> FetchResultHandleAsync(FetchResultHandleOptions? options = null, CancellationToken cancellationToken = default)
     {
-        return await _analyticsService.FetchStatusAsync(Handle, _requestTimeout, cancellationToken)
-            .ConfigureAwait(false);
+        options ??= new FetchResultHandleOptions();
+        return _analyticsService.FetchResultHandleAsync(this, options, cancellationToken);
     }
 
     /// <summary>
-    /// Discards the query results on the server. After this call, the results can no longer be fetched.
+    /// Fetches the result handle of the asynchronous query from the server.
     /// </summary>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    public async Task DiscardResultsAsync(CancellationToken cancellationToken = default)
+    public Task<QueryResultHandle?> FetchResultHandleAsync(Func<FetchResultHandleOptions, FetchResultHandleOptions> options, CancellationToken cancellationToken = default)
     {
-        await _analyticsService.DiscardResultsAsync(Handle, _requestTimeout, cancellationToken)
-            .ConfigureAwait(false);
+        var fetchOptions = new FetchResultHandleOptions();
+        fetchOptions = options.Invoke(fetchOptions);
+        return FetchResultHandleAsync(fetchOptions, cancellationToken);
     }
 
     /// <summary>
     /// Cancels the query on the server. If the query has already completed, this is a no-op.
     /// </summary>
+    /// <param name="options">Options for cancellation.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public async Task CancelAsync(CancellationToken cancellationToken = default)
+    public Task CancelAsync(CancelOptions? options = null, CancellationToken cancellationToken = default)
     {
-        await _analyticsService.CancelQueryAsync(RequestId, _requestTimeout, cancellationToken)
-            .ConfigureAwait(false);
+        options ??= new CancelOptions();
+        return _analyticsService.CancelQueryAsync(RequestId, options, cancellationToken);
     }
 
     /// <summary>
-    /// Serializes this <see cref="QueryHandle"/> to a JSON string so it can be persisted and
-    /// later reconstructed via <see cref="Cluster.QueryHandleFromSerialized"/>.
-    /// This method does not perform any network operations.
+    /// Cancels the query on the server. If the query has already completed, this is a no-op.
     /// </summary>
-    /// <returns>A JSON string containing the handle and request ID.</returns>
-    public string Serialize()
+    public Task CancelAsync(Func<CancelOptions, CancelOptions> options, CancellationToken cancellationToken = default)
     {
-        var data = new SerializedQueryHandle(Handle, RequestId);
-        return JsonSerializer.Serialize(data);
+        var cancelOptions = new CancelOptions();
+        cancelOptions = options.Invoke(cancelOptions);
+        return CancelAsync(cancelOptions, cancellationToken);
     }
-
-    /// <summary>
-    /// Deserializes a <see cref="QueryHandle"/> from a JSON string previously produced by <see cref="Serialize"/>.
-    /// This method does not perform any network operations.
-    /// </summary>
-    internal static QueryHandle Deserialize(string serializedHandle, IAnalyticsService analyticsService, TimeSpan? requestTimeout = null)
-    {
-        ArgumentNullException.ThrowIfNull(serializedHandle);
-
-        var data = JsonSerializer.Deserialize<SerializedQueryHandle>(serializedHandle)
-                   ?? throw new ArgumentException("Invalid serialized handle format.", nameof(serializedHandle));
-
-        if (string.IsNullOrWhiteSpace(data.Handle) || string.IsNullOrWhiteSpace(data.RequestId))
-        {
-            throw new ArgumentException("Serialized handle is missing required fields.", nameof(serializedHandle));
-        }
-
-        return new QueryHandle(data.Handle, data.RequestId, analyticsService, requestTimeout);
-    }
-
-    private record SerializedQueryHandle(string Handle, string RequestId);
 }

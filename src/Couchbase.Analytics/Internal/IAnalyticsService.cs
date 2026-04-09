@@ -42,25 +42,25 @@ internal interface IAnalyticsService
 
     /// <summary>
     /// Fetches the status of an async query from the server.
-    /// Sends GET to /api/v1/request/status/{handle}.
+    /// Sends GET to /api/v1/request/status/{requestID}/{handleID}.
     /// </summary>
-    Task<QueryStatus> FetchStatusAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default);
+    Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches the results of a completed async query from the server.
-    /// Sends GET to /api/v1/request/result/{handle}.
+    /// Sends GET to /api/v1/request/result/{requestID}/{handleID}.
     /// </summary>
-    Task<IQueryResult> FetchResultsAsync(string handle, TimeSpan? requestTimeout, IDeserializer deserializer, CancellationToken cancellationToken = default);
+    Task<IQueryResult> FetchResultsAsync(string requestId, string handlePath, FetchResultsOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Discards the results of an async query on the server.
-    /// Sends DELETE to /api/v1/request/result/{handle}.
+    /// Sends DELETE to /api/v1/request/result/{requestID}/{handleID}.
     /// </summary>
-    Task DiscardResultsAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default);
+    Task DiscardResultsAsync(string requestId, string handlePath, DiscardResultsOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Cancels an active async query on the server.
     /// Sends DELETE to /api/v1/active_requests with the request_id.
     /// </summary>
-    Task CancelQueryAsync(string requestId, TimeSpan? requestTimeout, CancellationToken cancellationToken = default);
+    Task CancelQueryAsync(string requestId, CancelOptions options, CancellationToken cancellationToken = default);
 }

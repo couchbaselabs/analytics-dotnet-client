@@ -46,20 +46,6 @@ public record StartQueryOptions
     public TimeSpan? QueryTimeout { get; init; }
 
     /// <summary>
-    /// The per-HTTP-request timeout for SDK operations related to this async query
-    /// (e.g., starting the query, polling status, fetching results, cancelling).
-    /// If unset, defaults to <see cref="TimeoutOptions.DispatchTimeout"/>.
-    /// </summary>
-    public TimeSpan? RequestTimeout { get; init; }
-
-    /// <summary>
-    /// Optional result TTL that overrides the cluster's default (1 hour) for the query's result set.
-    /// Once the TTL expires, the server discards the result set.
-    /// The value should be a duration string (e.g., "30m", "2h").
-    /// </summary>
-    public string? ResultTTL { get; init; }
-
-    /// <summary>
     /// The ClientContextId to be used for the query request. Used to identify the query in logs and profiles.
     /// If none is provided, a new GUID will be generated.
     /// </summary>
@@ -79,11 +65,6 @@ public record StartQueryOptions
     /// The scan consistency for the query request.
     /// </summary>
     public QueryScanConsistency? ScanConsistency { get; init; }
-
-    /// <summary>
-    /// Used to deserialize query rows.
-    /// </summary>
-    public IDeserializer? Deserializer { get; init; }
 
     /// <summary>
     /// Whether the query is read-only.
@@ -144,11 +125,6 @@ public record StartQueryOptions
             formValues["query_context"] = QueryContext.ToString();
         }
 
-        if (!string.IsNullOrWhiteSpace(ResultTTL))
-        {
-            formValues["result_ttl"] = ResultTTL;
-        }
-
         foreach (var parameter in NamedParameters)
         {
             formValues.Add(parameter.Key.StartsWith('$') ? parameter.Key : $"${parameter.Key}", parameter.Value);
@@ -180,10 +156,6 @@ public record StartQueryOptions
     // Fluent builder methods
 
     public StartQueryOptions WithQueryTimeout(TimeSpan? queryTimeout) => this with { QueryTimeout = queryTimeout };
-
-    public StartQueryOptions WithRequestTimeout(TimeSpan? requestTimeout) => this with { RequestTimeout = requestTimeout };
-
-    public StartQueryOptions WithResultTTL(string? resultTTL) => this with { ResultTTL = resultTTL };
 
     public StartQueryOptions WithClientContextId(string clientContextId) => this with { ClientContextId = clientContextId };
 
@@ -220,8 +192,6 @@ public record StartQueryOptions
         copy[name] = value;
         return this with { Raw = copy };
     }
-
-    public StartQueryOptions WithDeserializer(IDeserializer deserializer) => this with { Deserializer = deserializer };
 
     internal StartQueryOptions WithQueryContext(QueryContext queryContext) => this with { QueryContext = queryContext };
 }
