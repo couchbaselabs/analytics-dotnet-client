@@ -1,5 +1,4 @@
 using System.Security.Authentication;
-using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.Grpc.Protocol.Columnar;
 
@@ -74,7 +73,6 @@ public static class ClusterNewInstanceRequestExtensions
         }
         else if (protoSecurity.HasTrustOnlyPemString)
         {
-            Serilog.Log.Information("Using PEM string for certificate trust");
             securityOptions = securityOptions.WithTrustOnlyPemString(protoSecurity.TrustOnlyPemString);
         }
         if (protoSecurity.HasDisableServerCertificateVerification)

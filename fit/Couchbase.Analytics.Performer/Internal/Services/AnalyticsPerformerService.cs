@@ -74,16 +74,6 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
                     return new(request, cluster);
                 });
 
-            /* context.GetHttpContext().Response.OnCompleted(() =>
-             {
-                 foreach (var tunable in request.Tunables)
-                 {
-                     Environment.SetEnvironmentVariable(tunable.Key, null);
-                 }
-
-                 return Task.CompletedTask;
-             });*/
-
             Serilog.Log.Information(
                  "Created or using new cluster instance in {Seconds}: {ConnectionString}",
                  stopWatch.Elapsed, request.ConnectionString);
@@ -185,12 +175,8 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
             {
                 statusCode = StatusCode.Unimplemented;
             }
-            response.SdkConnectionError.Add((int)statusCode, new SdkConnectionError());// ¯\_(ツ)_/¯
+            response.SdkConnectionError.Add((int)statusCode, new SdkConnectionError());
         }
-
-        //java has observer.onNext and observer.onCompleted here
-        //C# has context.GetHttpContext().Response.OnCompleted and context.GetHttpContext().Response.OnStarting
-        //Do we have to provide a func here for each or just use the defaults?
 
         return Task.FromResult(response);
     }
