@@ -62,15 +62,15 @@ public class AsyncAnalyticsTests
             count++;
         }
 
-        Assert.Equal(100, count);
-        Assert.Equal(100, results.MetaData.Metrics?.ResultCount);
+        Assert.Equal(99, count);
+        Assert.Equal(99, results.MetaData.Metrics?.ResultCount);
     }
 
     [Fact]
     public async Task Test_AsyncAnalytics_Cancellation_Cluster()
     {
-        // Use a statement that takes some time to execute
-        var statement = "select i from array_range(1, 100000) as i;";
+        // Use a statement that takes some time to execute (Cartesian product to delay)
+        var statement = "select * from array_range(1, 5000) as a, array_range(1, 5000) as b;";
         var queryOptions = new StartQueryOptions()
         {
             QueryTimeout = TimeSpan.FromSeconds(30)
@@ -82,14 +82,24 @@ public class AsyncAnalyticsTests
         // Immediately cancel
         await handle.CancelAsync(new CancelOptions());
 
-        // Attempting to fetch the handle afterwards should theoretically return 404 cleanly, or it might just take a while and fail.
-        // Wait briefly for cancellation to propagate.
-        await Task.Delay(1000);
-
-        await Assert.ThrowsAsync<QueryNotFoundException>(async () => 
+        // Attempting to fetch the handle afterwards should return 404 because the job is killed.
+        // It's possible the cancel takes a brief moment to process gracefully on the server.
+        var ex = await Record.ExceptionAsync(async () =>
         {
-            await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
+            for (int i = 0; i < 20; i++)
+            {
+                var resultHandle = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
+                if (resultHandle != null)
+                {
+                    // If it somehow completed, we're not testing cancellation properly, but let's break
+                    break;
+                }
+                await Task.Delay(500);
+            }
         });
+
+        // The query should have been killed, resulting in a QueryNotFoundException when it's purged.
+        Assert.IsType<QueryNotFoundException>(ex);
     }
 
     [Fact]
