@@ -7,13 +7,6 @@ namespace Couchbase.Analytics.Performer.Internal.Utils;
 
 public static class ClusterNewInstanceRequestExtensions
 {
-    public static Credential ToSdkCredential(
-        this ClusterNewInstanceRequest request)
-    {
-        return new Credential(request.Credential.UsernameAndPassword.Username,
-            request.Credential.UsernameAndPassword.Password);
-    }
-
     public static ClusterOptions ToSdkQueryOptions(this ClusterNewInstanceRequest request)
     {
         var protoOptions = request.Options;
@@ -72,7 +65,8 @@ public static class ClusterNewInstanceRequestExtensions
 
         if (protoSecurity.TrustOnlyPlatform)
         {
-            // what is this?
+            // Trust only certificates installed on the machine's trust store,
+            // nothing to do here
         }
         else if (protoSecurity.HasTrustOnlyCapella)
         {
@@ -80,6 +74,7 @@ public static class ClusterNewInstanceRequestExtensions
         }
         else if (protoSecurity.HasTrustOnlyPemString)
         {
+            Serilog.Log.Information("Using PEM string for certificate trust");
             securityOptions = securityOptions.WithTrustOnlyPemString(protoSecurity.TrustOnlyPemString);
         }
         if (protoSecurity.HasDisableServerCertificateVerification)

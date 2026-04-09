@@ -8,25 +8,25 @@ namespace Couchbase.Analytics.Performer.Internal.Connections;
 internal class ClusterConnection : IDisposable
 {
     private readonly ClusterNewInstanceRequest _clusterNewInstanceRequest;
-    private Cluster _cluster;
+    internal Cluster Cluster;
     private volatile bool _disposed;
 
     public ClusterConnection(
         ClusterNewInstanceRequest clusterNewInstanceRequest, Cluster cluster)
     {
         _clusterNewInstanceRequest = clusterNewInstanceRequest;
-        _cluster = cluster;
+        Cluster = cluster;
     }
 
     public Task<IQueryResult> ExecuteClusterQuery(string statement, QueryOptions? options = null, CancellationToken? cancellationToken = null)
     {
-        return _cluster.
+        return Cluster.
             ExecuteQueryAsync(statement, options);
     }
 
     public Task<IQueryResult> ExecuteScopeQuery(string database, string scope, string statement, QueryOptions? options = null, CancellationToken? cancellationToken = null)
     {
-        return _cluster.
+        return Cluster.
             Database(database).
             Scope(scope).
             ExecuteQueryAsync(statement, options);
@@ -37,7 +37,7 @@ internal class ClusterConnection : IDisposable
         if (!_disposed)
         {
             _disposed = true;
-            _cluster?.Dispose();
+            Cluster?.Dispose();
         }
     }
 }

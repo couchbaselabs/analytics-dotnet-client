@@ -21,6 +21,30 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
     }
     private ConcurrentDictionary<string, ClusterConnection> Clusters { get; }
 
+    public override Task<EmptyResultOrFailureResponse> SetCredential(SetCredentialRequest request, ServerCallContext context)
+    {
+        var response = new EmptyResultOrFailureResponse();
+        var stopWatch = LightweightStopwatch.StartNew();
+        var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        try
+        {
+            var newCredential = request.Credential.ToCore();
+
+            if (Clusters.TryGetValue(request.ExecutionContext.ClusterId, out var clusterConnection))
+            {
+                clusterConnection.Cluster.UpdateCredential(newCredential);
+            }
+            response = response.GetResponseMetaData(stopWatch, initiated);
+        }
+        catch (Exception ex)
+        {
+            response.GetResponseMetaData(stopWatch, initiated, ex);
+        }
+
+        return Task.FromResult(response);
+    }
+
     public override Task<EmptyResultOrFailureResponse> ClusterNewInstance(ClusterNewInstanceRequest request,
         ServerCallContext context)
     {
@@ -32,7 +56,6 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
         var response = new EmptyResultOrFailureResponse();
         try
         {
-            //how to make this work in C#? or does this work?
             foreach (var tunable in request.Tunables)
             {
                 Environment.SetEnvironmentVariable(tunable.Key, tunable.Value);
@@ -46,7 +69,7 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
                         request.ConnectionString);
 
                     var cluster = Cluster.Create(request.ConnectionString,
-                        request.ToSdkCredential(), request.ToSdkQueryOptions());
+                        request.Credential.ToCore(), request.ToSdkQueryOptions());
 
                     return new(request, cluster);
                 });
@@ -89,6 +112,10 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
 
         try
         {
+            response.SupportsCertificateCredential = true;
+            response.SupportsJwtCredential = true;
+            response.SupportsSetCredential = true;
+
             response.ClusterNewInstance.Add((int)Mode.PushBasedStreaming, new PerApiElementClusterNewInstance { SupportsDispatchTimeout = true });
             response.ClusterNewInstance.Add((int)Mode.Buffered, new PerApiElementClusterNewInstance { SupportsDispatchTimeout = true });
 

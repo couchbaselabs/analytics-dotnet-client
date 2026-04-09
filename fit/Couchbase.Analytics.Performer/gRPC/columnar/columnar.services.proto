@@ -24,6 +24,10 @@ service ColumnarService {
   rpc ClusterNewInstance (ClusterNewInstanceRequest) returns (EmptyResultOrFailureResponse);
   rpc ClusterClose (ClusterCloseRequest) returns (EmptyResultOrFailureResponse);
   rpc CloseAllClusters (CloseAllColumnarClustersRequest) returns (EmptyResultOrFailureResponse);
+
+  // Updates the credential on a previously-created cluster connection.
+  // Maps to the EA RFC's `cluster.credential(newCredential)`.
+  rpc SetCredential (SetCredentialRequest) returns (EmptyResultOrFailureResponse);
 }
 
 // To better permit DRY, instance.executeQuery() and scope.executeQuery() are here rather than in their respective services.

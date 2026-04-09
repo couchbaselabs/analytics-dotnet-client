@@ -213,8 +213,9 @@ public static partial class CertificateValidation
             }
             else if (securityOptions.TrustMode == CertificateTrustMode.PemString)
             {
-                trustedCertificates.Add(X509CertificateLoader.LoadCertificate(
-                    System.Text.Encoding.ASCII.GetBytes(securityOptions.CertificateValue!)));
+                var certs = new X509Certificate2Collection();
+                certs.ImportFromPem(securityOptions.CertificateValue!);
+                trustedCertificates.AddRange(certs);
             }
             else if (securityOptions.TrustMode == CertificateTrustMode.CertificatesOnly)
             {
@@ -276,6 +277,19 @@ public static partial class CertificateValidation
 
         // Allow unknown certificate authority since we're using a custom trust
         validationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+        // We don't check online for revocation since we may be validating against private CAs that don't support OCSP/CRL
+        validationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+        // Copy intermediate certificates from the TLS chain into ExtraStore so the
+        // custom chain builder can locate them even if they are not in CustomTrustStore.
+        if (chain != null)
+        {
+            foreach (var element in chain.ChainElements)
+            {
+                validationChain.ChainPolicy.ExtraStore.Add(element.Certificate);
+            }
+        }
 
         // Build and validate the certificate chain
         var chainValid = validationChain.Build(serverCert);
