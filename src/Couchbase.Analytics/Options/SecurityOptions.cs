@@ -58,6 +58,17 @@ public record SecurityOptions
     /// </summary>
     internal SslProtocols SslProtocols { get; init; } = SslProtocols.Tls13 | SslProtocols.Tls12;
 
+    /// <summary>
+    /// The certificate revocation checking mode used during chain validation.
+    /// </summary>
+    /// <remarks>
+    /// The default is <see cref="X509RevocationMode.NoCheck"/> because custom and private CAs
+    /// typically do not provide CRL distribution points or OCSP responders. Set to
+    /// <see cref="X509RevocationMode.Online"/> or <see cref="X509RevocationMode.Offline"/>
+    /// if your CA infrastructure supports revocation checking.
+    /// </remarks>
+    internal X509RevocationMode RevocationMode { get; init; } = X509RevocationMode.NoCheck;
+
     internal string? PathToPemFileValue => PemFilePath;
     internal string? CertificateValue => PemString;
     internal X509Certificate2Collection? CertificatesValue => Certificates;
@@ -145,5 +156,17 @@ public record SecurityOptions
     public SecurityOptions WithSslProtocols(SslProtocols protocols)
     {
         return this with { SslProtocols = protocols };
+    }
+
+    /// <summary>
+    /// Sets the certificate revocation mode used when validating server certificate chains.
+    /// </summary>
+    /// <remarks>
+    /// The default is <see cref="X509RevocationMode.NoCheck"/>. Use <see cref="X509RevocationMode.Online"/>
+    /// or <see cref="X509RevocationMode.Offline"/> if your CA infrastructure provides CRL/OCSP endpoints.
+    /// </remarks>
+    public SecurityOptions WithRevocationMode(X509RevocationMode revocationMode)
+    {
+        return this with { RevocationMode = revocationMode };
     }
 }

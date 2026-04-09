@@ -127,7 +127,7 @@ public static partial class CertificateValidation
                     return false; // Error loading custom certificates
                 }
 
-                return ValidateAgainstCustomTrust(certificate, chain, trustedCertificates, logger);
+                return ValidateAgainstCustomTrust(certificate, chain, trustedCertificates, logger, securityOptions.RevocationMode);
             }
         };
     }
@@ -250,7 +250,8 @@ public static partial class CertificateValidation
         X509Certificate? certificate,
         X509Chain? chain,
         X509Certificate2Collection trustedCertificates,
-        ILogger logger)
+        ILogger logger,
+        X509RevocationMode revocationMode = X509RevocationMode.NoCheck)
     {
         if (certificate == null)
         {
@@ -278,8 +279,7 @@ public static partial class CertificateValidation
         // Allow unknown certificate authority since we're using a custom trust
         validationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
 
-        // We don't check online for revocation since we may be validating against private CAs that don't support OCSP/CRL
-        validationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        validationChain.ChainPolicy.RevocationMode = revocationMode;
 
         // Copy intermediate certificates from the TLS chain into ExtraStore so the
         // custom chain builder can locate them even if they are not in CustomTrustStore.
