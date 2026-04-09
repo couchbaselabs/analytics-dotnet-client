@@ -288,13 +288,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                     throw new AnalyticsException("Server response is missing required 'requestID' or 'handle' fields.", errorContext);
                 }
 
-                // Strip the leading path prefix from the handle
-                var handle = handlePath.StartsWith("/api/v1/request/status/")
-                    ? handlePath["/api/v1/request/status/".Length..]
-                    : handlePath;
-
-                LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, _redactor.SystemData(handle), _redactor.SystemData(requestId), (int)response.StatusCode);
-                return new QueryHandle(handle, requestId, this);
+                LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, _redactor.SystemData(handlePath), _redactor.SystemData(requestId), (int)response.StatusCode);
+                return new QueryHandle(handlePath, requestId, this);
             }
             catch (HttpRequestException httpRequestException)
             {
@@ -335,7 +330,10 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
         var httpClient = CreateHttpClient(timeout);
 
-        var statusUri = new Uri(_baseUri, $"api/v1/request/status/{handle.RequestId}/{handle.Handle}");
+        var statusUri = Uri.TryCreate(handle.Handle, UriKind.Absolute, out var absUri)
+            ? absUri
+            : new Uri(_baseUri, handle.Handle);
+            
         var request = new HttpRequestMessage(HttpMethod.Get, statusUri);
 
         LogFetchStatusRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle.Handle));
@@ -393,12 +391,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 throw new InvalidOperationException("Query status indicates success but no result handle was provided by the server.");
             }
 
-            // Strip the leading path prefix to get just the handle portion
-            var handlePath = resultHandle.StartsWith("/api/v1/request/result/")
-                ? resultHandle["/api/v1/request/result/".Length..]
-                : resultHandle;
-
-            return new QueryResultHandle(handlePath, handle.RequestId, this);
+            return new QueryResultHandle(resultHandle, handle.RequestId, this);
         }
         catch (TaskCanceledException taskCanceledEx)
         {
@@ -412,7 +405,10 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var httpClient = CreateHttpClient(timeout);
         var deserializer = options.Deserializer ?? _clusterOptions.Deserializer;
 
-        var resultUri = new Uri(_baseUri, $"api/v1/request/result/{handlePath}");
+        var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri)
+            ? absUri
+            : new Uri(_baseUri, handlePath);
+            
         var request = new HttpRequestMessage(HttpMethod.Get, resultUri);
 
         LogFetchResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handlePath));
@@ -457,7 +453,10 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
         var httpClient = CreateHttpClient(timeout);
 
-        var resultUri = new Uri(_baseUri, $"api/v1/request/result/{handlePath}");
+        var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri)
+            ? absUri
+            : new Uri(_baseUri, handlePath);
+            
         var request = new HttpRequestMessage(HttpMethod.Delete, resultUri);
 
         LogDiscardResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handlePath));

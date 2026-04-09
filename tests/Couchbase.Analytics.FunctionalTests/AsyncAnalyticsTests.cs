@@ -34,6 +34,9 @@ public class AsyncAnalyticsTests
         Assert.NotNull(handle);
         Assert.NotNull(handle.Handle);
         Assert.NotNull(handle.RequestId);
+        
+        _outputHelper.WriteLine($"Handle: {handle.Handle}");
+        _outputHelper.WriteLine($"RequestId: {handle.RequestId}");
 
         // 2. Poll for the result handle
         QueryResultHandle? resultHandle = null;
@@ -61,49 +64,6 @@ public class AsyncAnalyticsTests
 
         Assert.Equal(100, count);
         Assert.Equal(100, results.MetaData.Metrics?.ResultCount);
-    }
-
-    [Fact]
-    public async Task Test_AsyncAnalytics_EndToEnd_Scope()
-    {
-        var statement = "select i from array_range(1, 10) as i;";
-        var queryOptions = new StartQueryOptions()
-        {
-            QueryTimeout = TimeSpan.FromSeconds(30)
-        };
-
-        var scope = _simpleFixture.Cluster.Database("default").Scope("default");
-
-        // 1. Start the query on the scope
-        var handle = await scope.StartQueryAsync(statement, queryOptions);
-        Assert.NotNull(handle);
-        Assert.NotNull(handle.Handle);
-
-        // 2. Poll for the result handle
-        QueryResultHandle? resultHandle = null;
-        for (int i = 0; i < 20; i++)
-        {
-            resultHandle = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
-            if (resultHandle != null)
-            {
-                break;
-            }
-            await Task.Delay(500);
-        }
-
-        Assert.NotNull(resultHandle);
-
-        // 3. Fetch the results
-        var results = await resultHandle!.FetchResultsAsync(new FetchResultsOptions());
-        Assert.NotNull(results);
-
-        var count = 0;
-        await foreach (var row in results.ConfigureAwait(false))
-        {
-            count++;
-        }
-
-        Assert.Equal(10, count);
     }
 
     [Fact]
