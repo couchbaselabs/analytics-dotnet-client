@@ -24,7 +24,7 @@ namespace Couchbase.AnalyticsClient.Internal.DI;
 /// <summary>
 /// A factory capable of returning a service.
 /// </summary>
-internal interface IServiceFactory
+internal interface IServiceFactory : IDisposable
 {
     /// <summary>
     /// Initializes the factory, making it owned by the given <see cref="IServiceProvider"/>.

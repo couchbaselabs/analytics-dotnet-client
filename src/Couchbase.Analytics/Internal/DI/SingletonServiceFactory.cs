@@ -19,6 +19,7 @@
  * ************************************************************/
 #endregion
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using Couchbase.AnalyticsClient.Utils;
 
@@ -107,5 +108,13 @@ internal sealed class SingletonServiceFactory : IServiceFactory
         }
 
         return Factory;
+    }
+
+    public void Dispose()
+    {
+        if (_singleton is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
     }
 }

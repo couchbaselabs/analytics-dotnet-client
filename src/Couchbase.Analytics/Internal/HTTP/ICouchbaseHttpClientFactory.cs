@@ -25,7 +25,7 @@ namespace Couchbase.AnalyticsClient.Internal.HTTP;
 /// Creates an <see cref="HttpClient"/> which may be safely configured and disposed, but while
 /// reusing inner handlers for connection pooling and HTTP keep-alives.
 /// </summary>
-internal interface ICouchbaseHttpClientFactory
+internal interface ICouchbaseHttpClientFactory : IDisposable
 {
     /// <summary>
     /// Creates an <see cref="HttpClient"/> which may be safely configured and disposed, but while

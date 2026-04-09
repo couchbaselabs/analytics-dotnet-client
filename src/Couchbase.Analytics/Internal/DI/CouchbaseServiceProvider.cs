@@ -19,6 +19,7 @@
  * ************************************************************/
 #endregion
 
+using System;
 using System.Collections.ObjectModel;
 
 namespace Couchbase.AnalyticsClient.Internal.DI;
@@ -79,5 +80,39 @@ internal sealed class CouchbaseServiceProvider : ICouchbaseServiceProvider
         }
 
         return false;
+    }
+
+    private bool _disposed;
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+
+        var exceptions = new List<Exception>();
+
+        foreach (var factory in _services.Values)
+        {
+            if (factory is IDisposable disposableFactory)
+            {
+                try
+                {
+                    disposableFactory.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }
+        }
+
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(exceptions);
+        }
     }
 }

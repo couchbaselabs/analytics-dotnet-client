@@ -223,5 +223,10 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
         handler.Dispose();
     }
 
+    public void Dispose()
+    {
+        _sharedHandler?.Dispose();
+    }
+
     public HttpCompletionOption DefaultCompletionOption { get; set; } = HttpCompletionOption.ResponseHeadersRead;
 }
