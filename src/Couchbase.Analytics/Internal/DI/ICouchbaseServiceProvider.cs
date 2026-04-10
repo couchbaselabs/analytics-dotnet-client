@@ -24,7 +24,7 @@ namespace Couchbase.AnalyticsClient.Internal.DI;
 /// <summary>
 /// Extends <see cref="IServiceProvider"/> with a method to test for service registration.
 /// </summary>
-internal interface ICouchbaseServiceProvider : IServiceProvider
+internal interface ICouchbaseServiceProvider : IServiceProvider, IDisposable
 {
     /// <summary>
     /// Determines if the specified service type is available from the <see cref="ICouchbaseServiceProvider"/>.

@@ -96,4 +96,9 @@ internal sealed class TransientServiceFactory : IServiceFactory
             return constructor.Invoke(constructorArgs);
         }
     }
+
+    public void Dispose()
+    {
+        // Transient factories do not manage singleton resources, so disposal is a no-op
+    }
 }

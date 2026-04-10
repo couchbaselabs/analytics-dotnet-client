@@ -228,6 +228,9 @@ public class Cluster : IDisposable
 
     public void Dispose()
     {
-        // TODO release managed resources here
+        if (_serviceProvider is IDisposable disposableProvider)
+        {
+            disposableProvider.Dispose();
+        }
     }
 }

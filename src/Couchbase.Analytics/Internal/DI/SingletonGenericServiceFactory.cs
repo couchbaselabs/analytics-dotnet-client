@@ -131,4 +131,29 @@ internal sealed class SingletonGenericServiceFactory : IServiceFactory
 
         return constructor.Invoke(constructorArgs);
     }
+
+    public void Dispose()
+    {
+        var exceptions = new List<Exception>();
+
+        foreach (var singleton in _singletons.Values)
+        {
+            if (singleton is IDisposable disposable)
+            {
+                try
+                {
+                    disposable.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+            }
+        }
+
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(exceptions);
+        }
+    }
 }
