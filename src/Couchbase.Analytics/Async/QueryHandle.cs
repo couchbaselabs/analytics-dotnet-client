@@ -28,15 +28,14 @@ namespace Couchbase.AnalyticsClient.Async;
 
 /// <summary>
 /// Represents a handle to a server-side asynchronous query.
-/// Obtained from <see cref="Cluster.StartQueryAsync"/> or <see cref="Cluster.QueryHandleFromSerialized"/>.
+/// Obtained from <see cref="Cluster.StartQueryAsync"/>.
 /// </summary>
 public class QueryHandle
 {
     private readonly IAnalyticsService _analyticsService;
 
     /// <summary>
-    /// The query handle string used to poll status and fetch results.
-    /// This is the path segment after <c>/api/v1/request/status/</c>.
+    /// The query handle string used to poll for the result handle.
     /// </summary>
     public string Handle { get; }
 

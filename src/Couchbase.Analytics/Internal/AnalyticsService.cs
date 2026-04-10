@@ -336,7 +336,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             
         var request = new HttpRequestMessage(HttpMethod.Get, statusUri);
 
-        LogFetchStatusRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle.Handle));
+        LogFetchResultHandleRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle.Handle));
 
         try
         {
@@ -361,7 +361,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             if (!response.IsSuccessStatusCode)
             {
-                LogFetchStatusUnexpectedHttp(_logger, _redactor.SystemData(handle.Handle), (int)response.StatusCode);
+                LogFetchResultHandleUnexpectedHttp(_logger, _redactor.SystemData(handle.Handle), (int)response.StatusCode);
             }
 
             IReadOnlyList<QueryError>? errors = null;
@@ -381,7 +381,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 throw new AnalyticsException($"Query status fetch failed with HTTP {(int)response.StatusCode} and status: {status}", errorContext);
             }
 
-            LogFetchStatusResponse(_logger, _redactor.SystemData(handle.Handle), status, (int)response.StatusCode);
+            LogFetchResultHandleResponse(_logger, _redactor.SystemData(handle.Handle), status, (int)response.StatusCode);
 
             if (string.Equals(status, "running", StringComparison.OrdinalIgnoreCase))
             {
@@ -608,14 +608,14 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     [LoggerMessage(9, LogLevel.Debug, "Async StartQuery succeeded for {ClientContextId}. Handle={Handle}, RequestId={RequestId} (HTTP {StatusCode})")]
     private static partial void LogAsyncStartQuerySucceeded(ILogger logger, string? clientContextId, Redacted<string> handle, Redacted<string> requestId, int statusCode);
 
-    [LoggerMessage(10, LogLevel.Debug, "FetchStatus sending GET to {Uri} for handle {Handle}")]
-    private static partial void LogFetchStatusRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
+    [LoggerMessage(10, LogLevel.Debug, "FetchResultHandle sending GET to {Uri} for handle {Handle}")]
+    private static partial void LogFetchResultHandleRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
 
-    [LoggerMessage(11, LogLevel.Debug, "FetchStatus for handle {Handle} returned status={Status} (HTTP {StatusCode})")]
-    private static partial void LogFetchStatusResponse(ILogger logger, Redacted<string> handle, string status, int statusCode);
+    [LoggerMessage(11, LogLevel.Debug, "FetchResultHandle for handle {Handle} returned status={Status} (HTTP {StatusCode})")]
+    private static partial void LogFetchResultHandleResponse(ILogger logger, Redacted<string> handle, string status, int statusCode);
 
-    [LoggerMessage(12, LogLevel.Warning, "FetchStatus for handle {Handle} returned unexpected HTTP {StatusCode}")]
-    private static partial void LogFetchStatusUnexpectedHttp(ILogger logger, Redacted<string> handle, int statusCode);
+    [LoggerMessage(12, LogLevel.Warning, "FetchResultHandle for handle {Handle} returned unexpected HTTP {StatusCode}")]
+    private static partial void LogFetchResultHandleUnexpectedHttp(ILogger logger, Redacted<string> handle, int statusCode);
 
     [LoggerMessage(13, LogLevel.Debug, "FetchResults sending GET to {Uri} for handle {Handle}")]
     private static partial void LogFetchResultsRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
