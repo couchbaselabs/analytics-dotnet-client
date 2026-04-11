@@ -209,17 +209,7 @@ public class Cluster : IDisposable
         return StartQueryAsync(statement, startQueryOptions, cancellationToken);
     }
 
-    /// <summary>
-    /// Reconstructs a <see cref="QueryHandle"/> from a previously serialized handle string.
-    /// This method does not perform any network operations.
-    /// </summary>
-    /// <param name="serializedHandle">A JSON string previously produced by <see cref="QueryHandle.Serialize"/>.</param>
-    /// <returns>A <see cref="QueryHandle"/> that can be used to interact with the query.</returns>
-    public QueryHandle QueryHandleFromSerialized(string serializedHandle)
-    {
-        var service = _analyticsService.GetValueOrThrow();
-        return QueryHandle.Deserialize(serializedHandle, service);
-    }
+
 
     public Database Database(string databaseName)
     {

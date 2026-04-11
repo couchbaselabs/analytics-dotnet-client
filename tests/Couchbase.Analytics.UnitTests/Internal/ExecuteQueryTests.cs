@@ -47,6 +47,7 @@ public class ExecuteQueryTests
         public Uri Uri { get; } = new Uri("http://localhost");
 
         public QueryOptions? LastOptions { get; private set; }
+        public StartQueryOptions? LastStartOptions { get; private set; }
 
         public Task<IQueryResult> SendAsync(string statement, QueryOptions options, CancellationToken cancellationToken = default)
         {
@@ -55,18 +56,21 @@ public class ExecuteQueryTests
         }
 
         public Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions options, CancellationToken cancellationToken = default)
+        {
+            LastStartOptions = options;
+            return Task.FromResult(new QueryHandle("handle", "reqId", this));
+        }
+
+        public Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
-        public Task<QueryStatus> FetchStatusAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+        public Task<IQueryResult> FetchResultsAsync(string requestId, string handlePath, FetchResultsOptions options, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
-        public Task<IQueryResult> FetchResultsAsync(string handle, TimeSpan? requestTimeout, IDeserializer deserializer, CancellationToken cancellationToken = default)
+        public Task DiscardResultsAsync(string requestId, string handlePath, DiscardResultsOptions options, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
-        public Task DiscardResultsAsync(string handle, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        public Task CancelQueryAsync(string requestId, TimeSpan? requestTimeout, CancellationToken cancellationToken = default)
+        public Task CancelQueryAsync(string requestId, CancelOptions options, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
     }
 
@@ -77,6 +81,17 @@ public class ExecuteQueryTests
         string FormatList(List<object> l) => string.Join(", ", l.Select(x => x?.ToString()));
 
         return $"AsStreaming={o.AsStreaming}; Timeout={o.Timeout}; ClientContextId={o.ClientContextId}; " +
+               $"ScanConsistency={o.ScanConsistency}; ReadOnly={o.ReadOnly}; MaxRetries={o.MaxRetries}; " +
+               $"Named=[{FormatDict(o.NamedParameters)}]; Positional=[{FormatList(o.PositionalParameters)}]; Raw=[{FormatDict(o.Raw)}]; " +
+               $"QueryContext={(o.QueryContext is null ? "<null>" : o.QueryContext.ToString())}";
+    }
+
+    private static string FormatStartOptions(StartQueryOptions o)
+    {
+        string FormatDict(Dictionary<string, object> d) => string.Join(", ", d.Select(kv => $"{kv.Key}={kv.Value}"));
+        string FormatList(List<object> l) => string.Join(", ", l.Select(x => x?.ToString()));
+
+        return $"QueryTimeout={o.QueryTimeout}; ClientContextId={o.ClientContextId}; " +
                $"ScanConsistency={o.ScanConsistency}; ReadOnly={o.ReadOnly}; MaxRetries={o.MaxRetries}; " +
                $"Named=[{FormatDict(o.NamedParameters)}]; Positional=[{FormatList(o.PositionalParameters)}]; Raw=[{FormatDict(o.Raw)}]; " +
                $"QueryContext={(o.QueryContext is null ? "<null>" : o.QueryContext.ToString())}";
@@ -172,5 +187,166 @@ public class ExecuteQueryTests
         Assert.Equal("db1", applied.QueryContext!.Database);
         Assert.Equal("sc1", applied.QueryContext.Scope);
         Assert.Equal("default:`db1`.`sc1`", applied.QueryContext.ToString());
+    }
+
+    [Fact]
+    public async Task StartQueryAsync_WithFunc_AppliesOptions_OnCluster()
+    {
+        var fakeService = new FakeAnalyticsService();
+
+        var cluster = Cluster.Create(
+            "http://localhost:18095",
+            Credential.Create("user", "pass"),
+            opts => opts
+                .AddClusterService<IAnalyticsService>(fakeService)
+        );
+
+        StartQueryOptions? before = null;
+        var func = (Func<StartQueryOptions, StartQueryOptions>)(o =>
+        {
+            // Capture the options BEFORE the func applies changes
+            before = o;
+            return o
+                .WithQueryTimeout(TimeSpan.FromSeconds(12))
+                .WithClientContextId("ctx-xyz")
+                .WithScanConsistency(QueryScanConsistency.RequestPlus)
+                .WithReadOnly(true)
+                .WithMaxRetries(5)
+                .WithNamedParameters(new Dictionary<string, object> { ["k1"] = 1 })
+                .WithNamedParameter("k2", 2)
+                .WithPositionalParameters(["p1"])
+                .WithPositionalParameter("p2")
+                .WithRaw("raw1", 123);
+        });
+
+        await cluster.StartQueryAsync("SELECT 1;", func);
+
+        var applied = fakeService.LastStartOptions;
+        Assert.NotNull(applied);
+
+        _outputHelper.WriteLine($"Before (Cluster): {FormatStartOptions(before!)}");
+        _outputHelper.WriteLine($"After  (Cluster): {FormatStartOptions(applied)}");
+
+        Assert.Equal(TimeSpan.FromSeconds(12), applied!.QueryTimeout);
+        Assert.Equal("ctx-xyz", applied.ClientContextId);
+        Assert.Equal(QueryScanConsistency.RequestPlus, applied.ScanConsistency);
+        Assert.True(applied.ReadOnly);
+        Assert.Equal((uint)5, applied.MaxRetries);
+        Assert.Equal(1, applied.NamedParameters["k1"]);
+        Assert.Equal(2, applied.NamedParameters["k2"]);
+        Assert.Equal(["p1", "p2"], applied.PositionalParameters);
+        Assert.Equal(123, applied.Raw["raw1"]);
+    }
+
+    [Fact]
+    public async Task StartQueryAsync_WithFunc_AppliesOptions_OnScope_AndPreservesQueryContext()
+    {
+        var fakeService = new FakeAnalyticsService();
+
+        var cluster = Cluster.Create(
+            "http://localhost:18095",
+            Credential.Create("user", "pass"),
+            opts => opts.AddClusterService<IAnalyticsService>(fakeService)
+        );
+
+        var scope = cluster.Database("db1").Scope("sc1");
+
+        StartQueryOptions? before = null;
+        var func = (Func<StartQueryOptions, StartQueryOptions>)(o =>
+        {
+            // Capture the options before the func applies changes
+            before = o;
+            return o
+                .WithClientContextId("scope-ctx");
+        });
+
+        await scope.StartQueryAsync("SELECT 1;", func);
+
+        var applied = fakeService.LastStartOptions;
+        Assert.NotNull(applied);
+
+        _outputHelper.WriteLine($"Before (Scope): {FormatStartOptions(before!)}");
+        _outputHelper.WriteLine($"After  (Scope): {FormatStartOptions(applied!)}");
+
+        Assert.Equal("scope-ctx", applied!.ClientContextId);
+
+        // QueryContext should be set by Scope before invoking func
+        Assert.NotNull(applied.QueryContext);
+        Assert.Equal("db1", applied.QueryContext!.Database);
+        Assert.Equal("sc1", applied.QueryContext.Scope);
+        Assert.Equal("default:`db1`.`sc1`", applied.QueryContext.ToString());
+    }
+
+    [Fact]
+    public async Task StartQueryAsync_WithOptionsObject_AppliesOptions_OnCluster()
+    {
+        var fakeService = new FakeAnalyticsService();
+
+        var cluster = Cluster.Create(
+            "http://localhost:18095",
+            Credential.Create("user", "pass"),
+            opts => opts
+                .AddClusterService<IAnalyticsService>(fakeService)
+        );
+
+        var options = new StartQueryOptions()
+            .WithQueryTimeout(TimeSpan.FromSeconds(12))
+            .WithClientContextId("ctx-xyz")
+            .WithScanConsistency(QueryScanConsistency.RequestPlus)
+            .WithReadOnly(true)
+            .WithMaxRetries(5)
+            .WithNamedParameters(new Dictionary<string, object> { ["k1"] = 1 })
+            .WithNamedParameter("k2", 2)
+            .WithPositionalParameters(["p1"])
+            .WithPositionalParameter("p2")
+            .WithRaw("raw1", 123);
+
+        await cluster.StartQueryAsync("SELECT 1;", options);
+
+        var applied = fakeService.LastStartOptions;
+        Assert.NotNull(applied);
+
+        Assert.Equal(TimeSpan.FromSeconds(12), applied.QueryTimeout);
+        Assert.Equal("ctx-xyz", applied.ClientContextId);
+        Assert.Equal(QueryScanConsistency.RequestPlus, applied.ScanConsistency);
+        Assert.True(applied.ReadOnly);
+        Assert.Equal((uint)5, applied.MaxRetries);
+        Assert.Equal(1, applied.NamedParameters["k1"]);
+        Assert.Equal(2, applied.NamedParameters["k2"]);
+        Assert.Equal(["p1", "p2"], applied.PositionalParameters);
+        Assert.Equal(123, applied.Raw["raw1"]);
+    }
+
+    [Fact]
+    public async Task StartQueryAsync_WithOptionsObject_AppliesOptions_OnScope_AndPreservesQueryContext()
+    {
+        var fakeService = new FakeAnalyticsService();
+
+        var cluster = Cluster.Create(
+            "http://localhost:18095",
+            Credential.Create("user", "pass"),
+            opts => opts.AddClusterService<IAnalyticsService>(fakeService)
+        );
+
+        var scope = cluster.Database("db1").Scope("sc1");
+
+        var options = new StartQueryOptions()
+            .WithClientContextId("scope-ctx");
+
+        await scope.StartQueryAsync("SELECT 1;", options);
+
+        var applied = fakeService.LastStartOptions;
+        Assert.NotNull(applied);
+
+        Assert.Equal("scope-ctx", applied.ClientContextId);
+
+        // QueryContext should be set by Scope without mutating the original options
+        Assert.NotNull(applied.QueryContext);
+        Assert.Equal("db1", applied.QueryContext!.Database);
+        Assert.Equal("sc1", applied.QueryContext.Scope);
+        Assert.Equal("default:`db1`.`sc1`", applied.QueryContext.ToString());
+
+        // The original options should not be mutated
+        Assert.Null(options.QueryContext);
     }
 }

@@ -22,6 +22,7 @@
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.Async;
 
 namespace Couchbase.AnalyticsClient;
 
@@ -52,5 +53,19 @@ public sealed class Scope
         var queryOptions = new QueryOptions().WithQueryContext(new QueryContext(_database.Name, Name));
         queryOptions = options.Invoke(queryOptions);
         return _cluster.ExecuteQueryAsync(statement, queryOptions, cancellationToken);
+    }
+
+    public Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        options ??= new StartQueryOptions();
+        options = options.WithQueryContext(new QueryContext(_database.Name, Name));
+        return _cluster.StartQueryAsync(statement, options, cancellationToken);
+    }
+
+    public Task<QueryHandle> StartQueryAsync(string statement, Func<StartQueryOptions, StartQueryOptions> options, CancellationToken cancellationToken = default)
+    {
+        var startQueryOptions = new StartQueryOptions().WithQueryContext(new QueryContext(_database.Name, Name));
+        startQueryOptions = options.Invoke(startQueryOptions);
+        return _cluster.StartQueryAsync(statement, startQueryOptions, cancellationToken);
     }
 }
