@@ -1,7 +1,6 @@
 using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Results;
 using Moq;
 using Xunit;
 
@@ -31,7 +30,7 @@ public class QueryHandleTests
 
         var result = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
         Assert.Same(expectedResult, result);
-        
+
         serviceMock.Verify(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), default), Times.Once);
     }
 
@@ -46,7 +45,7 @@ public class QueryHandleTests
             .Returns(Task.CompletedTask);
 
         await handle.CancelAsync(options);
-        
+
         serviceMock.Verify(x => x.CancelQueryAsync("test-req", options, default), Times.Once);
     }
 

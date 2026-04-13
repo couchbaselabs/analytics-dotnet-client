@@ -33,5 +33,5 @@ public class QueryNotFoundException : AnalyticsException
 
     public QueryNotFoundException(string message, Exception innerException) : base(message, innerException) { }
 
-    internal QueryNotFoundException(string message, Exception innerException, Couchbase.AnalyticsClient.Internal.Retry.ErrorContext errorContext) : base(message, innerException, errorContext) { }
+    internal QueryNotFoundException(string message, Exception innerException, Internal.Retry.ErrorContext errorContext) : base(message, innerException, errorContext) { }
 }

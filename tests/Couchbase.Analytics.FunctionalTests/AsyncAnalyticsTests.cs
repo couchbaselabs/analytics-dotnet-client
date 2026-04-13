@@ -1,8 +1,7 @@
-using System.Text.Json;
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Async;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -34,13 +33,13 @@ public class AsyncAnalyticsTests
         Assert.NotNull(handle);
         Assert.NotNull(handle.Handle);
         Assert.NotNull(handle.RequestId);
-        
+
         _outputHelper.WriteLine($"Handle: {handle.Handle}");
         _outputHelper.WriteLine($"RequestId: {handle.RequestId}");
 
         // 2. Poll for the result handle
         QueryResultHandle? resultHandle = null;
-        for (int i = 0; i < 20; i++)
+        for (var i = 0; i < 20; i++)
         {
             resultHandle = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
             if (resultHandle != null)
@@ -86,7 +85,7 @@ public class AsyncAnalyticsTests
         // It's possible the cancel takes a brief moment to process gracefully on the server.
         var ex = await Record.ExceptionAsync(async () =>
         {
-            for (int i = 0; i < 20; i++)
+            for (var i = 0; i < 20; i++)
             {
                 var resultHandle = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
                 if (resultHandle != null)
@@ -101,7 +100,7 @@ public class AsyncAnalyticsTests
         // The query should have been killed, resulting in a QueryNotFoundException when it's purged,
         // or a cleanly mapped QueryException ("Job Killed") if the server responds gracefully before purging.
         Assert.NotNull(ex);
-        Assert.True(ex is QueryNotFoundException || ex is QueryException, 
+        Assert.True(ex is QueryNotFoundException or QueryException,
             $"Expected QueryNotFoundException or QueryException upon cancellation, but received: {ex.GetType().FullName}");
     }
 
@@ -113,7 +112,7 @@ public class AsyncAnalyticsTests
 
         // Poll for the result handle
         QueryResultHandle? resultHandle = null;
-        for (int i = 0; i < 20; i++)
+        for (var i = 0; i < 20; i++)
         {
             resultHandle = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
             if (resultHandle != null)
@@ -132,7 +131,7 @@ public class AsyncAnalyticsTests
         await resultHandle!.DiscardResultsAsync(new DiscardResultsOptions());
 
         // Attempting to fetch the results after discarding should throw QueryNotFoundException
-        await Assert.ThrowsAsync<QueryNotFoundException>(async () => 
+        await Assert.ThrowsAsync<QueryNotFoundException>(async () =>
         {
             await resultHandle.FetchResultsAsync(new FetchResultsOptions());
         });

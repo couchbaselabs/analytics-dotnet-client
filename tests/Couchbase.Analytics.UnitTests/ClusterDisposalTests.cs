@@ -1,4 +1,3 @@
-using System;
 using Couchbase.AnalyticsClient;
 using Couchbase.AnalyticsClient.HTTP;
 using Microsoft.Extensions.Logging;
@@ -13,6 +12,7 @@ public class ClusterDisposalTests
     public void Cluster_Dispose_DisposesAllRegisteredSingletons()
     {
         var mockLoggerFactory = new Mock<ILoggerFactory>();
+        mockLoggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
 
         var cluster = Cluster.Create(
             "http://localhost:8095",

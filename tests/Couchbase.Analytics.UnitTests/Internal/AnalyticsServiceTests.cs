@@ -1,13 +1,13 @@
 using System.Net;
 using System.Text;
+using Couchbase.AnalyticsClient.Async;
+using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Logging;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.Core.Json;
-using Couchbase.AnalyticsClient.Async;
-using Couchbase.AnalyticsClient.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;

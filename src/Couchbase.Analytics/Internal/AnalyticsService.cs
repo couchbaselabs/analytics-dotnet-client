@@ -333,7 +333,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var statusUri = Uri.TryCreate(handle.Handle, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
             : new Uri(_baseUri, handle.Handle);
-            
+
         var request = new HttpRequestMessage(HttpMethod.Get, statusUri);
 
         LogFetchResultHandleRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle.Handle));
@@ -390,19 +390,19 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
             {
-                if (string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase) || 
+                if (string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(status, "aborted", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(status, "closed", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new QueryNotFoundException($"Query has been discarded or canceled (status: {status}).");
                 }
-                
+
                 if (string.Equals(status, "timeout", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new AnalyticsTimeoutException("The query evaluation timed out on the server.");
                 }
-                
-                if (string.Equals(status, "fatal", StringComparison.OrdinalIgnoreCase) || 
+
+                if (string.Equals(status, "fatal", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(status, "errors", StringComparison.OrdinalIgnoreCase))
                 {
@@ -414,7 +414,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                     }
                     throw new AnalyticsException($"Query execution failed on the server (status: {status}).");
                 }
-                
+
                 throw new AnalyticsException($"Query status fetch failed with unrecognized status: {status}");
             }
 
@@ -441,7 +441,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
             : new Uri(_baseUri, handlePath);
-            
+
         var request = new HttpRequestMessage(HttpMethod.Get, resultUri);
 
         LogFetchResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handlePath));
@@ -489,7 +489,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
             : new Uri(_baseUri, handlePath);
-            
+
         var request = new HttpRequestMessage(HttpMethod.Delete, resultUri);
 
         LogDiscardResultsRequest(_logger, _redactor.SystemData(resultUri), _redactor.SystemData(handlePath));

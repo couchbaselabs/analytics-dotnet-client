@@ -31,7 +31,7 @@ public class QueryResultHandleTests
 
         var result = await handle.FetchResultsAsync(options);
         Assert.Same(expectedResult, result);
-        
+
         serviceMock.Verify(x => x.FetchResultsAsync("test-req", "test-path", options, default), Times.Once);
     }
 
@@ -46,7 +46,7 @@ public class QueryResultHandleTests
             .Returns(Task.CompletedTask);
 
         await handle.DiscardResultsAsync(options);
-        
+
         serviceMock.Verify(x => x.DiscardResultsAsync("test-req", "test-path", options, default), Times.Once);
     }
 

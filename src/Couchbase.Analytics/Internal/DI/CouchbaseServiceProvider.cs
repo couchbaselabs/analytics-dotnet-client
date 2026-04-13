@@ -19,7 +19,6 @@
  * ************************************************************/
 #endregion
 
-using System;
 using System.Collections.ObjectModel;
 
 namespace Couchbase.AnalyticsClient.Internal.DI;

@@ -34,11 +34,11 @@ public class QueryResultHandle
 {
     private readonly string _handlePath;
     private readonly IAnalyticsService _analyticsService;
-    
+
     internal string? Status { get; }
-    
+
     internal AsyncQueryMetrics? Metrics { get; }
-    
+
     internal int? ResultCount { get; }
 
     /// <summary>
@@ -55,13 +55,13 @@ public class QueryResultHandle
 
         using var json = JsonDocument.Parse(responseJson);
         var root = json.RootElement;
-        
+
         Status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
         if (root.TryGetProperty("metrics", out var metricsElement))
         {
             Metrics = JsonSerializer.Deserialize<AsyncQueryMetrics>(metricsElement.GetRawText());
         }
-        
+
         if (root.TryGetProperty("resultCount", out var resultCountProp) && resultCountProp.TryGetInt32(out var resultCount))
         {
             ResultCount = resultCount;
@@ -117,7 +117,7 @@ public class QueryResultHandle
         var elapsed = Metrics?.ElapsedTime?.TotalMilliseconds;
         var metricsStr = elapsed.HasValue ? $"{elapsed}ms elapsed" : "none";
         var countStr = ResultCount.HasValue ? $", ResultCount={ResultCount}" : "";
-        
+
         return $"QueryResultHandle [RequestId={RequestId}, Status={Status ?? "unknown"}{countStr}, Metrics={{{metricsStr}}}]";
     }
 }

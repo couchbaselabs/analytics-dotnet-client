@@ -1,4 +1,3 @@
-using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Options;

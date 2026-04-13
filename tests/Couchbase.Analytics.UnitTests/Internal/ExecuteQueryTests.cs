@@ -5,7 +5,6 @@ using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
-using Couchbase.Core.Json;
 using Xunit;
 using Xunit.Abstractions;
 

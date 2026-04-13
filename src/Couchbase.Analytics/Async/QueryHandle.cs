@@ -23,7 +23,6 @@ using System.Text.Json;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.AnalyticsClient.Results;
 
 namespace Couchbase.AnalyticsClient.Async;
 
@@ -34,9 +33,9 @@ namespace Couchbase.AnalyticsClient.Async;
 public class QueryHandle
 {
     private readonly IAnalyticsService _analyticsService;
-    
+
     internal string? Status { get; }
-    
+
     internal AsyncQueryMetrics? Metrics { get; }
 
     /// <summary>
@@ -58,7 +57,7 @@ public class QueryHandle
 
         using var json = JsonDocument.Parse(responseJson);
         var root = json.RootElement;
-        
+
         Status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
         if (root.TryGetProperty("metrics", out var metricsElement))
         {

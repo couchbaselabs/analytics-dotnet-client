@@ -20,6 +20,7 @@
 #endregion
 
 using System.Net.Http.Headers;
+using System.Text;
 
 namespace Couchbase.AnalyticsClient.HTTP;
 
@@ -43,11 +44,7 @@ public sealed record JwtCredential(string Token) : ICredential
         return new(token);
     }
 
-    /// <summary>
-    /// Excludes the full token and <see cref="AuthorizationHeader"/> from the record's
-    /// ToString output to prevent leaking credentials into logs.
-    /// </summary>
-    private bool PrintMembers(System.Text.StringBuilder builder)
+    private bool PrintMembers(StringBuilder builder)
     {
         builder.Append($"{nameof(Token)} = <{Token.Length} chars>");
         return true;

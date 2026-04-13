@@ -50,7 +50,7 @@ public record Credential(string Username, string Password) : ICredential
     /// Excludes <see cref="AuthorizationHeader"/> from the record's ToString output
     /// to prevent leaking encoded credentials into logs.
     /// </summary>
-    protected virtual bool PrintMembers(System.Text.StringBuilder builder)
+    protected virtual bool PrintMembers(StringBuilder builder)
     {
         builder.Append($"{nameof(Username)} = {Username}");
         return true;
