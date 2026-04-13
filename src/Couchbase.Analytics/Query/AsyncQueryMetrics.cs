@@ -19,23 +19,8 @@
  * ************************************************************/
 #endregion
 
-using System.Text.Json.Serialization;
-using Couchbase.Core.Json;
-
 namespace Couchbase.AnalyticsClient.Query;
 
-public sealed class QueryMetrics : QueryMetricsBase
+internal sealed class AsyncQueryMetrics : QueryMetricsBase
 {
-
-    [JsonPropertyName("resultCount")]
-    public int ResultCount { get; init; }
-
-    [JsonPropertyName("resultSize")]
-    public int ResultSize { get; init; }
-
-    [JsonPropertyName("processedObjects")]
-    public int ProcessedObjects { get; init; }
-
-    [JsonPropertyName("bufferCacheHitRatio")]
-    public string? BufferCacheHitRatio { get; init; }
 }

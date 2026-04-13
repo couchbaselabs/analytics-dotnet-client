@@ -181,7 +181,7 @@ public class AnalyticsServiceTests
             _loggerMock.Object,
             new TypedRedactor(RedactionLevel.None));
 
-        var handle = new QueryHandle("mock-handle", "mock-req", service);
+        var handle = new QueryHandle("mock-handle", "mock-req", "{}", service);
 
         // Act & Assert
         await Assert.ThrowsAsync<QueryNotFoundException>(() =>

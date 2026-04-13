@@ -58,7 +58,7 @@ public class ExecuteQueryTests
         public Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions options, CancellationToken cancellationToken = default)
         {
             LastStartOptions = options;
-            return Task.FromResult(new QueryHandle("handle", "reqId", this));
+            return Task.FromResult(new QueryHandle("handle", "reqId", "{}", this));
         }
 
         public Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default)

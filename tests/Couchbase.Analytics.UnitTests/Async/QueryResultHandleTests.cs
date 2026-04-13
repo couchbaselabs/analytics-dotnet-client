@@ -13,7 +13,7 @@ public class QueryResultHandleTests
     public void Constructor_InitializesProperties()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryResultHandle("test-path", "test-req", serviceMock.Object);
+        var handle = new QueryResultHandle("test-path", "test-req", "{}", serviceMock.Object);
 
         Assert.Equal("test-req", handle.RequestId);
     }
@@ -22,7 +22,7 @@ public class QueryResultHandleTests
     public async Task FetchResultsAsync_DelegatesToService()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryResultHandle("test-path", "test-req", serviceMock.Object);
+        var handle = new QueryResultHandle("test-path", "test-req", "{}", serviceMock.Object);
         var expectedResult = new Mock<IQueryResult>().Object;
         var options = new FetchResultsOptions();
 
@@ -39,7 +39,7 @@ public class QueryResultHandleTests
     public async Task DiscardResultsAsync_DelegatesToService()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryResultHandle("test-path", "test-req", serviceMock.Object);
+        var handle = new QueryResultHandle("test-path", "test-req", "{}", serviceMock.Object);
         var options = new DiscardResultsOptions();
 
         serviceMock.Setup(x => x.DiscardResultsAsync("test-req", "test-path", options, It.IsAny<CancellationToken>()))
@@ -55,16 +55,17 @@ public class QueryResultHandleTests
     {
         var serviceMock = new Mock<IAnalyticsService>();
 
-        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle(null!, "req", serviceMock.Object));
-        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle("path", null!, serviceMock.Object));
-        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle("path", "req", null!));
+        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle(null!, "req", "{}", serviceMock.Object));
+        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle("path", null!, "{}", serviceMock.Object));
+        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle("path", "req", null!, serviceMock.Object));
+        Assert.Throws<ArgumentNullException>(() => new QueryResultHandle("path", "req", "{}", null!));
     }
 
     [Fact]
     public async Task FetchResultsAsync_FluentOptions_DelegatesProperly()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryResultHandle("test-path", "test-req", serviceMock.Object);
+        var handle = new QueryResultHandle("test-path", "test-req", "{}", serviceMock.Object);
         var expectedResult = new Mock<IQueryResult>().Object;
 
         serviceMock.Setup(x => x.FetchResultsAsync("test-req", "test-path", It.IsAny<FetchResultsOptions>(), It.IsAny<CancellationToken>()))
@@ -81,7 +82,7 @@ public class QueryResultHandleTests
     public async Task DiscardResultsAsync_FluentOptions_DelegatesProperly()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryResultHandle("test-path", "test-req", serviceMock.Object);
+        var handle = new QueryResultHandle("test-path", "test-req", "{}", serviceMock.Object);
 
         serviceMock.Setup(x => x.DiscardResultsAsync("test-req", "test-path", It.IsAny<DiscardResultsOptions>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

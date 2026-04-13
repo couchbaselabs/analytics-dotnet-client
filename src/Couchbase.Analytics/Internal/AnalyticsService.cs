@@ -146,7 +146,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
             try
             {
-                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
+                LogQueryAttemptStarting(_logger, attempt + 1, options.ClientContextId, options.QueryContext?.ToString() ?? "<cluster>", _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
 
                 var result = await ExecuteQueryAsync(content, httpClient, options.AsStreaming, deserializer, errorContext, cancellationToken).ConfigureAwait(false);
 
@@ -172,7 +172,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
             catch (HttpRequestException httpRequestException)
             {
-                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, _redactor.UserData(statement),
+                LogQueryAttemptFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, options.QueryContext?.ToString() ?? "<cluster>", _redactor.UserData(statement),
                     httpRequestException.Message, stopwatch.Elapsed.TotalMilliseconds);
 
                 // "No successful connection(s)" is retryable
@@ -238,7 +238,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             try
             {
-                LogAsyncStartQueryAttempt(_logger, attempt + 1, _redactor.SystemData(Uri), options.ClientContextId, _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
+                LogAsyncStartQueryAttempt(_logger, attempt + 1, _redactor.SystemData(Uri), options.ClientContextId, options.QueryContext?.ToString() ?? "<cluster>", _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
 
                 var request = new HttpRequestMessage(HttpMethod.Post, Uri) { Content = content };
                 var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
@@ -289,11 +289,11 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 }
 
                 LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, _redactor.SystemData(handlePath), _redactor.SystemData(requestId), (int)response.StatusCode);
-                return new QueryHandle(handlePath, requestId, this);
+                return new QueryHandle(handlePath, requestId, root.GetRawText(), this);
             }
             catch (HttpRequestException httpRequestException)
             {
-                LogAsyncStartQueryFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, _redactor.UserData(statement), httpRequestException.Message);
+                LogAsyncStartQueryFailed(_logger, httpRequestException, attempt + 1, options.ClientContextId, options.QueryContext?.ToString() ?? "<cluster>", _redactor.UserData(statement), httpRequestException.Message);
 
                 if (httpRequestException.InnerException is AggregateException aggregateEx)
                 {
@@ -424,7 +424,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 throw new InvalidOperationException("Query status indicates success but no result handle was provided by the server.");
             }
 
-            return new QueryResultHandle(resultHandle, handle.RequestId, this);
+            return new QueryResultHandle(resultHandle, handle.RequestId, root.GetRawText(), this);
         }
         catch (TaskCanceledException taskCanceledEx)
         {
@@ -579,8 +579,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     #region Logging
 
-    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId}: {Statement} (elapsed: {Elapsed}ms)")]
-    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, Redacted<string> statement, double elapsed);
+    [LoggerMessage(1, LogLevel.Debug, "Analytics query attempt {Attempt} starting for {ClientContextId} on context [{QueryContext}]: {Statement} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptStarting(ILogger logger, int attempt, string? clientContextId, string queryContext, Redacted<string> statement, double elapsed);
 
     [LoggerMessage(2, LogLevel.Debug, "Received retriable server errors for ClientContextId {ClientContextId}, retrying...")]
     private static partial void LogRetriableServerErrors(ILogger logger, string? clientContextId);
@@ -588,14 +588,14 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     [LoggerMessage(3, LogLevel.Debug, "HttpRequestException is not retriable, failing immediately")]
     private static partial void LogNonRetriableHttpException(ILogger logger);
 
-    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId}: {Statement} failed: {Error} (elapsed: {Elapsed}ms)")]
-    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, Redacted<string> statement, string error, double elapsed);
+    [LoggerMessage(4, LogLevel.Debug, "Analytics query attempt {Attempt} for ClientContextId {ClientContextId} on context [{QueryContext}]: {Statement} failed: {Error} (elapsed: {Elapsed}ms)")]
+    private static partial void LogQueryAttemptFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, string queryContext, Redacted<string> statement, string error, double elapsed);
 
-    [LoggerMessage(5, LogLevel.Debug, "Async StartQuery attempt {Attempt} sending POST to {Uri} for {ClientContextId}: {Statement} (elapsed: {Elapsed}ms)")]
-    private static partial void LogAsyncStartQueryAttempt(ILogger logger, int attempt, Redacted<Uri> uri, string? clientContextId, Redacted<string> statement, double elapsed);
+    [LoggerMessage(5, LogLevel.Debug, "Async StartQuery attempt {Attempt} sending POST to {Uri} for {ClientContextId} on context [{QueryContext}]: {Statement} (elapsed: {Elapsed}ms)")]
+    private static partial void LogAsyncStartQueryAttempt(ILogger logger, int attempt, Redacted<Uri> uri, string? clientContextId, string queryContext, Redacted<string> statement, double elapsed);
 
-    [LoggerMessage(6, LogLevel.Debug, "Async StartQuery attempt {Attempt} for {ClientContextId}: {Statement} failed: {Error}")]
-    private static partial void LogAsyncStartQueryFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, Redacted<string> statement, string error);
+    [LoggerMessage(6, LogLevel.Debug, "Async StartQuery attempt {Attempt} for {ClientContextId} on context [{QueryContext}]: {Statement} failed: {Error}")]
+    private static partial void LogAsyncStartQueryFailed(ILogger logger, Exception ex, int attempt, string? clientContextId, string queryContext, Redacted<string> statement, string error);
 
     [LoggerMessage(7, LogLevel.Debug, "DiscardResults returned 404 for handle {Handle} — already discarded or canceled.")]
     private static partial void LogDiscardResults404(ILogger logger, Redacted<string> handle);

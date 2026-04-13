@@ -22,6 +22,7 @@
 using System.Text.Json;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
 
 namespace Couchbase.AnalyticsClient.Async;
@@ -33,6 +34,10 @@ namespace Couchbase.AnalyticsClient.Async;
 public class QueryHandle
 {
     private readonly IAnalyticsService _analyticsService;
+    
+    internal string? Status { get; }
+    
+    internal AsyncQueryMetrics? Metrics { get; }
 
     /// <summary>
     /// The query handle string used to poll for the result handle.
@@ -44,11 +49,21 @@ public class QueryHandle
     /// </summary>
     public string RequestId { get; }
 
-    internal QueryHandle(string handle, string requestId, IAnalyticsService analyticsService)
+    internal QueryHandle(string handle, string requestId, string responseJson, IAnalyticsService analyticsService)
     {
         Handle = handle ?? throw new ArgumentNullException(nameof(handle));
         RequestId = requestId ?? throw new ArgumentNullException(nameof(requestId));
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
+        ArgumentException.ThrowIfNullOrWhiteSpace(responseJson);
+
+        using var json = JsonDocument.Parse(responseJson);
+        var root = json.RootElement;
+        
+        Status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+        if (root.TryGetProperty("metrics", out var metricsElement))
+        {
+            Metrics = JsonSerializer.Deserialize<AsyncQueryMetrics>(metricsElement.GetRawText());
+        }
     }
 
     /// <summary>
@@ -92,5 +107,13 @@ public class QueryHandle
         var cancelOptions = new CancelOptions();
         cancelOptions = options.Invoke(cancelOptions);
         return CancelAsync(cancelOptions, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var elapsed = Metrics?.ElapsedTime?.TotalMilliseconds;
+        var metricsStr = elapsed.HasValue ? $"{elapsed}ms elapsed" : "none";
+        return $"QueryHandle [RequestId={RequestId}, Handle={Handle}, Status={Status ?? "unknown"}, Metrics={{{metricsStr}}}]";
     }
 }
