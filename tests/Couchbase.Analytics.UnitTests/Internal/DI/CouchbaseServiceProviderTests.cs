@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Couchbase.AnalyticsClient.Internal.DI;
 using Moq;
 using Xunit;

@@ -20,21 +20,25 @@
 #endregion
 
 using System.Text.Json.Serialization;
+using Couchbase.Core.Json;
 
 namespace Couchbase.AnalyticsClient.Query;
 
-public sealed class QueryMetrics : QueryMetricsBase
+public abstract class QueryMetricsBase
 {
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("elapsedTime")]
+    public TimeSpan? ElapsedTime { get; init; }
 
-    [JsonPropertyName("resultCount")]
-    public int ResultCount { get; init; }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("executionTime")]
+    public TimeSpan? ExecutionTime { get; init; }
 
-    [JsonPropertyName("resultSize")]
-    public int ResultSize { get; init; }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("compileTime")]
+    public TimeSpan? CompileTime { get; init; }
 
-    [JsonPropertyName("processedObjects")]
-    public int ProcessedObjects { get; init; }
-
-    [JsonPropertyName("bufferCacheHitRatio")]
-    public string? BufferCacheHitRatio { get; init; }
+    [JsonConverter(typeof(MillisecondsStringJsonConverter))]
+    [JsonPropertyName("queueWaitTime")]
+    public TimeSpan? QueueWaitTime { get; init; }
 }

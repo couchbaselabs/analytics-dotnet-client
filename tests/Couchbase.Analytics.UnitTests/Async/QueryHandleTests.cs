@@ -1,7 +1,8 @@
+using System.Text.Json;
 using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
-using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.UnitTests.Helpers;
 using Moq;
 using Xunit;
 
@@ -13,7 +14,7 @@ public class QueryHandleTests
     public void Constructor_InitializesProperties()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryHandle("test-handle", "test-req", serviceMock.Object);
+        var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
 
         Assert.Equal("test-handle", handle.Handle);
         Assert.Equal("test-req", handle.RequestId);
@@ -23,15 +24,15 @@ public class QueryHandleTests
     public async Task FetchResultHandleAsync_DelegatesToService()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryHandle("test-handle", "test-req", serviceMock.Object);
-        var expectedResult = new Mock<QueryResultHandle>("path", "req", serviceMock.Object).Object;
+        var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
+        var expectedResult = TestHandleFactory.CreateQueryResultHandle("path", "req", "{}", serviceMock.Object);
 
         serviceMock.Setup(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         var result = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
         Assert.Same(expectedResult, result);
-        
+
         serviceMock.Verify(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), default), Times.Once);
     }
 
@@ -39,14 +40,14 @@ public class QueryHandleTests
     public async Task CancelAsync_DelegatesToService()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryHandle("test-handle", "test-req", serviceMock.Object);
+        var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
         var options = new CancelOptions();
 
         serviceMock.Setup(x => x.CancelQueryAsync("test-req", options, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         await handle.CancelAsync(options);
-        
+
         serviceMock.Verify(x => x.CancelQueryAsync("test-req", options, default), Times.Once);
     }
 
@@ -55,17 +56,18 @@ public class QueryHandleTests
     {
         var serviceMock = new Mock<IAnalyticsService>();
 
-        Assert.Throws<ArgumentNullException>(() => new QueryHandle(null!, "req", serviceMock.Object));
-        Assert.Throws<ArgumentNullException>(() => new QueryHandle("handle", null!, serviceMock.Object));
-        Assert.Throws<ArgumentNullException>(() => new QueryHandle("handle", "req", null!));
+        Assert.Throws<ArgumentNullException>(() => TestHandleFactory.CreateQueryHandle(null!, "req", "{}", serviceMock.Object));
+        Assert.Throws<ArgumentNullException>(() => TestHandleFactory.CreateQueryHandle("handle", null!, "{}", serviceMock.Object));
+        Assert.Throws<ArgumentException>(() => new QueryHandle("handle", "req", default(JsonElement), serviceMock.Object));
+        Assert.Throws<ArgumentNullException>(() => TestHandleFactory.CreateQueryHandle("handle", "req", "{}", null!));
     }
 
     [Fact]
     public async Task FetchResultHandleAsync_FluentOptions_DelegatesProperly()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryHandle("test-handle", "test-req", serviceMock.Object);
-        var expectedResult = new Mock<QueryResultHandle>("path", "req", serviceMock.Object).Object;
+        var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
+        var expectedResult = TestHandleFactory.CreateQueryResultHandle("path", "req", "{}", serviceMock.Object);
 
         serviceMock.Setup(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
@@ -81,7 +83,7 @@ public class QueryHandleTests
     public async Task CancelAsync_FluentOptions_DelegatesProperly()
     {
         var serviceMock = new Mock<IAnalyticsService>();
-        var handle = new QueryHandle("test-handle", "test-req", serviceMock.Object);
+        var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
 
         serviceMock.Setup(x => x.CancelQueryAsync("test-req", It.IsAny<CancelOptions>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

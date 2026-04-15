@@ -31,7 +31,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Couchbase.AnalyticsClient.Internal.HTTP;
 
-internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
+internal partial class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
 {
     /// <summary>
     /// Grace period before disposing a retired handler, allowing in-flight requests to complete.
@@ -208,19 +208,22 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
             _sharedHandler = CreateClientHandler();
             _lastKnownCredential = newCredential;
 
+            LogHandlerRecreated(_logger, newCredential.GetType().Name, RetiredHandlerDisposeDelay.TotalSeconds);
+
             // Schedule deferred disposal of the old handler.
             // In-flight requests may still reference it, so we wait before disposing.
-            _ = DisposeAfterDelayAsync(oldHandler);
+            _ = DisposeAfterDelayAsync(oldHandler, _logger);
         }
     }
 
     /// <summary>
     /// Disposes a retired handler after a grace period, allowing in-flight requests to drain.
     /// </summary>
-    private static async Task DisposeAfterDelayAsync(AuthenticationHandler handler)
+    private static async Task DisposeAfterDelayAsync(AuthenticationHandler handler, ILogger logger)
     {
         await Task.Delay(RetiredHandlerDisposeDelay).ConfigureAwait(false);
         handler.Dispose();
+        LogOldHandlerDisposed(logger);
     }
 
     public void Dispose()
@@ -229,4 +232,14 @@ internal class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
     }
 
     public HttpCompletionOption DefaultCompletionOption { get; set; } = HttpCompletionOption.ResponseHeadersRead;
+
+    #region Logging
+
+    [LoggerMessage(1, LogLevel.Information, "HTTP handler rebuilt due to {CredentialType} credential change. Old handler scheduled for disposal in {DelaySeconds}s.")]
+    private static partial void LogHandlerRecreated(ILogger logger, string credentialType, double delaySeconds);
+
+    [LoggerMessage(2, LogLevel.Information, "Retired HTTP handler successfully disposed after grace period.")]
+    private static partial void LogOldHandlerDisposed(ILogger logger);
+
+    #endregion
 }

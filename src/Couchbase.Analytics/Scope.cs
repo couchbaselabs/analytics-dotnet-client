@@ -19,10 +19,10 @@
  * ************************************************************/
 #endregion
 
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
-using Couchbase.AnalyticsClient.Async;
 
 namespace Couchbase.AnalyticsClient;
 

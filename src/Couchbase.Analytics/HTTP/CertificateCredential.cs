@@ -90,13 +90,9 @@ public sealed record CertificateCredential : ICredential
     public static CertificateCredential FromPem(string certPath, string keyPath) =>
         new(X509Certificate2.CreateFromPemFile(certPath, keyPath));
 
-    /// <summary>
-    /// Excludes sensitive certificate details from the record's ToString output.
-    /// Only Subject and Thumbprint are included.
-    /// </summary>
     private bool PrintMembers(StringBuilder builder)
     {
-        builder.Append($"{nameof(Certificate.Subject)} = {Certificate.Subject}, {nameof(Certificate.Thumbprint)} = {Certificate.Thumbprint}");
+        builder.Append($"{nameof(Certificate)} = [Subject = {Certificate.Subject}, Thumbprint = {Certificate.Thumbprint}]");
         return true;
     }
 }

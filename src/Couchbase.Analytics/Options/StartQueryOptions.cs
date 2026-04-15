@@ -21,7 +21,6 @@
 
 using System.Text.Json;
 using Couchbase.AnalyticsClient.Query;
-using Couchbase.Core.Json;
 using Couchbase.Core.Utils;
 
 namespace Couchbase.AnalyticsClient.Options;

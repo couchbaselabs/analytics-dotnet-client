@@ -30,7 +30,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Couchbase.AnalyticsClient;
 
-public class Cluster : IDisposable
+public partial class Cluster : IDisposable
 {
     private volatile ICredential _credential;
     private readonly ClusterOptions _clusterOptions;
@@ -52,6 +52,8 @@ public class Cluster : IDisposable
 
         _logger = _serviceProvider.GetRequiredService<ILogger<Cluster>>();
         _analyticsService = new LazyService<IAnalyticsService>(_serviceProvider);
+
+        LogClusterCreated(_logger, clusterOptions.ConnectionString);
     }
 
     /// <summary>
@@ -164,6 +166,7 @@ public class Cluster : IDisposable
             throw new InvalidOperationException(
                 $"Cannot change credential type from {current.GetType().Name} to {newCredential.GetType().Name}.");
         _credential = newCredential;
+        LogCredentialUpdated(_logger, current.GetType().Name);
     }
 
     public Task<IQueryResult> ExecuteQueryAsync(string statement, Func<QueryOptions, QueryOptions> options, CancellationToken cancellationToken = default)
@@ -222,5 +225,19 @@ public class Cluster : IDisposable
         {
             disposableProvider.Dispose();
         }
+        LogClusterDisposed(_logger);
     }
+
+    #region Logging
+
+    [LoggerMessage(1, LogLevel.Information, "Analytics Cluster initialized for connection: {ConnectionString}")]
+    private static partial void LogClusterCreated(ILogger logger, string connectionString);
+
+    [LoggerMessage(2, LogLevel.Information, "Analytics Cluster credentials dynamically updated (Type: {CredentialType})")]
+    private static partial void LogCredentialUpdated(ILogger logger, string credentialType);
+
+    [LoggerMessage(3, LogLevel.Information, "Analytics Cluster disposed. Releasing managed resources.")]
+    private static partial void LogClusterDisposed(ILogger logger);
+
+    #endregion
 }

@@ -19,8 +19,10 @@
  * ************************************************************/
 #endregion
 
+using System.Text.Json;
 using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
 
 namespace Couchbase.AnalyticsClient.Async;
@@ -33,16 +35,38 @@ public class QueryResultHandle
     private readonly string _handlePath;
     private readonly IAnalyticsService _analyticsService;
 
+    internal string? Status { get; }
+
+    internal AsyncQueryMetrics? Metrics { get; }
+
+    internal int? ResultCount { get; }
+
     /// <summary>
     /// The request ID assigned by the server when the query was submitted.
     /// </summary>
     public string RequestId { get; }
 
-    internal QueryResultHandle(string handlePath, string requestId, IAnalyticsService analyticsService)
+    internal QueryResultHandle(string handlePath, string requestId, JsonElement root, IAnalyticsService analyticsService)
     {
         _handlePath = handlePath ?? throw new ArgumentNullException(nameof(handlePath));
         RequestId = requestId ?? throw new ArgumentNullException(nameof(requestId));
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
+
+        if (root.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+        {
+            throw new ArgumentException("The JSON response element must not be empty or null.", nameof(root));
+        }
+
+        Status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+        if (root.TryGetProperty("metrics", out var metricsElement))
+        {
+            Metrics = JsonSerializer.Deserialize<AsyncQueryMetrics>(metricsElement.GetRawText());
+        }
+
+        if (root.TryGetProperty("resultCount", out var resultCountProp) && resultCountProp.TryGetInt32(out var resultCount))
+        {
+            ResultCount = resultCount;
+        }
     }
 
     /// <summary>
@@ -86,5 +110,15 @@ public class QueryResultHandle
         var discardOptions = new DiscardResultsOptions();
         discardOptions = options.Invoke(discardOptions);
         return DiscardResultsAsync(discardOptions, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var elapsed = Metrics?.ElapsedTime?.TotalMilliseconds;
+        var metricsStr = elapsed.HasValue ? $"{elapsed}ms elapsed" : "none";
+        var countStr = ResultCount.HasValue ? $", ResultCount={ResultCount}" : "";
+
+        return $"QueryResultHandle [RequestId={RequestId}, Status={Status ?? "unknown"}{countStr}, Metrics={{{metricsStr}}}]";
     }
 }
