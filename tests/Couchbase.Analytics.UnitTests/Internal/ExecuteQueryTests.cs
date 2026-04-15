@@ -5,6 +5,7 @@ using Couchbase.AnalyticsClient.Internal;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Query;
 using Couchbase.AnalyticsClient.Results;
+using Couchbase.AnalyticsClient.UnitTests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -57,7 +58,7 @@ public class ExecuteQueryTests
         public Task<QueryHandle> StartQueryAsync(string statement, StartQueryOptions options, CancellationToken cancellationToken = default)
         {
             LastStartOptions = options;
-            return Task.FromResult(new QueryHandle("handle", "reqId", "{}", this));
+            return Task.FromResult(TestHandleFactory.CreateQueryHandle("handle", "reqId", "{}", this));
         }
 
         public Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default)

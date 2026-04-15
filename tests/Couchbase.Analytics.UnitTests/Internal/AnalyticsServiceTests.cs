@@ -7,6 +7,7 @@ using Couchbase.AnalyticsClient.Internal.HTTP;
 using Couchbase.AnalyticsClient.Internal.Results;
 using Couchbase.AnalyticsClient.Logging;
 using Couchbase.AnalyticsClient.Options;
+using Couchbase.AnalyticsClient.UnitTests.Helpers;
 using Couchbase.Core.Json;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -181,7 +182,7 @@ public class AnalyticsServiceTests
             _loggerMock.Object,
             new TypedRedactor(RedactionLevel.None));
 
-        var handle = new QueryHandle("mock-handle", "mock-req", "{}", service);
+        var handle = TestHandleFactory.CreateQueryHandle("mock-handle", "mock-req", "{}", service);
 
         // Act & Assert
         await Assert.ThrowsAsync<QueryNotFoundException>(() =>

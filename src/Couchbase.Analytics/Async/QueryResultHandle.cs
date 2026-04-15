@@ -46,15 +46,16 @@ public class QueryResultHandle
     /// </summary>
     public string RequestId { get; }
 
-    internal QueryResultHandle(string handlePath, string requestId, string responseJson, IAnalyticsService analyticsService)
+    internal QueryResultHandle(string handlePath, string requestId, JsonElement root, IAnalyticsService analyticsService)
     {
         _handlePath = handlePath ?? throw new ArgumentNullException(nameof(handlePath));
         RequestId = requestId ?? throw new ArgumentNullException(nameof(requestId));
         _analyticsService = analyticsService ?? throw new ArgumentNullException(nameof(analyticsService));
-        ArgumentException.ThrowIfNullOrWhiteSpace(responseJson);
 
-        using var json = JsonDocument.Parse(responseJson);
-        var root = json.RootElement;
+        if (root.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+        {
+            throw new ArgumentException("The JSON response element must not be empty or null.", nameof(root));
+        }
 
         Status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
         if (root.TryGetProperty("metrics", out var metricsElement))

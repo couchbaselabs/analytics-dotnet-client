@@ -289,7 +289,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 }
 
                 LogAsyncStartQuerySucceeded(_logger, options.ClientContextId, _redactor.SystemData(handlePath), _redactor.SystemData(requestId), (int)response.StatusCode);
-                return new QueryHandle(handlePath, requestId, root.GetRawText(), this);
+                return new QueryHandle(handlePath, requestId, root, this);
             }
             catch (HttpRequestException httpRequestException)
             {
@@ -424,7 +424,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 throw new InvalidOperationException("Query status indicates success but no result handle was provided by the server.");
             }
 
-            return new QueryResultHandle(resultHandle, handle.RequestId, root.GetRawText(), this);
+            return new QueryResultHandle(resultHandle, handle.RequestId, root, this);
         }
         catch (TaskCanceledException taskCanceledEx)
         {
