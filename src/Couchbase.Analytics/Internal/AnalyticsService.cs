@@ -352,8 +352,13 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
         try
         {
+            var stopwatch = LightweightStopwatch.StartNew();
+            var errorContext = new ErrorContext(string.Empty, stopwatch, timeout);
+
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
                 .ConfigureAwait(false);
+
+            errorContext.StatusCode = response.StatusCode;
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
@@ -373,14 +378,14 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 var preview = responseBody.Length > 200 ? responseBody[..200] + "..." : responseBody;
                 throw new AnalyticsException(
                     $"Server returned non-JSON response (HTTP {(int)response.StatusCode}). Body preview: {preview}",
-                    ex);
+                    ex, errorContext);
             }
 
             var status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
 
             if (string.IsNullOrWhiteSpace(status))
             {
-                throw new AnalyticsException("Server response is missing required 'status' field.");
+                throw new AnalyticsException("Server response is missing required 'status' field.", errorContext);
             }
 
             if (!response.IsSuccessStatusCode)
@@ -396,8 +401,6 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
-                errorContext.StatusCode = response.StatusCode;
                 if (errors is { Count: > 0 })
                 {
                     throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
@@ -419,11 +422,9 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             {
                 if (errors is { Count: > 0 })
                 {
-                    var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
-                    errorContext.StatusCode = response.StatusCode;
                     throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
                 }
-                throw new AnalyticsTimeoutException("The query evaluation timed out on the server.");
+                throw new AnalyticsTimeoutException("The query evaluation timed out on the server.", errorContext: errorContext);
             }
 
             if (string.Equals(status, "fatal", StringComparison.OrdinalIgnoreCase) ||
@@ -432,11 +433,9 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             {
                 if (errors is { Count: > 0 })
                 {
-                    var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
-                    errorContext.StatusCode = response.StatusCode;
                     throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
                 }
-                throw new AnalyticsException($"Query execution failed on the server (status: {status}).");
+                throw new AnalyticsException($"Query execution failed on the server (status: {status}).", errorContext);
             }
 
             // For queued, running, and success — return a QueryStatus
@@ -447,7 +446,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 return new QueryStatus(handle.RequestId, root, this);
             }
 
-            throw new AnalyticsException($"Unrecognized query status from server: '{status}'.");
+            throw new AnalyticsException($"Unrecognized query status from server: '{status}'.", errorContext);
         }
         catch (TaskCanceledException taskCanceledEx)
         {

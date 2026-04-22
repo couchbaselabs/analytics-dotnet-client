@@ -63,4 +63,24 @@ public class BlockingAnalyticsResultTest
         // Assert
         Assert.NotNull(result);
     }
+
+    [Fact]
+    public async Task EnumerateRows_SecondEnumeration_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
+        var stream = new MemoryStream(json);
+        var result = new BlockingAnalyticsResult(stream, new StjJsonDeserializer());
+        await result.InitializeAsync(CancellationToken.None);
+
+        // Act — first enumeration should succeed
+        var rows = await result.ToListAsync(CancellationToken.None);
+        Assert.NotEmpty(rows);
+
+        // Assert — second enumeration should throw
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in result) { }
+        });
+    }
 }

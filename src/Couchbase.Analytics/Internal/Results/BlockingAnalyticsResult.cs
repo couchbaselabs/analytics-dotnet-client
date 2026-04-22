@@ -35,7 +35,7 @@ namespace Couchbase.AnalyticsClient.Internal.Results;
 internal class BlockingAnalyticsResult : AnalyticsResultBase
 {
     private IEnumerable<AnalyticsRow>? _rows;
-    private bool _enumerated;
+    private int _enumerated; // 0 = not started, 1 = started (atomic via Interlocked)
 
     public BlockingAnalyticsResult(Stream responseStream, IDeserializer serializer, IDisposable? ownedForCleanup = null)
         : base(responseStream, serializer, ownedForCleanup)
@@ -55,12 +55,11 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
                 $"{nameof(BlockingAnalyticsResult)} has not been initialized, call InitializeAsync first");
         }
 
-        if (_enumerated)
+        if (Interlocked.CompareExchange(ref _enumerated, 1, 0) != 0)
         {
-            throw new InvalidOperationException("BlockingAnalyticsResult has already been enumerated");
+            throw new InvalidOperationException(
+                "Query results can only be enumerated once. The result stream has already been consumed.");
         }
-
-        _enumerated = true;
 
         foreach (var row in _rows)
         {
@@ -71,7 +70,7 @@ internal class BlockingAnalyticsResult : AnalyticsResultBase
 
     public override async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var reader = Serializer.CreateJsonStreamReader(ResponseStream, cancellationToken);
+        using var reader = Serializer.CreateJsonStreamReader(ResponseStream, cancellationToken);
 
         if (!await reader.InitializeAsync(cancellationToken).ConfigureAwait(false))
         {
