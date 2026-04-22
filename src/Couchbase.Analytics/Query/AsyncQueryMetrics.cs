@@ -19,8 +19,12 @@
  * ************************************************************/
 #endregion
 
+using System.Text.Json.Serialization;
+
 namespace Couchbase.AnalyticsClient.Query;
 
 internal sealed class AsyncQueryMetrics : QueryMetricsBase
 {
+    [JsonPropertyName("processedObjects")]
+    public long? ProcessedObjects { get; init; }
 }

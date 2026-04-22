@@ -325,7 +325,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
         throw lastException ?? ThrowTooManyRetries(errorContext);
     }
 
-    public async Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default)
+    public async Task<QueryStatus> FetchStatusAsync(QueryHandle handle, FetchStatusOptions options, CancellationToken cancellationToken = default)
     {
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
         var httpClient = CreateHttpClient(timeout);
@@ -336,7 +336,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
         var request = new HttpRequestMessage(HttpMethod.Get, statusUri);
 
-        LogFetchResultHandleRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle.Handle));
+        LogFetchStatusRequest(_logger, _redactor.SystemData(statusUri), _redactor.SystemData(handle.Handle));
 
         try
         {
@@ -361,7 +361,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             if (!response.IsSuccessStatusCode)
             {
-                LogFetchResultHandleUnexpectedHttp(_logger, _redactor.SystemData(handle.Handle), (int)response.StatusCode);
+                LogFetchStatusUnexpectedHttp(_logger, _redactor.SystemData(handle.Handle), (int)response.StatusCode);
             }
 
             IReadOnlyList<QueryError>? errors = null;
@@ -381,54 +381,40 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 throw new AnalyticsException($"Query status fetch failed with HTTP {(int)response.StatusCode} and status: {status}", errorContext);
             }
 
-            LogFetchResultHandleResponse(_logger, _redactor.SystemData(handle.Handle), status, (int)response.StatusCode);
+            LogFetchStatusResponse(_logger, _redactor.SystemData(handle.Handle), status, (int)response.StatusCode);
 
-            if (string.Equals(status, "running", StringComparison.OrdinalIgnoreCase))
+            // Handle error statuses that come back with HTTP 200 but indicate failure
+            if (string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "aborted", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "closed", StringComparison.OrdinalIgnoreCase))
             {
-                return null;
+                throw new QueryNotFoundException($"Query has been discarded or canceled (status: {status}).");
             }
 
-            if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(status, "timeout", StringComparison.OrdinalIgnoreCase))
             {
-                if (string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(status, "aborted", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(status, "closed", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new QueryNotFoundException($"Query has been discarded or canceled (status: {status}).");
-                }
-
-                if (string.Equals(status, "timeout", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new AnalyticsTimeoutException("The query evaluation timed out on the server.");
-                }
-
-                if (string.Equals(status, "fatal", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(status, "errors", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (errors is { Count: > 0 })
-                    {
-                        var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
-                        errorContext.StatusCode = response.StatusCode;
-                        throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
-                    }
-                    throw new AnalyticsException($"Query execution failed on the server (status: {status}).");
-                }
-
-                throw new AnalyticsException($"Query status fetch failed with unrecognized status: {status}");
+                throw new AnalyticsTimeoutException("The query evaluation timed out on the server.");
             }
 
-            var resultHandle = root.TryGetProperty("handle", out var handleProp) ? handleProp.GetString() : null;
-            if (string.IsNullOrWhiteSpace(resultHandle))
+            if (string.Equals(status, "fatal", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "errors", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("Query status indicates success but no result handle was provided by the server.");
+                if (errors is { Count: > 0 })
+                {
+                    var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
+                    errorContext.StatusCode = response.StatusCode;
+                    throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                }
+                throw new AnalyticsException($"Query execution failed on the server (status: {status}).");
             }
 
-            return new QueryResultHandle(resultHandle, handle.RequestId, root, this);
+            // For queued, running, and success — return a QueryStatus
+            return new QueryStatus(handle.RequestId, root, this);
         }
         catch (TaskCanceledException taskCanceledEx)
         {
-            throw new AnalyticsTimeoutException("The FetchResultHandle request was canceled.", taskCanceledEx);
+            throw new AnalyticsTimeoutException("The FetchStatus request was canceled.", taskCanceledEx);
         }
     }
 
@@ -608,14 +594,14 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     [LoggerMessage(9, LogLevel.Debug, "Async StartQuery succeeded for {ClientContextId}. Handle={Handle}, RequestId={RequestId} (HTTP {StatusCode})")]
     private static partial void LogAsyncStartQuerySucceeded(ILogger logger, string? clientContextId, Redacted<string> handle, Redacted<string> requestId, int statusCode);
 
-    [LoggerMessage(10, LogLevel.Debug, "FetchResultHandle sending GET to {Uri} for handle {Handle}")]
-    private static partial void LogFetchResultHandleRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
+    [LoggerMessage(10, LogLevel.Debug, "FetchStatus sending GET to {Uri} for handle {Handle}")]
+    private static partial void LogFetchStatusRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);
 
-    [LoggerMessage(11, LogLevel.Debug, "FetchResultHandle for handle {Handle} returned status={Status} (HTTP {StatusCode})")]
-    private static partial void LogFetchResultHandleResponse(ILogger logger, Redacted<string> handle, string status, int statusCode);
+    [LoggerMessage(11, LogLevel.Debug, "FetchStatus for handle {Handle} returned status={Status} (HTTP {StatusCode})")]
+    private static partial void LogFetchStatusResponse(ILogger logger, Redacted<string> handle, string status, int statusCode);
 
-    [LoggerMessage(12, LogLevel.Warning, "FetchResultHandle for handle {Handle} returned unexpected HTTP {StatusCode}")]
-    private static partial void LogFetchResultHandleUnexpectedHttp(ILogger logger, Redacted<string> handle, int statusCode);
+    [LoggerMessage(12, LogLevel.Warning, "FetchStatus for handle {Handle} returned unexpected HTTP {StatusCode}")]
+    private static partial void LogFetchStatusUnexpectedHttp(ILogger logger, Redacted<string> handle, int statusCode);
 
     [LoggerMessage(13, LogLevel.Debug, "FetchResults sending GET to {Uri} for handle {Handle}")]
     private static partial void LogFetchResultsRequest(ILogger logger, Redacted<Uri> uri, Redacted<string> handle);

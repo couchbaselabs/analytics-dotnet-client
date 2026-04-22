@@ -61,7 +61,7 @@ public class ExecuteQueryTests
             return Task.FromResult(TestHandleFactory.CreateQueryHandle("handle", "reqId", "{}", this));
         }
 
-        public Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default)
+        public Task<QueryStatus> FetchStatusAsync(QueryHandle handle, FetchStatusOptions options, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
         public Task<IQueryResult> FetchResultsAsync(string requestId, string handlePath, FetchResultsOptions options, CancellationToken cancellationToken = default)

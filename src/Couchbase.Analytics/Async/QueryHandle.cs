@@ -39,14 +39,14 @@ public class QueryHandle
     internal AsyncQueryMetrics? Metrics { get; }
 
     /// <summary>
-    /// The query handle string used to poll for the result handle.
+    /// The query handle string used to poll for the query status.
     /// </summary>
-    public string Handle { get; }
+    internal string Handle { get; }
 
     /// <summary>
     /// The request ID assigned by the server when the query was submitted.
     /// </summary>
-    public string RequestId { get; }
+    internal string RequestId { get; }
 
     internal QueryHandle(string handle, string requestId, JsonElement root, IAnalyticsService analyticsService)
     {
@@ -67,25 +67,25 @@ public class QueryHandle
     }
 
     /// <summary>
-    /// Fetches the result handle of the asynchronous query from the server.
+    /// Fetches the current status of the asynchronous query from the server.
     /// </summary>
-    /// <param name="options">Options for fetching the result handle.</param>
+    /// <param name="options">Options for fetching the status.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>A <see cref="QueryResultHandle"/> if results are ready, otherwise null.</returns>
-    public Task<QueryResultHandle?> FetchResultHandleAsync(FetchResultHandleOptions? options = null, CancellationToken cancellationToken = default)
+    /// <returns>A <see cref="QueryStatus"/> representing the current state of the query.</returns>
+    public Task<QueryStatus> FetchStatusAsync(FetchStatusOptions? options = null, CancellationToken cancellationToken = default)
     {
-        options ??= new FetchResultHandleOptions();
-        return _analyticsService.FetchResultHandleAsync(this, options, cancellationToken);
+        options ??= new FetchStatusOptions();
+        return _analyticsService.FetchStatusAsync(this, options, cancellationToken);
     }
 
     /// <summary>
-    /// Fetches the result handle of the asynchronous query from the server.
+    /// Fetches the current status of the asynchronous query from the server.
     /// </summary>
-    public Task<QueryResultHandle?> FetchResultHandleAsync(Func<FetchResultHandleOptions, FetchResultHandleOptions> options, CancellationToken cancellationToken = default)
+    public Task<QueryStatus> FetchStatusAsync(Func<FetchStatusOptions, FetchStatusOptions> options, CancellationToken cancellationToken = default)
     {
-        var fetchOptions = new FetchResultHandleOptions();
+        var fetchOptions = new FetchStatusOptions();
         fetchOptions = options.Invoke(fetchOptions);
-        return FetchResultHandleAsync(fetchOptions, cancellationToken);
+        return FetchStatusAsync(fetchOptions, cancellationToken);
     }
 
     /// <summary>

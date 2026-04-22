@@ -15,4 +15,7 @@ internal static class TestHandleFactory
 
     public static QueryResultHandle CreateQueryResultHandle(string handlePath, string requestId, string responseJson, IAnalyticsService service)
         => new(handlePath, requestId, JsonDocument.Parse(responseJson).RootElement, service);
+
+    public static QueryStatus CreateQueryStatus(string requestId, string responseJson, IAnalyticsService service)
+        => new(requestId, JsonDocument.Parse(responseJson).RootElement, service);
 }

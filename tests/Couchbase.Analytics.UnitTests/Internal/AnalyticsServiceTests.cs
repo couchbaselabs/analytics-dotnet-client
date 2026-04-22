@@ -163,7 +163,7 @@ public class AnalyticsServiceTests
     }
 
     [Fact]
-    public async Task FetchResultHandleAsync_When404_ThrowsQueryNotFoundException()
+    public async Task FetchStatusAsync_When404_ThrowsQueryNotFoundException()
     {
         // Arrange
         var httpClientMock = new Mock<HttpMessageHandler>();
@@ -186,7 +186,7 @@ public class AnalyticsServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<QueryNotFoundException>(() =>
-            service.FetchResultHandleAsync(handle, new FetchResultHandleOptions()));
+            service.FetchStatusAsync(handle, new FetchStatusOptions()));
     }
 
     [Fact]

@@ -43,7 +43,7 @@ internal interface IAnalyticsService
     /// Fetches the status of an async query from the server.
     /// Sends GET to /api/v1/request/status/{requestID}/{handleID}.
     /// </summary>
-    Task<QueryResultHandle?> FetchResultHandleAsync(QueryHandle handle, FetchResultHandleOptions options, CancellationToken cancellationToken = default);
+    Task<QueryStatus> FetchStatusAsync(QueryHandle handle, FetchStatusOptions options, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches the results of a completed async query from the server.
