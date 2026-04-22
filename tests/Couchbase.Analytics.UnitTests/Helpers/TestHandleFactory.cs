@@ -11,11 +11,20 @@ namespace Couchbase.AnalyticsClient.UnitTests.Helpers;
 internal static class TestHandleFactory
 {
     public static QueryHandle CreateQueryHandle(string handle, string requestId, string responseJson, IAnalyticsService service)
-        => new(handle, requestId, JsonDocument.Parse(responseJson).RootElement, service);
+    {
+        using var doc = JsonDocument.Parse(responseJson);
+        return new QueryHandle(handle, requestId, doc.RootElement.Clone(), service);
+    }
 
     public static QueryResultHandle CreateQueryResultHandle(string handlePath, string requestId, string responseJson, IAnalyticsService service)
-        => new(handlePath, requestId, JsonDocument.Parse(responseJson).RootElement, service);
+    {
+        using var doc = JsonDocument.Parse(responseJson);
+        return new QueryResultHandle(handlePath, requestId, doc.RootElement.Clone(), service);
+    }
 
     public static QueryStatus CreateQueryStatus(string requestId, string responseJson, IAnalyticsService service)
-        => new(requestId, JsonDocument.Parse(responseJson).RootElement, service);
+    {
+        using var doc = JsonDocument.Parse(responseJson);
+        return new QueryStatus(requestId, doc.RootElement.Clone(), service);
+    }
 }

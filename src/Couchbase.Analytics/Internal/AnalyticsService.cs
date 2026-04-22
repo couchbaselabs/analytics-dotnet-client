@@ -393,6 +393,12 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
             if (string.Equals(status, "timeout", StringComparison.OrdinalIgnoreCase))
             {
+                if (errors is { Count: > 0 })
+                {
+                    var errorContext = new ErrorContext(string.Empty, LightweightStopwatch.StartNew(), timeout);
+                    errorContext.StatusCode = response.StatusCode;
+                    throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                }
                 throw new AnalyticsTimeoutException("The query evaluation timed out on the server.");
             }
 
@@ -410,7 +416,14 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
 
             // For queued, running, and success — return a QueryStatus
-            return new QueryStatus(handle.RequestId, root, this);
+            if (string.Equals(status, "queued", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "running", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            {
+                return new QueryStatus(handle.RequestId, root, this);
+            }
+
+            throw new AnalyticsException($"Unrecognized query status from server: '{status}'.");
         }
         catch (TaskCanceledException taskCanceledEx)
         {
