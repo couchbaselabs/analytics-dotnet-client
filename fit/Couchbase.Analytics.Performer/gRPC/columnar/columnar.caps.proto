@@ -10,6 +10,12 @@ message PerApiElementGeneric {
   // Currently empty.
 }
 
+message CredentialSupport {
+  bool supports_jwt_credential = 1;
+  bool supports_certificate_credential = 2;
+  bool supports_set_credential = 3;
+}
+
 message PerApiElementClusterNewInstance {
   //  The SDK implements a dispatch timeout, which is optional. The SDK may or may not implement this feature.
   bool supports_dispatch_timeout = 1;
@@ -262,12 +268,5 @@ message FetchPerformerCapsResponse {
 
   AnalyticsProduct analytics_product = 8;
 
-  // Whether the SDK supports JWT credential
-  bool supports_jwt_credential = 9;
-
-  // Whether the SDK supports client certificate credential
-  bool supports_certificate_credential = 10;
-
-  // Whether the SDK supports cluster.credential(newCredential) for credential rotation.
-  bool supports_set_credential = 11;
+  CredentialSupport credential_support = 9;
 }

@@ -102,9 +102,12 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
 
         try
         {
-            response.SupportsCertificateCredential = true;
-            response.SupportsJwtCredential = true;
-            response.SupportsSetCredential = true;
+            response.CredentialSupport = new CredentialSupport
+            {
+                SupportsJwtCredential = true,
+                SupportsCertificateCredential = true,
+                SupportsSetCredential = true
+            };
 
             response.ClusterNewInstance.Add((int)Mode.PushBasedStreaming, new PerApiElementClusterNewInstance { SupportsDispatchTimeout = true });
             response.ClusterNewInstance.Add((int)Mode.Buffered, new PerApiElementClusterNewInstance { SupportsDispatchTimeout = true });
