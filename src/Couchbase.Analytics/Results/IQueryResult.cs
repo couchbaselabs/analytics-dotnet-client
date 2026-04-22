@@ -24,7 +24,7 @@ using Couchbase.AnalyticsClient.Query;
 
 namespace Couchbase.AnalyticsClient.Results;
 
-public interface IQueryResult : IDisposable, IAsyncEnumerable<AnalyticsRow>
+public interface IQueryResult : IDisposable, IAsyncDisposable, IAsyncEnumerable<AnalyticsRow>
 {
     IAsyncEnumerable<AnalyticsRow> Rows { get; }
 

@@ -82,4 +82,56 @@ public class StreamingAnalyticsResultTests
         // Assert
         Assert.True(true); // No exception should be thrown
     }
+
+    [Fact]
+    public async Task EnumerateRows_SecondEnumeration_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var json = File.ReadAllBytes("JsonDocuments/analyticsResponse.json");
+        var stream = new MemoryStream(json);
+        var result = new StreamingAnalyticsResult(stream, new StjJsonDeserializer());
+        await result.InitializeAsync(CancellationToken.None);
+
+        // Act — first enumeration should succeed
+        var rows = await result.ToListAsync(CancellationToken.None);
+        Assert.NotEmpty(rows);
+
+        // Assert — second enumeration should throw
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in result) { }
+        });
+    }
+
+    [Fact]
+    public async Task DisposeAsync_DisposesOwnedResources()
+    {
+        // Arrange
+        var stream = new MemoryStream();
+        var ownedResource = new Mock<IDisposable>();
+        var result = new StreamingAnalyticsResult(stream, new StjJsonDeserializer(), ownedResource.Object);
+
+        // Act
+        await result.DisposeAsync();
+
+        // Assert
+        ownedResource.Verify(r => r.Dispose(), Times.Once);
+        Assert.False(stream.CanRead); // Stream should be disposed
+    }
+
+    [Fact]
+    public async Task DisposeAsync_CalledTwice_DisposesOnlyOnce()
+    {
+        // Arrange
+        var stream = new MemoryStream();
+        var ownedResource = new Mock<IDisposable>();
+        var result = new StreamingAnalyticsResult(stream, new StjJsonDeserializer(), ownedResource.Object);
+
+        // Act
+        await result.DisposeAsync();
+        await result.DisposeAsync();
+
+        // Assert
+        ownedResource.Verify(r => r.Dispose(), Times.Once);
+    }
 }

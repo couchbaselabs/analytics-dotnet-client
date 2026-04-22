@@ -66,12 +66,8 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
     {
         if (_hasReadResult)
         {
-            yield break;
-        }
-        if (_hasFinishedReading)
-        {
-            _hasReadResult = true;
-            yield break;
+            throw new InvalidOperationException(
+                "Query results can only be enumerated once. The result stream has already been consumed.");
         }
         if (!_hasReadToResult)
         {

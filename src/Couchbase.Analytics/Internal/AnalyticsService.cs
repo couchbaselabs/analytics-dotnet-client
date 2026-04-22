@@ -247,8 +247,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 errorContext.StatusCode = response.StatusCode;
 
                 var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                var json = JsonDocument.Parse(responseBody);
-                var root = json.RootElement;
+                using var json = JsonDocument.Parse(responseBody);
+                var root = json.RootElement.Clone();
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -349,8 +349,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
 
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            var json = JsonDocument.Parse(responseBody);
-            var root = json.RootElement;
+            using var json = JsonDocument.Parse(responseBody);
+            var root = json.RootElement.Clone();
 
             var status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
 

@@ -154,7 +154,7 @@ public class CouchbaseHttpClientTests
         var testResolver = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), _outputHelper, ipReplacement: IpReplacementStrategy.None);
         InjectFakeDnsEndpointResolver(serviceProvider, testResolver);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
-        await foreach (var result in response.ConfigureAwait(false))
+        await foreach (var result in response.Rows)
         {
             _outputHelper?.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
         }
@@ -169,7 +169,7 @@ public class CouchbaseHttpClientTests
         var testResolverMissingOneIP = new TestDnsEndpointResolver(new CountBasedDnsRefreshStrategy(1), _outputHelper, ipReplacement: IpReplacementStrategy.Single);
         InjectFakeDnsEndpointResolver(serviceProvider, testResolverMissingOneIP);
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
-        await foreach (var result in response.ConfigureAwait(false))
+        await foreach (var result in response.Rows)
         {
             _outputHelper?.WriteLine(result.ContentAs<GreetingResponse>().Greeting);
         }
@@ -186,7 +186,7 @@ public class CouchbaseHttpClientTests
         var response = await service.SendAsync("SELECT \"hello\" as greeting", new QueryOptions());
         Assert.NotNull(response);
 
-        await foreach (var result in response.ConfigureAwait(false))
+        await foreach (var result in response.Rows)
         {
             Assert.Equal("hello", result.ContentAs<GreetingResponse>().Greeting);
         }

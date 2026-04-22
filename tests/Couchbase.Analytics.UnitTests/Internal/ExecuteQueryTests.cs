@@ -35,6 +35,8 @@ public class ExecuteQueryTests
         {
         }
 
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
         public IAsyncEnumerator<AnalyticsRow> GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();

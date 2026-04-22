@@ -57,7 +57,7 @@ public class AsyncAnalyticsTests
         Assert.NotNull(results);
 
         var count = 0;
-        await foreach (var row in results.ConfigureAwait(false))
+        await foreach (var row in results.Rows)
         {
             count++;
         }
