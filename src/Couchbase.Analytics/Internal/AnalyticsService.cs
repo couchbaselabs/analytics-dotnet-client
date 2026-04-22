@@ -247,8 +247,20 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 errorContext.StatusCode = response.StatusCode;
 
                 var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                using var json = JsonDocument.Parse(responseBody);
-                var root = json.RootElement.Clone();
+
+                JsonElement root;
+                try
+                {
+                    using var json = JsonDocument.Parse(responseBody);
+                    root = json.RootElement.Clone();
+                }
+                catch (JsonException ex)
+                {
+                    var preview = responseBody.Length > 200 ? responseBody[..200] + "..." : responseBody;
+                    throw new AnalyticsException(
+                        $"Server returned non-JSON response (HTTP {(int)response.StatusCode}). Body preview: {preview}",
+                        ex, errorContext);
+                }
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -349,8 +361,20 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             }
 
             var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            using var json = JsonDocument.Parse(responseBody);
-            var root = json.RootElement.Clone();
+
+            JsonElement root;
+            try
+            {
+                using var json = JsonDocument.Parse(responseBody);
+                root = json.RootElement.Clone();
+            }
+            catch (JsonException ex)
+            {
+                var preview = responseBody.Length > 200 ? responseBody[..200] + "..." : responseBody;
+                throw new AnalyticsException(
+                    $"Server returned non-JSON response (HTTP {(int)response.StatusCode}). Body preview: {preview}",
+                    ex);
+            }
 
             var status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
 
