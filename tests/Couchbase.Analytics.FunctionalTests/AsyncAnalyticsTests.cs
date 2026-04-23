@@ -144,4 +144,94 @@ public class AsyncAnalyticsTests
             await resultHandle.FetchResultsAsync(new FetchResultsOptions());
         });
     }
+
+    [Fact]
+    public async Task Test_AsyncAnalytics_EndToEnd_Scope()
+    {
+        var statement = "select i from array_range(1, 10) as i;";
+        var queryOptions = new StartQueryOptions()
+        {
+            QueryTimeout = TimeSpan.FromSeconds(30)
+        };
+
+        // 1. Start the query via scope
+        var handle = await _simpleFixture.TestScope.StartQueryAsync(statement, queryOptions);
+        Assert.NotNull(handle);
+
+        // 2. Poll for the query status
+        QueryStatus? queryStatus = null;
+        for (var i = 0; i < 20; i++)
+        {
+            queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
+            if (queryStatus.ResultsReady)
+            {
+                break;
+            }
+            await Task.Delay(500);
+        }
+
+        Assert.NotNull(queryStatus);
+        Assert.True(queryStatus!.ResultsReady);
+
+        // 3. Fetch results
+        var resultHandle = queryStatus.ResultHandle();
+        Assert.NotNull(resultHandle);
+
+        var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
+        Assert.NotNull(results);
+
+        var count = 0;
+        await foreach (var row in results.Rows)
+        {
+            count++;
+        }
+
+        Assert.Equal(9, count);
+        Assert.Equal(9, results.MetaData.Metrics?.ResultCount);
+    }
+
+    [Fact]
+    public async Task Test_AsyncAnalytics_Metadata_Cluster()
+    {
+        var statement = "select i from array_range(1, 100) as i;";
+        var queryOptions = new StartQueryOptions()
+        {
+            QueryTimeout = TimeSpan.FromSeconds(30)
+        };
+
+        var handle = await _simpleFixture.Cluster.StartQueryAsync(statement, queryOptions);
+        Assert.NotNull(handle);
+
+        QueryStatus? queryStatus = null;
+        for (var i = 0; i < 20; i++)
+        {
+            queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
+            _outputHelper.WriteLine($"Status: {queryStatus}");
+            if (queryStatus.ResultsReady)
+            {
+                break;
+            }
+            await Task.Delay(500);
+        }
+
+        Assert.NotNull(queryStatus);
+        Assert.True(queryStatus!.ResultsReady);
+
+        var resultHandle = queryStatus.ResultHandle();
+        var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
+
+        // Consume all rows
+        var count = 0;
+        await foreach (var row in results.Rows)
+        {
+            count++;
+        }
+
+        // Verify metrics
+        Assert.NotNull(results.MetaData);
+        Assert.NotNull(results.MetaData.Metrics);
+        Assert.Equal(99, results.MetaData.Metrics!.ResultCount);
+        Assert.NotNull(results.MetaData.Metrics.ElapsedTime);
+        Assert.NotNull(results.MetaData.Metrics.ExecutionTime);
+    }
 }

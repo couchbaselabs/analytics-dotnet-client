@@ -179,6 +179,15 @@ jobs:
           EOF
           echo "settings.json written:" && cat tests/Couchbase.Analytics.FunctionalTests/settings.json
 
+      - name: Create test dataverse for scope-level queries
+        run: |
+          echo "Creating test dataverse testdb.testscope for scope-level functional tests"
+          curl -sSf -k -u "${CBDINO_USER}:${CBDINO_PASS}" \
+            "${CBDINO_CONNSTR}/api/v1/request" \
+            --data-urlencode 'statement=CREATE DATAVERSE testdb.testscope IF NOT EXISTS;'
+          echo ""
+          echo "Dataverse created successfully"
+
       - name: Build and Run Functional Tests
         run: |
           dotnet test tests/Couchbase.Analytics.FunctionalTests/Couchbase.Analytics.FunctionalTests.csproj \
