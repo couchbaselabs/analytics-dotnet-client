@@ -182,9 +182,10 @@ jobs:
       - name: Create test dataverse for scope-level queries
         run: |
           echo "Creating test dataverse testdb.testscope for scope-level functional tests"
-          curl -sSf -k -u "${CBDINO_USER}:${CBDINO_PASS}" \
-            "${CBDINO_CONNSTR}/api/v1/request" \
-            --data-urlencode 'statement=CREATE DATAVERSE testdb.testscope IF NOT EXISTS;'
+          curl -sS -k -u "${CBDINO_USER}:${CBDINO_PASS}" \
+            -H "Content-Type: application/json" \
+            -d '{"statement": "CREATE DATAVERSE testdb.testscope IF NOT EXISTS;"}' \
+            "${CBDINO_CONNSTR}/api/v1/request"
           echo ""
           echo "Dataverse created successfully"
 
