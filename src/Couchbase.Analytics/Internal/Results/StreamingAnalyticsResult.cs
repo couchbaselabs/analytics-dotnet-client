@@ -63,12 +63,6 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
     private async IAsyncEnumerable<AnalyticsRow> EnumerateRows(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (Interlocked.CompareExchange(ref _enumerated, 1, 0) != 0)
-        {
-            throw new InvalidOperationException(
-                "Query results can only be enumerated once. The result stream has already been consumed.");
-        }
-
         if (!_hasReadToResult)
         {
             throw new InvalidOperationException(
@@ -78,6 +72,12 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
         if (_jsonReader == null)
         {
             throw new InvalidOperationException("_jsonReader is null");
+        }
+
+        if (Interlocked.CompareExchange(ref _enumerated, 1, 0) != 0)
+        {
+            throw new InvalidOperationException(
+                "Query results can only be enumerated once. The result stream has already been consumed.");
         }
 
         await foreach (var token in _jsonReader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))

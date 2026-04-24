@@ -221,7 +221,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
         var body = options.GetFormValuesAsJson(statement);
         using var content = new StringContent(body, Encoding.UTF8, MediaType.Json);
-        var httpClient = CreateHttpClient(requestTimeout);
+        using var httpClient = CreateHttpClient(requestTimeout);
 
         var maxRetries = options.MaxRetries ?? _clusterOptions.MaxRetries;
         var attempt = -1;
@@ -241,7 +241,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                 LogAsyncStartQueryAttempt(_logger, attempt + 1, _redactor.SystemData(Uri), options.ClientContextId, options.QueryContext?.ToString() ?? "<cluster>", _redactor.UserData(statement), stopwatch.Elapsed.TotalMilliseconds);
 
                 var request = new HttpRequestMessage(HttpMethod.Post, Uri) { Content = content };
-                var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+                using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
                     .ConfigureAwait(false);
 
                 errorContext.StatusCode = response.StatusCode;
@@ -340,7 +340,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     public async Task<QueryStatus> FetchStatusAsync(QueryHandle handle, FetchStatusOptions options, CancellationToken cancellationToken = default)
     {
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
-        var httpClient = CreateHttpClient(timeout);
+        using var httpClient = CreateHttpClient(timeout);
 
         var statusUri = Uri.TryCreate(handle.Handle, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
@@ -355,7 +355,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
             var stopwatch = LightweightStopwatch.StartNew();
             var errorContext = new ErrorContext(string.Empty, stopwatch, timeout);
 
-            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
                 .ConfigureAwait(false);
 
             errorContext.StatusCode = response.StatusCode;
@@ -506,7 +506,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     public async Task DiscardResultsAsync(string requestId, string handlePath, DiscardResultsOptions options, CancellationToken cancellationToken = default)
     {
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
-        var httpClient = CreateHttpClient(timeout);
+        using var httpClient = CreateHttpClient(timeout);
 
         var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
             ? absUri
@@ -518,7 +518,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
         try
         {
-            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
                 .ConfigureAwait(false);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
@@ -544,7 +544,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     public async Task CancelQueryAsync(string requestId, CancelOptions options, CancellationToken cancellationToken = default)
     {
         var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
-        var httpClient = CreateHttpClient(timeout);
+        using var httpClient = CreateHttpClient(timeout);
 
         var cancelUri = new Uri(_baseUri, "api/v1/active_requests");
         var request = new HttpRequestMessage(HttpMethod.Delete, cancelUri)
@@ -560,7 +560,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
         try
         {
-            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
+            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken)
                 .ConfigureAwait(false);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
