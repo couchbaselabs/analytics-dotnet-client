@@ -22,9 +22,9 @@
 namespace Couchbase.AnalyticsClient.Options;
 
 /// <summary>
-/// Options for fetching a result handle from an asynchronous server-side query.
+/// Options for fetching the status of an asynchronous server-side query.
 /// </summary>
-public record FetchResultHandleOptions
+public record FetchStatusOptions
 {
     // Reserved for future use.
 }

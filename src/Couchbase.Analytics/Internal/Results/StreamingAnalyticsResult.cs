@@ -34,8 +34,7 @@ namespace Couchbase.AnalyticsClient.Internal.Results;
 internal class StreamingAnalyticsResult : AnalyticsResultBase
 {
     private bool _hasReadToResult;
-    private bool _hasReadResult;
-    private bool _hasFinishedReading;
+    private int _enumerated; // 0 = not started, 1 = started (atomic via Interlocked)
     private IJsonStreamReader _jsonReader;
     private bool _disposed;
 
@@ -64,15 +63,6 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
     private async IAsyncEnumerable<AnalyticsRow> EnumerateRows(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (_hasReadResult)
-        {
-            yield break;
-        }
-        if (_hasFinishedReading)
-        {
-            _hasReadResult = true;
-            yield break;
-        }
         if (!_hasReadToResult)
         {
             throw new InvalidOperationException(
@@ -84,12 +74,16 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
             throw new InvalidOperationException("_jsonReader is null");
         }
 
+        if (Interlocked.CompareExchange(ref _enumerated, 1, 0) != 0)
+        {
+            throw new InvalidOperationException(
+                "Query results can only be enumerated once. The result stream has already been consumed.");
+        }
+
         await foreach (var token in _jsonReader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
         {
             yield return new AnalyticsRow(token);
         }
-
-        _hasReadResult = true;
 
         await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
     }
@@ -137,7 +131,6 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
             }
         }
 
-        _hasFinishedReading = true;
     }
 
     public override void Dispose()
@@ -146,5 +139,13 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
         _disposed = true;
         _jsonReader?.Dispose();
         base.Dispose();
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _jsonReader?.Dispose();
+        await base.DisposeAsync().ConfigureAwait(false);
     }
 }

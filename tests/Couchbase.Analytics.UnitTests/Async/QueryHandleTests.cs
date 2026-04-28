@@ -21,19 +21,19 @@ public class QueryHandleTests
     }
 
     [Fact]
-    public async Task FetchResultHandleAsync_DelegatesToService()
+    public async Task FetchStatusAsync_DelegatesToService()
     {
         var serviceMock = new Mock<IAnalyticsService>();
         var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
-        var expectedResult = TestHandleFactory.CreateQueryResultHandle("path", "req", "{}", serviceMock.Object);
+        var expectedStatus = TestHandleFactory.CreateQueryStatus("test-req", """{"status":"running"}""", serviceMock.Object);
 
-        serviceMock.Setup(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedResult);
+        serviceMock.Setup(x => x.FetchStatusAsync(handle, It.IsAny<FetchStatusOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedStatus);
 
-        var result = await handle.FetchResultHandleAsync(new FetchResultHandleOptions());
-        Assert.Same(expectedResult, result);
+        var result = await handle.FetchStatusAsync(new FetchStatusOptions());
+        Assert.Same(expectedStatus, result);
 
-        serviceMock.Verify(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), default), Times.Once);
+        serviceMock.Verify(x => x.FetchStatusAsync(handle, It.IsAny<FetchStatusOptions>(), default), Times.Once);
     }
 
     [Fact]
@@ -63,20 +63,20 @@ public class QueryHandleTests
     }
 
     [Fact]
-    public async Task FetchResultHandleAsync_FluentOptions_DelegatesProperly()
+    public async Task FetchStatusAsync_FluentOptions_DelegatesProperly()
     {
         var serviceMock = new Mock<IAnalyticsService>();
         var handle = TestHandleFactory.CreateQueryHandle("test-handle", "test-req", "{}", serviceMock.Object);
-        var expectedResult = TestHandleFactory.CreateQueryResultHandle("path", "req", "{}", serviceMock.Object);
+        var expectedStatus = TestHandleFactory.CreateQueryStatus("test-req", """{"status":"success","handle":"/result/path"}""", serviceMock.Object);
 
-        serviceMock.Setup(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedResult);
+        serviceMock.Setup(x => x.FetchStatusAsync(handle, It.IsAny<FetchStatusOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedStatus);
 
         // Act using the fluent Options builder
-        var result = await handle.FetchResultHandleAsync(opt => opt);
+        var result = await handle.FetchStatusAsync(opt => opt);
 
-        Assert.Same(expectedResult, result);
-        serviceMock.Verify(x => x.FetchResultHandleAsync(handle, It.IsAny<FetchResultHandleOptions>(), default), Times.Once);
+        Assert.Same(expectedStatus, result);
+        serviceMock.Verify(x => x.FetchStatusAsync(handle, It.IsAny<FetchStatusOptions>(), default), Times.Once);
     }
 
     [Fact]

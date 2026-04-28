@@ -65,4 +65,15 @@ internal abstract class AnalyticsResultBase : IQueryResult
         ResponseStream?.Dispose();
         _ownedForCleanup?.Dispose();
     }
+
+    public virtual async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (ResponseStream != null)
+        {
+            await ResponseStream.DisposeAsync().ConfigureAwait(false);
+        }
+        _ownedForCleanup?.Dispose();
+    }
 }
