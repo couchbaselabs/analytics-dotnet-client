@@ -202,12 +202,19 @@ jobs:
 
       - name: Create test dataverse for scope-level queries
         run: |
-          echo "Creating test dataverse 'testscope' (under Default database) for scope-level functional tests"
-          curl -sS -k -u "${CBDINO_USER}:${CBDINO_PASS}" \
+          echo "Creating test dataverse 'testscope' for scope-level functional tests"
+          HTTP_CODE=$(curl -sS -o /tmp/dataverse-response.json -w "%{http_code}" -k \
+            -u "${CBDINO_USER}:${CBDINO_PASS}" \
             -H "Content-Type: application/json" \
             -d '{"statement": "CREATE DATAVERSE testscope IF NOT EXISTS;"}' \
-            "${CBDINO_CONNSTR}/api/v1/request"
+            "${CBDINO_CONNSTR}/api/v1/request")
+          echo "HTTP status: $HTTP_CODE"
+          cat /tmp/dataverse-response.json
           echo ""
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Dataverse creation failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
           echo "Dataverse created successfully"
 
       - name: Build and Run Functional Tests

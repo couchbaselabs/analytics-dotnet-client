@@ -42,7 +42,7 @@ public class AnalyticsServiceTests
     {
         var statement = "select i from array_range(1, 100) as i;";
 
-        var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
+        await using var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true });
 
         await foreach (var row in result.Rows)
@@ -63,7 +63,7 @@ public class AnalyticsServiceTests
     {
         var statement = "select i from array_range(1, 100) as i;";
 
-        var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
+        await using var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false });
 
         await foreach (var row in result.Rows)
@@ -96,7 +96,7 @@ public class AnalyticsServiceTests
 
         var statement = "select i from array_range(1, 100) as i;";
 
-        var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
+        await using var result = await _simpleFixture.Cluster.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false });
 
         Assert.NotNull(result.MetaData);
@@ -159,7 +159,7 @@ public class AnalyticsServiceTests
     {
         var statement = "select i from array_range(1, 10) as i;";
 
-        var result = await _simpleFixture.TestScope.ExecuteQueryAsync(statement,
+        await using var result = await _simpleFixture.TestScope.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = true });
 
         var count = 0;
@@ -177,7 +177,7 @@ public class AnalyticsServiceTests
     {
         var statement = "select i from array_range(1, 10) as i;";
 
-        var result = await _simpleFixture.TestScope.ExecuteQueryAsync(statement,
+        await using var result = await _simpleFixture.TestScope.ExecuteQueryAsync(statement,
             new QueryOptions() { Timeout = TimeSpan.FromSeconds(10), AsStreaming = false });
 
         var count = 0;

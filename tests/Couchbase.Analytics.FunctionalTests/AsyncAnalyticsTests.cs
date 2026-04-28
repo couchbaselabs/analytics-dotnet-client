@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.AnalyticsClient.FunctionalTests.Fixtures;
@@ -33,17 +34,7 @@ public class AsyncAnalyticsTests
         Assert.NotNull(handle);
 
         // 2. Poll for the query status
-        QueryStatus? queryStatus = null;
-        for (var i = 0; i < 20; i++)
-        {
-            queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
-            _outputHelper.WriteLine($"Status: {queryStatus}");
-            if (queryStatus.ResultsReady)
-            {
-                break;
-            }
-            await Task.Delay(500);
-        }
+        var queryStatus = await PollUntilReadyAsync(handle, queryOptions.QueryTimeout ?? TimeSpan.FromSeconds(30));
 
         Assert.NotNull(queryStatus);
         Assert.True(queryStatus!.ResultsReady);
@@ -53,7 +44,7 @@ public class AsyncAnalyticsTests
         Assert.NotNull(resultHandle);
 
         // 4. Fetch the results
-        var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
+        await using var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
         Assert.NotNull(results);
 
         var count = 0;
@@ -86,7 +77,8 @@ public class AsyncAnalyticsTests
         // It's possible the cancel takes a brief moment to process gracefully on the server.
         var ex = await Record.ExceptionAsync(async () =>
         {
-            for (var i = 0; i < 20; i++)
+            var deadline = Stopwatch.StartNew();
+            while (deadline.Elapsed < queryOptions.QueryTimeout)
             {
                 var queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
                 if (queryStatus.ResultsReady)
@@ -112,19 +104,11 @@ public class AsyncAnalyticsTests
     public async Task Test_AsyncAnalytics_DiscardResults_Cluster()
     {
         var statement = "select i from array_range(1, 5) as i;";
-        var handle = await _simpleFixture.Cluster.StartQueryAsync(statement, new StartQueryOptions());
+        var queryOptions = new StartQueryOptions();
+        var handle = await _simpleFixture.Cluster.StartQueryAsync(statement, queryOptions);
 
         // Poll for the query status
-        QueryStatus? queryStatus = null;
-        for (var i = 0; i < 20; i++)
-        {
-            queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
-            if (queryStatus.ResultsReady)
-            {
-                break;
-            }
-            await Task.Delay(500);
-        }
+        var queryStatus = await PollUntilReadyAsync(handle, TimeSpan.FromSeconds(30));
 
         Assert.NotNull(queryStatus);
         Assert.True(queryStatus!.ResultsReady);
@@ -159,16 +143,7 @@ public class AsyncAnalyticsTests
         Assert.NotNull(handle);
 
         // 2. Poll for the query status
-        QueryStatus? queryStatus = null;
-        for (var i = 0; i < 20; i++)
-        {
-            queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
-            if (queryStatus.ResultsReady)
-            {
-                break;
-            }
-            await Task.Delay(500);
-        }
+        var queryStatus = await PollUntilReadyAsync(handle, queryOptions.QueryTimeout ?? TimeSpan.FromSeconds(30));
 
         Assert.NotNull(queryStatus);
         Assert.True(queryStatus!.ResultsReady);
@@ -177,7 +152,7 @@ public class AsyncAnalyticsTests
         var resultHandle = queryStatus.ResultHandle();
         Assert.NotNull(resultHandle);
 
-        var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
+        await using var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
         Assert.NotNull(results);
 
         var count = 0;
@@ -202,8 +177,40 @@ public class AsyncAnalyticsTests
         var handle = await _simpleFixture.Cluster.StartQueryAsync(statement, queryOptions);
         Assert.NotNull(handle);
 
+        var queryStatus = await PollUntilReadyAsync(handle, queryOptions.QueryTimeout ?? TimeSpan.FromSeconds(30));
+
+        Assert.NotNull(queryStatus);
+        Assert.True(queryStatus!.ResultsReady);
+
+        var resultHandle = queryStatus.ResultHandle();
+        await using var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
+
+        // Consume all rows
+        var count = 0;
+        await foreach (var row in results.Rows)
+        {
+            count++;
+        }
+
+        // Verify row count matches metrics
+        Assert.Equal(99, count);
+
+        // Verify metrics
+        Assert.NotNull(results.MetaData);
+        Assert.NotNull(results.MetaData.Metrics);
+        Assert.Equal(99, results.MetaData.Metrics!.ResultCount);
+        Assert.NotNull(results.MetaData.Metrics.ElapsedTime);
+        Assert.NotNull(results.MetaData.Metrics.ExecutionTime);
+    }
+
+    /// <summary>
+    /// Polls the query handle until results are ready or the deadline is reached.
+    /// </summary>
+    private async Task<QueryStatus?> PollUntilReadyAsync(QueryHandle handle, TimeSpan timeout)
+    {
+        var deadline = Stopwatch.StartNew();
         QueryStatus? queryStatus = null;
-        for (var i = 0; i < 20; i++)
+        while (deadline.Elapsed < timeout)
         {
             queryStatus = await handle.FetchStatusAsync(new FetchStatusOptions());
             _outputHelper.WriteLine($"Status: {queryStatus}");
@@ -213,25 +220,6 @@ public class AsyncAnalyticsTests
             }
             await Task.Delay(500);
         }
-
-        Assert.NotNull(queryStatus);
-        Assert.True(queryStatus!.ResultsReady);
-
-        var resultHandle = queryStatus.ResultHandle();
-        var results = await resultHandle.FetchResultsAsync(new FetchResultsOptions());
-
-        // Consume all rows
-        var count = 0;
-        await foreach (var row in results.Rows)
-        {
-            count++;
-        }
-
-        // Verify metrics
-        Assert.NotNull(results.MetaData);
-        Assert.NotNull(results.MetaData.Metrics);
-        Assert.Equal(99, results.MetaData.Metrics!.ResultCount);
-        Assert.NotNull(results.MetaData.Metrics.ElapsedTime);
-        Assert.NotNull(results.MetaData.Metrics.ExecutionTime);
+        return queryStatus;
     }
 }
