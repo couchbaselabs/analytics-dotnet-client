@@ -36,4 +36,10 @@ public class FixtureSettings
 
     [JsonPropertyName("ClientKeyPath2")]
     public string? ClientKeyPath2 { get; set; }
+
+    [JsonPropertyName("TestDatabase")]
+    public string TestDatabase { get; set; } = "Default";
+
+    [JsonPropertyName("TestScope")]
+    public string TestScope { get; set; } = "testscope";
 }

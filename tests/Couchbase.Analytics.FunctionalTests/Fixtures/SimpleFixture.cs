@@ -20,6 +20,8 @@ namespace Couchbase.AnalyticsClient.FunctionalTests.Fixtures
 
         public Credential Credential { get; private set; }
 
+        public Scope TestScope => Cluster.Database(FixtureSettings.TestDatabase).Scope(FixtureSettings.TestScope);
+
         public string CapellaCaCert =
             "-----BEGIN CERTIFICATE-----\n" +
             "MIIFWzCCA0OgAwIBAgIBATANBgkqhkiG9w0BAQsFADA4MTYwNAYDVQQDEy1kaW5v\n" +

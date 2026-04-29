@@ -179,6 +179,44 @@ jobs:
           EOF
           echo "settings.json written:" && cat tests/Couchbase.Analytics.FunctionalTests/settings.json
 
+      - name: Wait for analytics service to be ready
+        run: |
+          echo "Polling analytics service until it accepts queries..."
+          for i in $(seq 1 60); do
+            HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" -k \
+              -u "${CBDINO_USER}:${CBDINO_PASS}" \
+              -H "Content-Type: application/json" \
+              -d '{"statement": "SELECT 1;"}' \
+              "${CBDINO_CONNSTR}/api/v1/request" 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Analytics service is ready (attempt $i)"
+              break
+            fi
+            echo "Attempt $i/60: HTTP $HTTP_CODE — waiting 5s..."
+            sleep 5
+          done
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Analytics service did not become ready after 5 minutes"
+            exit 1
+          fi
+
+      - name: Create test dataverse for scope-level queries
+        run: |
+          echo "Creating test dataverse 'testscope' for scope-level functional tests"
+          HTTP_CODE=$(curl -sS -o /tmp/dataverse-response.json -w "%{http_code}" -k \
+            -u "${CBDINO_USER}:${CBDINO_PASS}" \
+            -H "Content-Type: application/json" \
+            -d '{"statement": "CREATE DATAVERSE testscope IF NOT EXISTS;"}' \
+            "${CBDINO_CONNSTR}/api/v1/request")
+          echo "HTTP status: $HTTP_CODE"
+          cat /tmp/dataverse-response.json
+          echo ""
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Dataverse creation failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "Dataverse created successfully"
+
       - name: Build and Run Functional Tests
         run: |
           dotnet test tests/Couchbase.Analytics.FunctionalTests/Couchbase.Analytics.FunctionalTests.csproj \
