@@ -127,7 +127,8 @@ public static partial class CertificateValidation
                     return false; // Error loading custom certificates
                 }
 
-                return ValidateAgainstCustomTrust(certificate, chain, trustedCertificates, logger);
+                return ValidateAgainstCustomTrust(certificate, chain, trustedCertificates,
+                    securityOptions.EnableCertificateRevocationCheck, logger);
             }
         };
     }
@@ -179,7 +180,8 @@ public static partial class CertificateValidation
 
         // Second check: Validate against Capella CA
         var capellaTrust = new X509Certificate2Collection { CapellaCaCert };
-        var capellaValid = ValidateAgainstCustomTrust(certificate, chain, capellaTrust, logger);
+        var capellaValid = ValidateAgainstCustomTrust(
+            certificate, chain, capellaTrust, enableRevocationCheck: true, logger);
 
         if (capellaValid)
         {
@@ -249,6 +251,7 @@ public static partial class CertificateValidation
         X509Certificate? certificate,
         X509Chain? chain,
         X509Certificate2Collection trustedCertificates,
+        bool enableRevocationCheck,
         ILogger logger)
     {
         if (certificate == null)
@@ -276,6 +279,11 @@ public static partial class CertificateValidation
 
         // Allow unknown certificate authority since we're using a custom trust
         validationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+        if (!enableRevocationCheck)
+        {
+            validationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        }
 
         // Build and validate the certificate chain
         var chainValid = validationChain.Build(serverCert);

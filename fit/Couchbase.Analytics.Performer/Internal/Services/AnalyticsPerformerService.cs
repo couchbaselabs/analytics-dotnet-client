@@ -9,17 +9,29 @@ using Couchbase.Grpc.Protocol.Columnar;
 using Couchbase.Grpc.Protocol.Shared;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using Exception = System.Exception;
 
 namespace Couchbase.Analytics.Performer.Internal.Services;
 
 internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
 {
-    public AnalyticsPerformerService(ConcurrentDictionary<string, ClusterConnection> clusters)
+    public AnalyticsPerformerService(
+        ConcurrentDictionary<string, ClusterConnection> clusters)
     {
         Clusters = clusters;
     }
     private ConcurrentDictionary<string, ClusterConnection> Clusters { get; }
+
+    // The Cluster owns its ILoggerFactory and disposes it on cluster Dispose, so we hand each
+    // cluster its own factory that bridges to the global Serilog logger.
+    private static ILoggerFactory CreateBridgedLoggerFactory() =>
+        LoggerFactory.Create(builder =>
+        {
+            builder.ClearProviders();
+            builder.AddSerilog();
+        });
 
     public override Task<EmptyResultOrFailureResponse> ClusterNewInstance(ClusterNewInstanceRequest request,
         ServerCallContext context)
@@ -46,7 +58,8 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
                         request.ConnectionString);
 
                     var cluster = Cluster.Create(request.ConnectionString,
-                        request.ToSdkCredential(), request.ToSdkQueryOptions());
+                        request.ToSdkCredential(),
+                        request.ToSdkQueryOptions().WithLogging(CreateBridgedLoggerFactory()));
 
                     return new(request, cluster);
                 });
@@ -84,7 +97,14 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
         var response = new FetchPerformerCapsResponse
         {
             AnalyticsProduct = AnalyticsProduct.Analytics,
-            Sdk = SDK.Net
+            Sdk = SDK.Net,
+            SupportsServerAsyncQueries = true,
+            CredentialSupport = new CredentialSupport
+            {
+                SupportsJwtCredential = true,
+                SupportsCertificateCredential = true,
+                SupportsSetCredential = true,
+            }
         };
 
         try
@@ -227,6 +247,34 @@ internal class AnalyticsPerformerService : ColumnarService.ColumnarServiceBase
         }
 
         Serilog.Log.Information("Closed all clusters in {Milliseconds}ms", stopWatch.Elapsed.TotalMilliseconds);
+        return Task.FromResult(response);
+    }
+
+    public override Task<EmptyResultOrFailureResponse> SetCredential(SetCredentialRequest request,
+        ServerCallContext context)
+    {
+        Serilog.Log.Information("Calling SetCredential for {ClusterId}", request.ExecutionContext.ClusterId);
+        var stopWatch = LightweightStopwatch.StartNew();
+        var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        var response = new EmptyResultOrFailureResponse();
+        try
+        {
+            if (!Clusters.TryGetValue(request.ExecutionContext.ClusterId, out var connection))
+            {
+                throw new KeyNotFoundException(
+                    "Cluster id not present in active clusters: " + request.ExecutionContext.ClusterId);
+            }
+
+            connection.UpdateCredential(request.Credential.ToSdkCredential());
+            response.GetResponseMetaData(stopWatch, initiated);
+        }
+        catch (Exception ex)
+        {
+            response.GetResponseMetaData(stopWatch, initiated, ex);
+            Serilog.Log.Error(ex, "SetCredential failed for {ClusterId}", request.ExecutionContext.ClusterId);
+        }
+
         return Task.FromResult(response);
     }
 

@@ -1,3 +1,4 @@
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Grpc.Protocol.Columnar;
 
@@ -12,22 +13,39 @@ public class PerformerQuery
         CancellationTokenSource = cancellationTokenSource;
     }
 
-    private Task<IQueryResult> QueryTask { get; }
+    public PerformerQuery()
+    {
+    }
+
+    public Task<IQueryResult>? QueryTask { get; set; }
     private IQueryResult? QueryResult { get; set; }
-    public CancellationTokenSource? CancellationTokenSource { get; }
-    public ContentAs ContentAs { get; set; }
+    public CancellationTokenSource? CancellationTokenSource { get; set; }
+    public ContentAs? ContentAs { get; set; }
+
+    // Server-async fields
+    public QueryHandle? AsyncHandle { get; set; }
+    public QueryStatus? AsyncStatus { get; set; }
+    public QueryResultHandle? AsyncResultHandle { get; set; }
 
     private IAsyncEnumerator<AnalyticsRow>? _cachedEnumerator;
 
     public async Task<IQueryResult> GetQueryResult()
     {
+        if (QueryTask is null)
+        {
+            throw new InvalidOperationException("No query task associated with this query handle.");
+        }
         return QueryResult ??= await QueryTask.ConfigureAwait(false);
     }
 
-    public async Task<QueryRowResponse> GetNextRow()
+    public async Task<QueryRowResponse> GetNextRow(ContentAs? rowContentAs = null)
     {
         if (QueryResult is null)
         {
+            if (QueryTask is null)
+            {
+                throw new InvalidOperationException("No query task associated with this query handle.");
+            }
             // Do not wrap in try/catch since we want to bubble the Exception to the caller
             // so it can convert it appropriately (e.g. "Invalid Credentials" and such)
             QueryResult = await QueryTask.ConfigureAwait(false);
@@ -46,6 +64,9 @@ public class PerformerQuery
             }
         }
 
+        var effectiveContentAs = rowContentAs ?? ContentAs
+            ?? throw new InvalidOperationException("No ContentAs available for row deserialization.");
+
         QueryRowResponse response;
 
         if (await _cachedEnumerator!.MoveNextAsync().ConfigureAwait(false))
@@ -56,7 +77,7 @@ public class PerformerQuery
                 {
                     Row = new QueryRowResponse.Types.Row()
                     {
-                        RowContent = _cachedEnumerator.Current.ContentAsToAnalyticsRow(ContentAs)
+                        RowContent = _cachedEnumerator.Current.ContentAsToAnalyticsRow(effectiveContentAs)
                     }
                 }
             };
