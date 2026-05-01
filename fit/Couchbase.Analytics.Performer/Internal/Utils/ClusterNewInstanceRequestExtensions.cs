@@ -1,4 +1,5 @@
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using Couchbase.AnalyticsClient.HTTP;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.Grpc.Protocol.Columnar;
@@ -7,11 +8,31 @@ namespace Couchbase.Analytics.Performer.Internal.Utils;
 
 public static class ClusterNewInstanceRequestExtensions
 {
-    public static Credential ToSdkCredential(
+    public static ICredential ToSdkCredential(
         this ClusterNewInstanceRequest request)
     {
-        return new Credential(request.Credential.UsernameAndPassword.Username,
-            request.Credential.UsernameAndPassword.Password);
+        return request.Credential.ToSdkCredential();
+    }
+
+    public static ICredential ToSdkCredential(
+        this ClusterNewInstanceRequest.Types.Credential credential)
+    {
+        switch (credential.TypeCase)
+        {
+            case ClusterNewInstanceRequest.Types.Credential.TypeOneofCase.UsernameAndPassword:
+                return new Credential(credential.UsernameAndPassword.Username,
+                    credential.UsernameAndPassword.Password);
+            case ClusterNewInstanceRequest.Types.Credential.TypeOneofCase.JwtAuth:
+                return new JwtCredential(credential.JwtAuth.Jwt);
+            case ClusterNewInstanceRequest.Types.Credential.TypeOneofCase.CertificateAuth:
+                var x509 = X509Certificate2.CreateFromPem(
+                    credential.CertificateAuth.Cert,
+                    credential.CertificateAuth.Key);
+                return new CertificateCredential(x509);
+            case ClusterNewInstanceRequest.Types.Credential.TypeOneofCase.None:
+            default:
+                throw new ArgumentException("No credential type specified");
+        }
     }
 
     public static ClusterOptions ToSdkQueryOptions(this ClusterNewInstanceRequest request)
@@ -61,13 +82,16 @@ public static class ClusterNewInstanceRequestExtensions
         {
             timeoutOptions = timeoutOptions.WithQueryTimeout(protoTimeout.QueryTimeout.ToTimeSpan());
         }
+        // handle_timeout is not supported by the .NET SDK; intentionally ignored.
         return timeoutOptions;
     }
 
     private static SecurityOptions ToCore(
         this ClusterNewInstanceRequest.Types.Options.Types.SecurityOptions? protoSecurity)
     {
-        var securityOptions = new SecurityOptions();
+        // FIT clusters (e.g. dinocluster) issue server certs without reachable OCSP/CRL endpoints,
+        // so revocation checking is always disabled in the performer.
+        var securityOptions = new SecurityOptions().WithEnableCertificateRevocationCheck(false);
         if (protoSecurity is null) return securityOptions;
 
         if (protoSecurity.TrustOnlyPlatform)
@@ -80,7 +104,13 @@ public static class ClusterNewInstanceRequestExtensions
         }
         else if (protoSecurity.HasTrustOnlyPemString)
         {
-            securityOptions = securityOptions.WithTrustOnlyPemString(protoSecurity.TrustOnlyPemString);
+            // The driver may send a bundle of multiple PEM-encoded certificates concatenated
+            // together (e.g. server cert + intermediate).
+            var collection = new X509Certificate2Collection();
+            collection.ImportFromPem(protoSecurity.TrustOnlyPemString);
+            securityOptions = collection.Count > 1
+                ? securityOptions.WithTrustOnlyCertificates(collection)
+                : securityOptions.WithTrustOnlyPemString(protoSecurity.TrustOnlyPemString);
         }
         if (protoSecurity.HasDisableServerCertificateVerification)
         {

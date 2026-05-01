@@ -58,6 +58,17 @@ public record SecurityOptions
     /// </summary>
     internal SslProtocols SslProtocols { get; init; } = SslProtocols.Tls13 | SslProtocols.Tls12;
 
+    /// <summary>
+    /// If true, the SDK performs revocation checking (OCSP/CRL) on the server certificate chain
+    /// during custom-trust validation. Defaults to true.
+    /// </summary>
+    /// <remarks>
+    /// Disable this when connecting to deployments whose certificates do not publish
+    /// reachable OCSP/CRL endpoints (e.g. internal test clusters). When disabled, the chain
+    /// is still validated against the configured trust anchors; only revocation is skipped.
+    /// </remarks>
+    internal bool EnableCertificateRevocationCheck { get; init; } = true;
+
     internal string? PathToPemFileValue => PemFilePath;
     internal string? CertificateValue => PemString;
     internal X509Certificate2Collection? CertificatesValue => Certificates;
@@ -145,5 +156,14 @@ public record SecurityOptions
     public SecurityOptions WithSslProtocols(SslProtocols protocols)
     {
         return this with { SslProtocols = protocols };
+    }
+
+    /// <summary>
+    /// Enables or disables OCSP/CRL revocation checking during custom-trust certificate
+    /// validation. Defaults to true.
+    /// </summary>
+    public SecurityOptions WithEnableCertificateRevocationCheck(bool enable)
+    {
+        return this with { EnableCertificateRevocationCheck = enable };
     }
 }

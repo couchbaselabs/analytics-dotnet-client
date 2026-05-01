@@ -2,6 +2,7 @@ using Couchbase.AnalyticsClient.Exceptions;
 using Couchbase.Grpc.Protocol.Columnar;
 using InvalidCredentialException = Couchbase.AnalyticsClient.Exceptions.InvalidCredentialException;
 using QueryException = Couchbase.AnalyticsClient.Exceptions.QueryException;
+using QueryNotFoundException = Couchbase.AnalyticsClient.Exceptions.QueryNotFoundException;
 
 
 namespace Couchbase.Analytics.Performer.Internal.Utils;
@@ -39,6 +40,15 @@ internal static class ExceptionExtensions
                 {
                     InvalidCredentialException =
                         new Grpc.Protocol.Columnar.InvalidCredentialException()
+                };
+            }
+
+            if (exception is QueryNotFoundException)
+            {
+                columnarError.SubException = new SubColumnarError
+                {
+                    QueryNotFoundException =
+                        new Grpc.Protocol.Columnar.QueryNotFoundException()
                 };
             }
 
@@ -87,6 +97,7 @@ internal static class ExceptionExtensions
                 return false;
             case InvalidCredentialException invalidCredentialException:
             case QueryException queryException:
+            case QueryNotFoundException queryNotFoundException:
             case AnalyticsTimeoutException timeoutException:
             case AnalyticsException analyticsException:
                 return true;

@@ -36,5 +36,9 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Certificates\" />
+    </ItemGroup>
+
 
 </Project>
