@@ -10,6 +10,45 @@ namespace Couchbase.Analytics.Performer.Internal.Utils;
 
 internal static class OptionsExtensions
 {
+    public static StartQueryOptions ToStartQueryOptions(this StartQueryRequest.Types.Options? protoOptions)
+    {
+        var options = new StartQueryOptions();
+        if (protoOptions is null) return options;
+
+        if (protoOptions.HasReadonly) options = options.WithReadOnly(protoOptions.Readonly);
+        if (protoOptions.HasScanConsistency) options = options.WithScanConsistency(protoOptions.ScanConsistency.ToCore());
+        if (protoOptions.Timeout is not null) options = options.WithQueryTimeout(protoOptions.Timeout.ToTimeSpan());
+        if (protoOptions.HasMaxRetries) options = options.WithMaxRetries((uint)protoOptions.MaxRetries);
+
+        if (protoOptions.ParametersPositional is not null)
+        {
+            options = options.WithPositionalParameters(protoOptions.ParametersPositional.Values.ToCore());
+        }
+
+        if (protoOptions.ParametersNamed is not null)
+        {
+            options = options.WithNamedParameters(protoOptions.ParametersNamed.Fields.ToCore());
+        }
+
+        if (protoOptions.Raw is not null)
+        {
+            options = options.WithRawParameters(protoOptions.Raw.Fields.ToCore());
+        }
+
+        return options;
+    }
+
+    private static QueryScanConsistency ToCore(
+        this StartQueryRequest.Types.Options.Types.ScanConsistency protoScanConsistency)
+    {
+        return protoScanConsistency switch
+        {
+            StartQueryRequest.Types.Options.Types.ScanConsistency.NotBounded => QueryScanConsistency.NotBounded,
+            StartQueryRequest.Types.Options.Types.ScanConsistency.RequestPlus => QueryScanConsistency.RequestPlus,
+            _ => throw new ArgumentOutOfRangeException(nameof(protoScanConsistency), "Could not parse ScanConsistency")
+        };
+    }
+
     public static QueryOptions ToQueryOptions(this ExecuteQueryRequest.Types.Options? protoOptions)
     {
         var queryOptions = new QueryOptions();
@@ -40,7 +79,7 @@ internal static class OptionsExtensions
         return queryOptions;
     }
 
-    private static IDeserializer ToCore(this Deserializer protoDeserializer)
+    internal static IDeserializer ToCore(this Deserializer protoDeserializer)
     {
         return protoDeserializer.TypeCase switch
         {

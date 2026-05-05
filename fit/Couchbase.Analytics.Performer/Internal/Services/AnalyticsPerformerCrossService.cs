@@ -3,6 +3,7 @@ using System.Net;
 using Couchbase.Analytics.Performer.Internal.Connections;
 using Couchbase.Analytics.Performer.Internal.Modes;
 using Couchbase.Analytics.Performer.Internal.Utils;
+using Couchbase.AnalyticsClient.Async;
 using Couchbase.AnalyticsClient.Options;
 using Couchbase.AnalyticsClient.Results;
 using Couchbase.Core.Utils;
@@ -146,7 +147,7 @@ internal class AnalyticsPerformerCrossService : ColumnarCrossService.ColumnarCro
 
         try
         {
-            response = await performerQuery.GetNextRow().ConfigureAwait(false);
+            response = await performerQuery.GetNextRow(request.ContentAs).ConfigureAwait(false);
             response.Metadata = new ResponseMetadata
             {
                 ElapsedNanos = (long)stopwatch.Elapsed.TotalNanoseconds,
@@ -252,6 +253,206 @@ internal class AnalyticsPerformerCrossService : ColumnarCrossService.ColumnarCro
         var response = new EmptyResultOrFailureResponse().GetResponseMetaData(stopwatch, initiated, exception);
 
         return Task.FromResult(response);
+    }
+
+    public override async Task<StartQueryResponse> StartQuery(StartQueryRequest request, ServerCallContext context)
+    {
+        Serilog.Log.Information("Executing startQuery");
+
+        var response = new StartQueryResponse();
+
+        try
+        {
+            var options = request.Options.ToStartQueryOptions();
+            var queryHandle = Guid.NewGuid().ToString();
+
+            QueryHandle sdkHandle;
+            switch (request.LevelCase)
+            {
+                case StartQueryRequest.LevelOneofCase.ClusterLevel:
+                    var clusterConn = _clusterConnections[request.ClusterLevel.ClusterId];
+                    sdkHandle = await clusterConn.StartClusterQuery(request.Statement, options).ConfigureAwait(false);
+                    break;
+                case StartQueryRequest.LevelOneofCase.ScopeLevel:
+                    var scopeConn = _clusterConnections[request.ScopeLevel.ClusterId];
+                    sdkHandle = await scopeConn.StartScopeQuery(
+                        request.ScopeLevel.DatabaseName,
+                        request.ScopeLevel.ScopeName,
+                        request.Statement,
+                        options).ConfigureAwait(false);
+                    break;
+                case StartQueryRequest.LevelOneofCase.None:
+                default:
+                    throw new ArgumentException("No level specified for query");
+            }
+
+            var performerQuery = new PerformerQuery
+            {
+                AsyncHandle = sdkHandle,
+                CancellationTokenSource = new CancellationTokenSource(),
+            };
+            _ongoingQueries[queryHandle] = performerQuery;
+
+            response.QueryHandle = queryHandle;
+        }
+        catch (Exception ex)
+        {
+            response.Failure = ex.ToProtoError();
+        }
+
+        return response;
+    }
+
+    public override async Task<AsyncFetchStatusResponse> AsyncFetchStatus(AsyncFetchStatusRequest request,
+        ServerCallContext context)
+    {
+        Serilog.Log.Information("Executing asyncFetchStatus");
+
+        var response = new AsyncFetchStatusResponse();
+
+        try
+        {
+            if (!_ongoingQueries.TryGetValue(request.QueryHandle, out var performerQuery)
+                || performerQuery.AsyncHandle is null)
+            {
+                throw new KeyNotFoundException(
+                    "Query handle not present in ongoing async queries: " + request.QueryHandle);
+            }
+
+            var status = await performerQuery.AsyncHandle.FetchStatusAsync().ConfigureAwait(false);
+            performerQuery.AsyncStatus = status;
+
+            response.QueryStatus = new AsyncFetchStatusResponse.Types.QueryStatusResult
+            {
+                ResultsReady = status.ResultsReady,
+                ToString_ = status.ToString() ?? string.Empty,
+            };
+        }
+        catch (Exception ex)
+        {
+            response.Failure = ex.ToProtoError();
+        }
+
+        return response;
+    }
+
+    public override Task<EmptyResultOrFailureResponse> AsyncQueryStatusResultHandle(
+        AsyncQueryStatusResultHandleRequest request, ServerCallContext context)
+    {
+        Serilog.Log.Information("Executing asyncQueryStatusResultHandle");
+        var stopwatch = LightweightStopwatch.StartNew();
+        var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        Exception? exception = null;
+        try
+        {
+            if (!_ongoingQueries.TryGetValue(request.QueryHandle, out var performerQuery)
+                || performerQuery.AsyncStatus is null)
+            {
+                throw new KeyNotFoundException(
+                    "QueryStatus not present for query: " + request.QueryHandle);
+            }
+
+            performerQuery.AsyncResultHandle = performerQuery.AsyncStatus.ResultHandle();
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+        }
+
+        var response = new EmptyResultOrFailureResponse()
+            .GetResponseMetaData(stopwatch, initiated, exception);
+        return Task.FromResult(response);
+    }
+
+    public override async Task<EmptyResultOrFailureResponse> AsyncCancelHandle(AsyncCancelHandleRequest request,
+        ServerCallContext context)
+    {
+        Serilog.Log.Information("Executing asyncCancelHandle");
+        var stopwatch = LightweightStopwatch.StartNew();
+        var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        Exception? exception = null;
+        try
+        {
+            if (!_ongoingQueries.TryGetValue(request.QueryHandle, out var performerQuery)
+                || performerQuery.AsyncHandle is null)
+            {
+                throw new KeyNotFoundException(
+                    "Query handle not present in ongoing async queries: " + request.QueryHandle);
+            }
+
+            await performerQuery.AsyncHandle.CancelAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+        }
+
+        return new EmptyResultOrFailureResponse().GetResponseMetaData(stopwatch, initiated, exception);
+    }
+
+    public override async Task<EmptyResultOrFailureResponse> AsyncFetchResults(AsyncFetchResultsRequest request,
+        ServerCallContext context)
+    {
+        Serilog.Log.Information("Executing asyncFetchResults");
+        var stopwatch = LightweightStopwatch.StartNew();
+        var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        Exception? exception = null;
+        try
+        {
+            if (!_ongoingQueries.TryGetValue(request.QueryHandle, out var performerQuery)
+                || performerQuery.AsyncResultHandle is null)
+            {
+                throw new KeyNotFoundException(
+                    "Result handle not present for query: " + request.QueryHandle);
+            }
+
+            var fetchOptions = new FetchResultsOptions();
+            if (request.Options?.Deserializer is not null)
+            {
+                fetchOptions = fetchOptions.WithDeserializer(request.Options.Deserializer.ToCore());
+            }
+
+            var queryResult = await performerQuery.AsyncResultHandle
+                .FetchResultsAsync(fetchOptions).ConfigureAwait(false);
+
+            performerQuery.QueryTask = Task.FromResult(queryResult);
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+        }
+
+        return new EmptyResultOrFailureResponse().GetResponseMetaData(stopwatch, initiated, exception);
+    }
+
+    public override async Task<EmptyResultOrFailureResponse> AsyncDiscardResults(AsyncDiscardResultsRequest request,
+        ServerCallContext context)
+    {
+        Serilog.Log.Information("Executing asyncDiscardResults");
+        var stopwatch = LightweightStopwatch.StartNew();
+        var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        Exception? exception = null;
+        try
+        {
+            if (!_ongoingQueries.TryGetValue(request.QueryHandle, out var performerQuery)
+                || performerQuery.AsyncResultHandle is null)
+            {
+                throw new KeyNotFoundException(
+                    "Result handle not present for query: " + request.QueryHandle);
+            }
+
+            await performerQuery.AsyncResultHandle.DiscardResultsAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            exception = ex;
+        }
+
+        return new EmptyResultOrFailureResponse().GetResponseMetaData(stopwatch, initiated, exception);
     }
 
     public override Task<EmptyResultOrFailureResponse> CloseAllQueryResults(CloseAllQueryResultsRequest request,
