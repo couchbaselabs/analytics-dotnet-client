@@ -134,4 +134,57 @@ public class StreamingAnalyticsResultTests
         // Assert
         ownedResource.Verify(r => r.Dispose(), Times.Once);
     }
+
+    [Fact]
+    public async Task StreamingAnalyticsResult_DdlResponse_NoResultsArray_InitializesSuccessfully()
+    {
+        // Arrange - DDL responses (CREATE DATABASE, DROP SCOPE, etc.) don't have a "results" array
+        var json = File.ReadAllBytes("JsonDocuments/ddlResponse.json");
+        var stream = new MemoryStream(json);
+
+        var analyticsResult = new StreamingAnalyticsResult(stream, new StjJsonDeserializer());
+
+        // Act
+        await analyticsResult.InitializeAsync(CancellationToken.None);
+
+        // Assert - should initialize without throwing
+        Assert.NotNull(analyticsResult.MetaData);
+        Assert.Equal("8c090478-269b-4051-b660-c2a5ae2c4aaa", analyticsResult.MetaData.RequestId);
+    }
+
+    [Fact]
+    public async Task StreamingAnalyticsResult_DdlResponse_EnumerationReturnsEmpty()
+    {
+        // Arrange - DDL responses have no results to enumerate
+        var json = File.ReadAllBytes("JsonDocuments/ddlResponse.json");
+        var stream = new MemoryStream(json);
+
+        var analyticsResult = new StreamingAnalyticsResult(stream, new StjJsonDeserializer());
+        await analyticsResult.InitializeAsync(CancellationToken.None);
+
+        // Act
+        var rows = await analyticsResult.ToListAsync(CancellationToken.None);
+
+        // Assert - should return empty list, not throw
+        Assert.NotNull(rows);
+        Assert.Empty(rows);
+    }
+
+    [Fact]
+    public async Task StreamingAnalyticsResult_DdlResponse_MetricsAvailable()
+    {
+        // Arrange
+        var json = File.ReadAllBytes("JsonDocuments/ddlResponse.json");
+        var stream = new MemoryStream(json);
+
+        var analyticsResult = new StreamingAnalyticsResult(stream, new StjJsonDeserializer());
+        await analyticsResult.InitializeAsync(CancellationToken.None);
+
+        // Act - enumerate to completion (empty)
+        await analyticsResult.ToListAsync(CancellationToken.None);
+
+        // Assert - metrics should still be available
+        Assert.NotNull(analyticsResult.MetaData.Metrics);
+        Assert.Equal(0, analyticsResult.MetaData.Metrics.ResultCount);
+    }
 }

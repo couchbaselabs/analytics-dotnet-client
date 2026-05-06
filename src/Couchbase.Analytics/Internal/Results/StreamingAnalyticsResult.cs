@@ -33,7 +33,8 @@ namespace Couchbase.AnalyticsClient.Internal.Results;
 /// <remarks>This is the default response type.</remarks>
 internal class StreamingAnalyticsResult : AnalyticsResultBase
 {
-    private bool _hasReadToResult;
+    private bool _isInitialized;
+    private bool _hasResultsArray;
     private int _enumerated; // 0 = not started, 1 = started (atomic via Interlocked)
     private IJsonStreamReader _jsonReader;
     private bool _disposed;
@@ -63,7 +64,7 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
     private async IAsyncEnumerable<AnalyticsRow> EnumerateRows(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (!_hasReadToResult)
+        if (!_isInitialized)
         {
             throw new InvalidOperationException(
                 $"{nameof(StreamingAnalyticsResult)} has not been initialized, call InitializeAsync first");
@@ -80,12 +81,17 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
                 "Query results can only be enumerated once. The result stream has already been consumed.");
         }
 
-        await foreach (var token in _jsonReader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
+        // Only try to read tokens if the response contained a "results" array.
+        // DDL responses (CREATE DATABASE, etc.) don't have results and we should yield nothing.
+        if (_hasResultsArray)
         {
-            yield return new AnalyticsRow(token);
-        }
+            await foreach (var token in _jsonReader.ReadTokensAsync(cancellationToken).ConfigureAwait(false))
+            {
+                yield return new AnalyticsRow(token);
+            }
 
-        await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
+            await ReadResponseAttributes(cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private async Task ReadResponseAttributes(CancellationToken cancellationToken = default)
@@ -95,9 +101,7 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
             throw new InvalidOperationException("_jsonReader is null");
         }
 
-        MetaData = new QueryMetaData();
-
-        _hasReadToResult = false;
+        MetaData ??= new QueryMetaData();
 
         while (true)
         {
@@ -118,19 +122,24 @@ internal class StreamingAnalyticsResult : AnalyticsResultBase
                     MetaData.Metrics = await _jsonReader.ReadObjectAsync<QueryMetrics>(cancellationToken).ConfigureAwait(false);
                     break;
                 case "results":
-                    _hasReadToResult = true;
+                    _hasResultsArray = true;
+                    _isInitialized = true;
                     return;
                 case "errors":
                     var errors = await _jsonReader.ReadObjectAsync<QueryError[]>(cancellationToken).ConfigureAwait(false);
                     Errors = errors ?? Array.Empty<QueryError>();
                     break;
-                case "warnings":
-                case "status":
-                    //Ignore for now
+                default:
+                    // Skip unknown attributes (signature, plans, status, warnings, etc.)
+                    // by reading and discarding their values
+                    await _jsonReader.ReadTokenAsync(cancellationToken).ConfigureAwait(false);
                     break;
             }
         }
 
+        // If we've read through the entire response without finding a "results" array,
+        // mark as initialized anyway. This handles DDL responses that don't return results.
+        _isInitialized = true;
     }
 
     public override void Dispose()

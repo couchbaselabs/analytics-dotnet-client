@@ -31,10 +31,7 @@
       <None Update="JsonDocuments\error-23000-response.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="JsonDocuments\analyticsResponse.json">
+      <None Update="JsonDocuments\ddlResponse.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
