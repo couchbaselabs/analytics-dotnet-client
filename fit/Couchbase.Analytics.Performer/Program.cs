@@ -19,13 +19,16 @@ public class Program
 
         foreach (var arg in args)
         {
-            var parameter = arg.Split('=');
+            var parameter = arg.Split(new[] { '=' }, 2);
             if (parameter.Length == 2)
             {
                 switch (parameter[0])
                 {
                     case "disableConsoleRead":
-                        disableConsoleRead = bool.Parse(parameter[1]);
+                        if (bool.TryParse(parameter[1], out var parsedDisableConsoleRead))
+                        {
+                            disableConsoleRead = parsedDisableConsoleRead;
+                        }
                         break;
                 }
             }
