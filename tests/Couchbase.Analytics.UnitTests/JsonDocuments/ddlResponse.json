@@ -1,0 +1,19 @@
+{
+  "requestID": "8c090478-269b-4051-b660-c2a5ae2c4aaa",
+  "signature": {
+    "*": "*"
+  },
+  "plans": {},
+  "status": "success",
+  "metrics": {
+    "elapsedTime": "268.643981ms",
+    "executionTime": "259.520732ms",
+    "compileTime": "0ns",
+    "queueWaitTime": "0ns",
+    "resultCount": 0,
+    "resultSize": 0,
+    "processedObjects": 0,
+    "bufferCacheHitRatio": "0.00%",
+    "bufferCachePageReadCount": 0
+  }
+}

@@ -239,17 +239,14 @@ internal class AnalyticsPerformerCrossService : ColumnarCrossService.ColumnarCro
         var stopwatch = LightweightStopwatch.StartNew();
         var initiated = Timestamp.FromDateTime(DateTime.UtcNow);
 
-        Exception? exception = null;
-
+        // Idempotent close - if the handle was already removed (e.g., by cancel), just succeed.
+        // This matches the RFC expectation that close is a cleanup operation that should not fail.
         if (request.QueryHandle is not null)
         {
-            if (!_ongoingQueries.TryRemove(request.QueryHandle, out var performerQuery))
-            {
-                exception = new KeyNotFoundException("Query handle not present in ongoing queries: " + request.QueryHandle);
-            }
+            _ongoingQueries.TryRemove(request.QueryHandle, out _);
         }
 
-        var response = new EmptyResultOrFailureResponse().GetResponseMetaData(stopwatch, initiated, exception);
+        var response = new EmptyResultOrFailureResponse().GetResponseMetaData(stopwatch, initiated);
 
         return Task.FromResult(response);
     }
