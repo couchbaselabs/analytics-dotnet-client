@@ -34,7 +34,7 @@ public class Program
             }
         }
 
-        var (host, port) = ("localhost", 8060);
+        var (host, port) = ("0.0.0.0", 8060);
 
         var server = new Server
         {
