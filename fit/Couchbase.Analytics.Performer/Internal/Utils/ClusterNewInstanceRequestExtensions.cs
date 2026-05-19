@@ -82,7 +82,10 @@ public static class ClusterNewInstanceRequestExtensions
         {
             timeoutOptions = timeoutOptions.WithQueryTimeout(protoTimeout.QueryTimeout.ToTimeSpan());
         }
-        // handle_timeout is not supported by the .NET SDK; intentionally ignored.
+        if (protoTimeout.HandleTimeout is not null)
+        {
+            timeoutOptions = timeoutOptions.WithHandleRequestTimeout(protoTimeout.HandleTimeout.ToTimeSpan());
+        }
         return timeoutOptions;
     }
 

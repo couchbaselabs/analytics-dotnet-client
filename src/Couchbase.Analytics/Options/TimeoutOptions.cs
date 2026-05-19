@@ -26,6 +26,7 @@ public record TimeoutOptions
     internal TimeSpan ConnectTimeout = TimeSpan.FromSeconds(10);
     internal TimeSpan DispatchTimeout = TimeSpan.FromSeconds(30);
     internal TimeSpan QueryTimeout = TimeSpan.FromMinutes(10);
+    internal TimeSpan HandleRequestTimeout = TimeSpan.FromSeconds(10);
 
     /// <summary>
     /// Socket connection timeout, or more broadly the timeout
@@ -52,12 +53,23 @@ public record TimeoutOptions
     }
 
     /// <summary>
-    /// Columnar query timeout.
+    /// Cluster-level query timeout. Can be overriden with <see cref="QueryOptions"/>'s Timeout.
     /// <remarks>The default is 10m.</remarks>
     /// </summary>
     public TimeoutOptions WithQueryTimeout(TimeSpan queryTimeout)
     {
         QueryTimeout = queryTimeout;
+        return this;
+    }
+
+    /// <summary>
+    /// Per-request timeout for async query handle operations
+    /// (FetchStatus, FetchResults, DiscardResults, CancelHandle).
+    /// <remarks>The default is 10s.</remarks>
+    /// </summary>
+    public TimeoutOptions WithHandleRequestTimeout(TimeSpan handleTimeout)
+    {
+        HandleRequestTimeout = handleTimeout;
         return this;
     }
 }
