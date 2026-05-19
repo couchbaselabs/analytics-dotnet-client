@@ -214,6 +214,8 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
     {
         var stopwatch = LightweightStopwatch.StartNew();
         var queryTimeout = options.QueryTimeout ?? _clusterOptions.TimeoutOptions.QueryTimeout;
+        // Ensure the resolved query timeout is serialized into the request body.
+        options = options with { QueryTimeout = queryTimeout };
         var requestTimeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
 
         var errorContext = new ErrorContext(options.ClientContextId, stopwatch, queryTimeout);
@@ -262,24 +264,29 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
                         ex, errorContext);
                 }
 
-                if (!response.IsSuccessStatusCode)
+                // Errors may be present alongside a 2xx response (e.g. HTTP 202 with status:"fatal"
+                // and a retriable error array). Inspect them before any other branching so the retry
+                // logic applies uniformly to success and failure HTTP codes.
+                QueryError[]? errors = null;
+                if (root.TryGetProperty("errors", out var errorsElement) && errorsElement.ValueKind == JsonValueKind.Array)
                 {
-                    // Try to parse errors from the response
-                    if (root.TryGetProperty("errors", out var errorsElement))
+                    errors = JsonSerializer.Deserialize<QueryError[]>(errorsElement.GetRawText());
+                }
+
+                if (errors is { Length: > 0 })
+                {
+                    if (AnalyticsErrorMapper.AreErrorsRetriable(errors))
                     {
-                        var errors = JsonSerializer.Deserialize<QueryError[]>(errorsElement.GetRawText())
-                                     ?? Array.Empty<QueryError>();
-
-                        if (AnalyticsErrorMapper.AreErrorsRetriable(errors))
-                        {
-                            lastException = AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
-                            await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
-                            continue;
-                        }
-
-                        throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                        lastException = AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                        await RetryUtils.BackoffAsync(attempt, cancellationToken).ConfigureAwait(false);
+                        continue;
                     }
 
+                    throw AnalyticsErrorMapper.MapServiceErrors(errors, errorContext);
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
                     // 503 is retriable
                     if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
                     {
@@ -339,7 +346,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     public async Task<QueryStatus> FetchStatusAsync(QueryHandle handle, FetchStatusOptions options, CancellationToken cancellationToken = default)
     {
-        var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var timeout = _clusterOptions.TimeoutOptions.HandleRequestTimeout;
         using var httpClient = CreateHttpClient(timeout);
 
         var statusUri = Uri.TryCreate(handle.Handle, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
@@ -456,7 +463,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     public async Task<IQueryResult> FetchResultsAsync(string requestId, string handlePath, FetchResultsOptions options, CancellationToken cancellationToken = default)
     {
-        var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var timeout = _clusterOptions.TimeoutOptions.HandleRequestTimeout;
         var httpClient = CreateHttpClient(timeout);
         var deserializer = options.Deserializer ?? _clusterOptions.Deserializer;
 
@@ -505,7 +512,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     public async Task DiscardResultsAsync(string requestId, string handlePath, DiscardResultsOptions options, CancellationToken cancellationToken = default)
     {
-        var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var timeout = _clusterOptions.TimeoutOptions.HandleRequestTimeout;
         using var httpClient = CreateHttpClient(timeout);
 
         var resultUri = Uri.TryCreate(handlePath, UriKind.Absolute, out var absUri) && (absUri.Scheme == Uri.UriSchemeHttp || absUri.Scheme == Uri.UriSchemeHttps)
@@ -543,7 +550,7 @@ internal sealed partial class AnalyticsService : HttpServiceBase, IAnalyticsServ
 
     public async Task CancelQueryAsync(string requestId, CancelOptions options, CancellationToken cancellationToken = default)
     {
-        var timeout = _clusterOptions.TimeoutOptions.DispatchTimeout;
+        var timeout = _clusterOptions.TimeoutOptions.HandleRequestTimeout;
         using var httpClient = CreateHttpClient(timeout);
 
         var cancelUri = new Uri(_baseUri, "api/v1/active_requests");
