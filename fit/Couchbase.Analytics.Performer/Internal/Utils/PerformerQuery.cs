@@ -64,21 +64,23 @@ public class PerformerQuery
             }
         }
 
-        var effectiveContentAs = rowContentAs ?? ContentAs
-            ?? throw new InvalidOperationException("No ContentAs available for row deserialization.");
+        var effectiveContentAs = rowContentAs ?? ContentAs;
 
         QueryRowResponse response;
 
         if (await _cachedEnumerator!.MoveNextAsync().ConfigureAwait(false))
         {
+            var row = new QueryRowResponse.Types.Row();
+            // QueryRowResponse.Row is optional and only present if the driver sent ContentAs in the request
+            if (effectiveContentAs is not null)
+            {
+                row.RowContent = _cachedEnumerator.Current.ContentAsToAnalyticsRow(effectiveContentAs);
+            }
             response = new QueryRowResponse()
             {
                 Success = new QueryRowResponse.Types.Result()
                 {
-                    Row = new QueryRowResponse.Types.Row()
-                    {
-                        RowContent = _cachedEnumerator.Current.ContentAsToAnalyticsRow(effectiveContentAs)
-                    }
+                    Row = row
                 }
             };
         }
