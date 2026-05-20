@@ -54,6 +54,13 @@ public sealed class MillisecondsStringJsonConverter : JsonConverter<TimeSpan?>
                 return TimeSpan.FromTicks(nanoseconds / 100);
             }
         }
+        else if (stringValue.EndsWith("µs") || stringValue.EndsWith("μs") || stringValue.EndsWith("us"))
+        {
+            if (double.TryParse(stringValue[..^2], NumberStyles.Float, CultureInfo.InvariantCulture, out var microseconds))
+            {
+                return TimeSpan.FromTicks((long)(microseconds * 10));
+            }
+        }
         else if (stringValue.EndsWith('s'))
         {
             if (double.TryParse(stringValue[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds))
@@ -63,7 +70,7 @@ public sealed class MillisecondsStringJsonConverter : JsonConverter<TimeSpan?>
         }
 
         throw new JsonException(
-                $"cannot parse {stringValue}. Only 0.0ms, 0.0ns, and 0.0s formats are supported.");
+                $"cannot parse {stringValue}. Only 0.0ms, 0.0ns, 0.0µs, and 0.0s formats are supported.");
     }
 
     public override void Write(Utf8JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)

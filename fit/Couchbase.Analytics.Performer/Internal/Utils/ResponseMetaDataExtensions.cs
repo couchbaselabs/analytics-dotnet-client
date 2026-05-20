@@ -8,35 +8,46 @@ public static class ResponseMetaDataExtensions
 {
     public static QueryResultMetadataResponse.Types.QueryMetadata ToResponseMetaData(this QueryMetaData metadata)
     {
-        var sdkMetrics = metadata.Metrics!;
-        var protoMetadata = new QueryResultMetadataResponse.Types.QueryMetadata()
+        var protoMetadata = new QueryResultMetadataResponse.Types.QueryMetadata();
+
+        if (metadata.Metrics is { } sdkMetrics)
         {
-            Metrics = new QueryResultMetadataResponse.Types.QueryMetadata.Types.Metrics
+            var protoMetrics = new QueryResultMetadataResponse.Types.QueryMetadata.Types.Metrics
             {
-                ElapsedTime = new Duration
-                {
-                    Seconds = sdkMetrics.ElapsedTime!.Value.Seconds,
-                    Nanos = sdkMetrics.ElapsedTime.Value.Nanoseconds
-                },
-                ExecutionTime = new Duration
-                {
-                    Seconds = sdkMetrics.ExecutionTime!.Value.Seconds,
-                    Nanos = sdkMetrics.ExecutionTime.Value.Nanoseconds
-                },
                 ProcessedObjects = (ulong)sdkMetrics.ProcessedObjects,
                 ResultCount = (ulong)sdkMetrics.ResultCount,
                 ResultSize = (ulong)sdkMetrics.ResultSize
-            }
-        };
+            };
 
-        if (metadata.RequestId is not null)
-        {
-            protoMetadata.RequestId = metadata.RequestId;
+            if (sdkMetrics.ElapsedTime is { } elapsed)
+            {
+                protoMetrics.ElapsedTime = new Duration
+                {
+                    Seconds = elapsed.Seconds,
+                    Nanos = elapsed.Nanoseconds
+                };
+            }
+
+            if (sdkMetrics.ExecutionTime is { } executed)
+            {
+                protoMetrics.ExecutionTime = new Duration
+                {
+                    Seconds = executed.Seconds,
+                    Nanos = executed.Nanoseconds
+                };
+            }
+
+            protoMetadata.Metrics = protoMetrics;
         }
 
-        if (metadata.Warnings is not null)
+        if (metadata.RequestId is { } requestId)
         {
-            foreach (var warnings in metadata.Warnings)
+            protoMetadata.RequestId = requestId;
+        }
+
+        if (metadata.Warnings is { } metaWarnings)
+        {
+            foreach (var warnings in metaWarnings)
             {
                 protoMetadata.Warnings.Add(new QueryResultMetadataResponse.Types.QueryMetadata.Types.Warning()
                 {
