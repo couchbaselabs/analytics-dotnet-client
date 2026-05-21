@@ -6,15 +6,15 @@
         <Nullable>enable</Nullable>
         <RootNamespace>Couchbase.AnalyticsClient</RootNamespace>
         <VersionPrefix>1.0.1</VersionPrefix>
-        
+
         <AssemblyName>Couchbase.AnalyticsClient</AssemblyName>
         <PackageId>Couchbase.AnalyticsClient</PackageId>
         <Product>Couchbase Analytics Client</Product>
         <Description>The Official Couchbase Analytics .NET SDK</Description>
-        
+
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        
+
         <PackageReleaseNotes>https://docs.couchbase.com/dotnet-analytics-sdk/current/project-docs/analytics-sdk-release-notes.html</PackageReleaseNotes>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
@@ -39,10 +39,30 @@
           <IncludeAssets>Couchbase.Core.dll</IncludeAssets>
       </ProjectReference>
     </ItemGroup>
-    
+
     <ItemGroup>
       <None Include="..\..\README.md" Pack="true" PackagePath="" />
     </ItemGroup>
-    
+
+    <!--
+      NuGet's symbol pack only includes the PDB of the project being packed.
+      Couchbase.Core.dll is bundled into the main package (lib/<tfm>/), so its
+      PDB must be added to the symbol package explicitly.
+      This target adds the PDB of every ProjectReference whose DLL flows into the build output.
+    -->
+    <PropertyGroup>
+      <TargetsForTfmSpecificDebugSymbolsInPackage>$(TargetsForTfmSpecificDebugSymbolsInPackage);IncludeReferencedProjectSymbolsInSymbolPackage</TargetsForTfmSpecificDebugSymbolsInPackage>
+    </PropertyGroup>
+
+    <Target Name="IncludeReferencedProjectSymbolsInSymbolPackage" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+      <ItemGroup>
+        <_ReferencedProjectPdb Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename).pdb')"
+                               Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
+        <TfmSpecificDebugSymbolsFile Include="@(_ReferencedProjectPdb)"
+                                     Condition="Exists('%(Identity)')"
+                                     TargetPath="/lib/$(TargetFramework)/%(Filename)%(Extension)"
+                                     TargetFramework="$(TargetFramework)" />
+      </ItemGroup>
+    </Target>
 
 </Project>
