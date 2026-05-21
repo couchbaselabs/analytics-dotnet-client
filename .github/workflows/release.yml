@@ -157,6 +157,49 @@ jobs:
           dotnet build src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release --no-restore /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:IncludeSource=true /p:SourceLinkCreate=true /p:SignAssembly=true /p:AssemblyOriginatorKeyFile="$env:SIGNKEY_PATH"
           dotnet pack src/Couchbase.Analytics/Couchbase.Analytics.csproj -c Release /p:ContinuousIntegrationBuild=true /p:Version="${{ needs.validate-inputs.outputs.tag }}" /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg /p:IncludeSource=true /p:SourceLinkCreate=true /p:SignAssembly=true /p:AssemblyOriginatorKeyFile="$env:SIGNKEY_PATH"
 
+      - name: Verify package contents (DLL <-> PDB parity)
+        shell: pwsh
+        run: |
+          $ver = "${{ needs.validate-inputs.outputs.tag }}"
+          $packDir = "src/Couchbase.Analytics/bin/Release"
+          $nupkg  = Get-ChildItem -Path $packDir -Filter "*.$ver.nupkg"  | Where-Object { $_.Name -notlike "*.symbols.nupkg" } | Select-Object -First 1
+          $snupkg = Get-ChildItem -Path $packDir -Filter "*.$ver.snupkg" | Select-Object -First 1
+          if (-not $nupkg)  { Write-Error "No .nupkg matching version $ver found in $packDir"; exit 1 }
+          if (-not $snupkg) { Write-Error "No .snupkg matching version $ver found in $packDir"; exit 1 }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          function Get-LibEntries($path, $extension) {
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($path)
+            try {
+              return @($zip.Entries | Where-Object { $_.FullName -like "lib/*$extension" } | ForEach-Object { $_.FullName })
+            } finally {
+              $zip.Dispose()
+            }
+          }
+
+          $dlls = Get-LibEntries $nupkg.FullName  ".dll"
+          $pdbs = Get-LibEntries $snupkg.FullName ".pdb"
+
+          Write-Host "DLLs in $($nupkg.Name):"
+          $dlls | ForEach-Object { Write-Host "  $_" }
+          Write-Host "PDBs in $($snupkg.Name):"
+          $pdbs | ForEach-Object { Write-Host "  $_" }
+
+          # Every DLL shipped in lib/<tfm>/ must have a matching PDB at the same path in the symbol package.
+          $missing = @()
+          foreach ($dll in $dlls) {
+            $expectedPdb = [System.IO.Path]::ChangeExtension($dll, ".pdb")
+            if (-not ($pdbs -contains $expectedPdb)) {
+              $missing += $expectedPdb
+            }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Error ("Symbol package is missing PDB(s) for bundled DLL(s):`n  " + ($missing -join "`n  "))
+            exit 1
+          }
+          Write-Host "Symbol package contains PDBs for all $($dlls.Count) bundled DLL(s)."
+
       - name: Upload Packages Artifact
         uses: actions/upload-artifact@v4
         with:
