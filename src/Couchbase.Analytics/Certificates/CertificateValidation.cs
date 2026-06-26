@@ -75,7 +75,7 @@ public static partial class CertificateValidation
     /// The certificate is automatically parsed from the PEM format and made available as an X509Certificate2 instance.
     /// </remarks>
     internal static readonly X509Certificate2 CapellaCaCert =
-        X509CertificateLoader.LoadCertificate(System.Text.Encoding.ASCII.GetBytes(CapellaCaCertPem));
+        CertificateLoader.LoadCertificate(System.Text.Encoding.ASCII.GetBytes(CapellaCaCertPem));
 
     /// <summary>
     /// Creates a <see cref="RemoteCertificateValidationCallback"/> that validates server certificates according to the specified security options.
@@ -211,11 +211,11 @@ public static partial class CertificateValidation
             }
             else if (securityOptions.TrustMode == CertificateTrustMode.PemFilePath)
             {
-                trustedCertificates.Add(X509CertificateLoader.LoadCertificateFromFile(securityOptions.PathToPemFileValue!));
+                trustedCertificates.Add(CertificateLoader.LoadCertificateFromFile(securityOptions.PathToPemFileValue!));
             }
             else if (securityOptions.TrustMode == CertificateTrustMode.PemString)
             {
-                trustedCertificates.Add(X509CertificateLoader.LoadCertificate(
+                trustedCertificates.Add(CertificateLoader.LoadCertificate(
                     System.Text.Encoding.ASCII.GetBytes(securityOptions.CertificateValue!)));
             }
             else if (securityOptions.TrustMode == CertificateTrustMode.CertificatesOnly)

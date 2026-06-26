@@ -87,7 +87,9 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
           cache: false
 
       - name: Install prerequisites (CentOS)
@@ -102,8 +104,12 @@ jobs:
       - name: Build (Release)
         run: dotnet build src/Couchbase.Analytics/Couchbase.Analytics.csproj --configuration Release --no-restore
 
-      - name: Test - Couchbase.Analytics.UnitTests (Release)
-        run: dotnet test tests/Couchbase.Analytics.UnitTests/Couchbase.Analytics.UnitTests.csproj --configuration Release --logger trx --results-directory "TestResults"
+      - name: Test - Couchbase.Analytics.UnitTests (net8.0)
+        run: dotnet test tests/Couchbase.Analytics.UnitTests/Couchbase.Analytics.UnitTests.csproj --configuration Release --framework net8.0 --logger GitHubActions --logger "trx;LogFileName=unit-tests-net8.0.trx" --results-directory "TestResults"
+
+      - name: Test - Couchbase.Analytics.UnitTests (net10.0)
+        if: ${{ !cancelled() }}
+        run: dotnet test tests/Couchbase.Analytics.UnitTests/Couchbase.Analytics.UnitTests.csproj --configuration Release --framework net10.0 --logger GitHubActions --logger "trx;LogFileName=unit-tests-net10.0.trx" --results-directory "TestResults"
 
       - name: Upload Test Results
         if: always()
@@ -136,7 +142,9 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
           cache: false
 
       - name: Restore

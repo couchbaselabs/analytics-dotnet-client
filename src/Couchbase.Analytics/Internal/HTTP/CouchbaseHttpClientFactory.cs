@@ -103,10 +103,10 @@ internal partial class CouchbaseHttpClientFactory : ICouchbaseHttpClientFactory
                 certCollection.AddRange(_securityOptions.CertificatesValue!);
                 break;
             case CertificateTrustMode.PemFilePath:
-                certCollection.Add(X509CertificateLoader.LoadCertificateFromFile(_securityOptions.PathToPemFileValue!));
+                certCollection.Add(Certificates.CertificateLoader.LoadCertificateFromFile(_securityOptions.PathToPemFileValue!));
                 break;
             case CertificateTrustMode.PemString:
-                certCollection.Add(X509CertificateLoader.LoadCertificate(
+                certCollection.Add(Certificates.CertificateLoader.LoadCertificate(
                     System.Text.Encoding.ASCII.GetBytes(_securityOptions.CertificateValue!)));
                 break;
             case CertificateTrustMode.Default:

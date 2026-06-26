@@ -79,7 +79,7 @@ public sealed record CertificateCredential : ICredential
     /// <param name="password">The password protecting the PKCS#12 file, or <c>null</c> if unprotected.</param>
     /// <returns>A <see cref="CertificateCredential"/> instance.</returns>
     public static CertificateCredential FromPkcs12(string path, string? password = null) =>
-        new(X509CertificateLoader.LoadPkcs12FromFile(path, password));
+        new(Certificates.CertificateLoader.LoadPkcs12FromFile(path, password));
 
     /// <summary>
     /// Creates a certificate credential by loading PEM-encoded certificate and private key files.

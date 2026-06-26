@@ -193,7 +193,7 @@ public class CertificateCredentialTests
         var fullCert = CreateSelfSignedCert();
         // Export only the public portion (DER) and reimport — strips the private key
         var publicBytes = fullCert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert);
-        return System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificate(publicBytes);
+        return Couchbase.AnalyticsClient.Certificates.CertificateLoader.LoadCertificate(publicBytes);
     }
 
     [Fact]

@@ -50,7 +50,9 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
           cache: false
 
       - name: Install cbdinocluster
@@ -217,82 +219,24 @@ jobs:
           fi
           echo "Dataverse created successfully"
 
-      - name: Build and Run Functional Tests
+      - name: Build and Run Functional Tests (net8.0)
         run: |
           dotnet test tests/Couchbase.Analytics.FunctionalTests/Couchbase.Analytics.FunctionalTests.csproj \
             --configuration Release \
-            --logger "trx;LogFileName=functional-tests.trx" \
+            --framework net8.0 \
+            --logger GitHubActions \
+            --logger "trx;LogFileName=functional-tests-net8.0.trx" \
             --results-directory "TestResults"
 
-      - name: Verify Functional Test Results
+      - name: Build and Run Functional Tests (net10.0)
+        if: ${{ !cancelled() }}
         run: |
-          python3 - TestResults/functional-tests.trx <<'PY'
-          import sys
-          import xml.etree.ElementTree as ET
-
-          if len(sys.argv) != 2:
-              print(f"Usage: {sys.argv[0]} <results.trx>")
-              sys.exit(1)
-
-          path = sys.argv[1]
-          print(f"Parsing TRX: {path}")
-
-          try:
-              tree = ET.parse(path)
-          except Exception as e:
-              print(f"ERROR: Failed to parse TRX file: {e}")
-              sys.exit(1)
-
-          root = tree.getroot()
-          ns = {'ns': root.tag.split('}')[0].strip('{')} if root.tag.startswith('{') else {}
-
-          rs = root.find('.//ns:ResultSummary', ns)
-          if rs is None:
-              rs = root.find('.//ResultSummary')
-          if rs is None:
-              print('ERROR: ResultSummary not found in TRX')
-              sys.exit(1)
-
-          counters = rs.find('.//ns:Counters', ns)
-          if counters is None:
-              counters = rs.find('.//Counters')
-          if counters is None:
-              print('ERROR: Counters not found in TRX')
-              sys.exit(1)
-
-          def get_int(name: str) -> int:
-              v = counters.attrib.get(name)
-              try:
-                  return int(v) if v is not None else 0
-              except ValueError:
-                  return 0
-
-          total = get_int('total')
-          executed = get_int('executed')
-          passed = get_int('passed')
-          failed = (
-              get_int('failed') +
-              get_int('error') +
-              get_int('timeout') +
-              get_int('aborted')
-          )
-
-          print(f"Summary: total={total}, executed={executed}, passed={passed}, failed={failed}")
-
-          if total == 0 or executed == 0:
-              print('ERROR: No tests were run.')
-              sys.exit(1)
-
-          if failed > 0:
-              print(f'ERROR: {failed} tests failed.')
-              sys.exit(1)
-
-          if passed < executed:
-              print(f'ERROR: Not all executed tests passed (passed={passed}, executed={executed}).')
-              sys.exit(1)
-
-          print('All functional tests passed.')
-          PY
+          dotnet test tests/Couchbase.Analytics.FunctionalTests/Couchbase.Analytics.FunctionalTests.csproj \
+            --configuration Release \
+            --framework net10.0 \
+            --logger GitHubActions \
+            --logger "trx;LogFileName=functional-tests-net10.0.trx" \
+            --results-directory "TestResults"
 
       - name: Upload Functional Test Results
         if: always()
