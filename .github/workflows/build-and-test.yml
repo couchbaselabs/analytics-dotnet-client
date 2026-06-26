@@ -2,6 +2,8 @@ name: Build & Run Unit Tests
 
 on:
   pull_request:
+  push:
+    branches: [master]
 
 jobs:
   build-and-test:
