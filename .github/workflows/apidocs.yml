@@ -6,6 +6,10 @@ on:
       version_tag:
         description: 'Git tag to build docs for (e.g., 1.0.0, 1.0.0-rc1). This is ignored if publish is false.'
         required: true
+      build_ref:
+        description: 'Optional git ref (branch/tag/SHA) to build FROM. Defaults to version_tag. Set this to build from e.g. master while still publishing under version_tag (e.g. build_ref=master, version_tag=1.1.0).'
+        required: false
+        default: ''
       publish:
         description: 'Publish to S3 (set false for smoke run)'
         type: boolean
@@ -23,6 +27,7 @@ jobs:
     outputs:
       tag: ${{ steps.compute.outputs.tag }}
       version: ${{ steps.compute.outputs.version }}
+      ref: ${{ steps.compute.outputs.ref }}
       publish: ${{ steps.compute.outputs.publish }}
     steps:
       - id: compute
@@ -30,6 +35,7 @@ jobs:
         shell: bash
         run: |
           TAG_INPUT="${{ github.event.inputs.version_tag }}"
+          BUILD_REF_INPUT="${{ github.event.inputs.build_ref }}"
           PUBLISH_INPUT="${{ github.event.inputs.publish }}"
           if [ -z "$TAG_INPUT" ]; then
             echo "Tag input is required." >&2
@@ -40,8 +46,11 @@ jobs:
             exit 1
           fi
           VER="${TAG_INPUT#v}"
+          # Ref to build from: build_ref if provided, otherwise the version tag.
+          REF="${BUILD_REF_INPUT:-$TAG_INPUT}"
           echo "tag=$TAG_INPUT" >> $GITHUB_OUTPUT
           echo "version=$VER" >> $GITHUB_OUTPUT
+          echo "ref=$REF" >> $GITHUB_OUTPUT
           echo "publish=$PUBLISH_INPUT" >> $GITHUB_OUTPUT
 
   build-docs:
@@ -58,11 +67,11 @@ jobs:
         if: needs.validate-inputs.outputs.publish != 'true'
         uses: actions/checkout@v4
 
-      - name: Checkout repo at tag
+      - name: Checkout repo at ref
         if: needs.validate-inputs.outputs.publish == 'true'
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.validate-inputs.outputs.tag }}
+          ref: ${{ needs.validate-inputs.outputs.ref }}
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
