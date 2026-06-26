@@ -15,7 +15,8 @@ It is designed for high-throughput analytics workloads and exposes a simple API 
 
 ## Supported platforms
 
-- .NET 8.0
+- .NET 10
+- .NET 8
 
 ## Packages
 
